@@ -75,3 +75,7 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 ## Versioning
 
 The current manifest version is `0.0.1` (unreleased scaffold). [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.0.1.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+
+## Public dataset smoke tests
+
+See [TEST_DATA.md](TEST_DATA.md) for the downloaded ds000003 anatomical subset and full ds000114 public inventory, provenance, verification and opt-in test boundaries. Both are outside the repository and are not used by the scaffold tests.

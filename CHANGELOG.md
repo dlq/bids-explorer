@@ -10,6 +10,8 @@ Record implemented changes under Unreleased. The manifest is currently `0.0.1`, 
 
 ### Added
 
+- Documented an externally stored, verified public ds000003 anatomical subset and full ds000114 public inventory for future manual/opt-in tests.
+
 - Versioned roadmap through 1.0.0, release conventions and manifest-derived VSIX filenames.
 
 - Pinned local Semgrep rules and regression fixtures, a security CI job with dependency auditing, weekly Dependabot configuration and security guidance.
