@@ -6,13 +6,13 @@ Working plan, November 3, 2026. Update this as implementation reveals constraint
 
 Make a VS Code extension for exploring BIDS datasets locally and over SSH, in ordinary directories, ZIP archives, tarballs and SquashFS images. Navigation and dataset context are the product; visualization is optional.
 
-The unreleased implementation now includes automatic shallow workspace-root recognition, workspace-scoped manual registration, lazy local directory browsing, canonical BIDS-only folder/file recognition, source details, file opening, branch refresh/retry and cancellation. A bounded, read-only diffusion gradient preview is also implemented: sphere, b-value plot and linked original values from a selected same-basename pair. Image association, orientation and inherited applicability remain future metadata work. Dataset access is read-only. Archive readers, inherited metadata and persistent indexing remain unimplemented. Hosted CI and real Remote SSH behavior have not yet been exercised.
+The unreleased implementation now includes automatic shallow workspace-root recognition, workspace-scoped manual registration, lazy local directory browsing, canonical BIDS-only folder/file recognition, source details, file opening, branch refresh/retry and cancellation. A bounded, read-only diffusion gradient preview is also implemented: sphere, b-value plot and linked original values from a selected same-basename pair. Image association, orientation and inherited applicability remain future metadata work. Dataset access is read-only. Archive readers, inherited metadata and persistent indexing remain unimplemented. Hosted CI remains unverified. Early directory and public-MRI Remote SSH smoke tests passed; broader remote robustness remains future work.
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and source references before implementing. Strata is reference material, not an implementation to copy wholesale.
 
 ## Version targets
 
-The manifest is currently `0.0.1`, an unreleased development build. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is currently `0.1.0`, an unreleased development build. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -42,7 +42,7 @@ Patch releases such as `0.3.1` fix an existing milestone; new functionality goes
 
 ## 0.1.0 — First usable local dataset browser
 
-**Status:** initial local implementation is present in the unreleased 0.0.1 development build. No version bump or release has been made. Canonical folder labeling is implemented; richer entity normalization belongs to 0.2.0. Local unit/integration checks and public-data smoke tests are recorded in docs/LOCAL_BROWSER_TESTING.md. Real Remote SSH smoke testing remains pending.
+**Status:** complete as the unpublished `0.1.0` local milestone. See [milestone validation](docs/MILESTONE_0.1.0.md) for minimum/current VS Code checks, local scale evidence, authorized Linux Remote SSH browsing and public MRI handoff. Canonical folder labeling is implemented; richer entity normalization belongs to `0.2.0`. This does not complete persistent indexing or the broader `0.6.0` remote workflow gates.
 
 Automatically recognize each open workspace folder with a root-level ordinary `dataset_description.json`, without parsing it, validating structure or recursively searching. React to workspace-folder changes and global Refresh. Retain **BIDS Explorer: Add Dataset** for external or noncanonical roots. Keep automatic ownership separate from persisted explicit registration; closing a workspace folder must not discard a manually added dataset. Show dataset → participant → session → modality, with raw data and derivatives kept distinct. Support sessionless datasets. Leave unfamiliar/administrative entries to the native file tree, accessible via Show Dataset in File Explorer; filtering is not BIDS validation.
 
@@ -191,7 +191,7 @@ Follow [TESTING.md](TESTING.md) for enforced coverage and behavioral test expect
 
 Use fast core tests for semantics and identity, extension-host tests for commands and tree behavior, and synthetic archive/large-tree tests for IO and responsiveness. Keep real private datasets and performance runs opt-in. Measure indexing, tree publication, extraction, transfer and viewer opening separately before optimizing.
 
-The initial 0.1.0 directory slice is implemented. Next, review the local browser in normal use and perform an explicitly authorized synthetic Remote SSH smoke test before archive investment. Address any resulting directory/host issues, then begin 0.2.0 metadata interpretation. Do not treat the local result as evidence of remote compatibility.
+The `0.1.0` directory milestone and early authorized Remote SSH smoke test are complete; evidence and limits are in [milestone validation](docs/MILESTONE_0.1.0.md). Next, design shared metadata/relationship contracts for `0.2.0`. Continue to distinguish this bounded smoke test from broader remote compatibility, reconnect behavior, persistent indexing and archive support.
 
 When the GitHub repository is created, enable the repository controls listed in [SECURITY.md](SECURITY.md). When it is pushed, add `CONTRIBUTING.md` covering development setup, tests, pull requests and changelog expectations.
 

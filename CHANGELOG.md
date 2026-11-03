@@ -1,8 +1,10 @@
 # Changelog
 
-Record implemented changes under Unreleased. The manifest is currently `0.0.1`, an unreleased development build; no version below represents a published release. Follow VERSIONING.md (`VERSIONING.md`): use `major.minor.patch`, release tags `vX.Y.Z` and dated headings `## [X.Y.Z] - YYYY-MM-DD` when releasing. Planned versions belong in PLANS.md (`PLANS.md`), not in release history.
+Record implemented changes under Unreleased. The manifest is currently `0.1.0`, an unreleased development build; no version below represents a published release. Follow VERSIONING.md (`VERSIONING.md`): use `major.minor.patch`, release tags `vX.Y.Z` and dated headings `## [X.Y.Z] - YYYY-MM-DD` when releasing. Planned versions belong in PLANS.md (`PLANS.md`), not in release history.
 
 ## Unreleased
+
+- Prepared the `0.1.0` local milestone build, with recorded minimum/current VS Code tests and authorized Remote SSH/public MRI smoke evidence. No tag or publication has been created.
 
 - Added theme-aware participant, session, modality, derivatives and pipeline icons to the BIDS Explorer tree, using built-in VS Code symbols alongside the existing dataset icon.
 
@@ -35,7 +37,7 @@ Record implemented changes under Unreleased. The manifest is currently `0.0.1`, 
 - Enforced per-file unit coverage, extension-host coverage reports, CI coverage artifacts and documented testing expectations.
 
 - Initial TypeScript VS Code extension scaffold with an empty BIDS Explorer view and refresh command.
-- Workspace-host configuration for local and Remote SSH development; remote behavior remains unverified.
+- Workspace-host configuration for local and Remote SSH development; early directory workflows are smoke-tested on an authorized Linux host; broader compatibility remains unverified.
 - F5 debugging, watch builds, type checking, linting, unit and extension-host tests, CI configuration and local VSIX packaging.
 - Project scope, research notes, implementation plan and retained Strata benchmark evidence.
 

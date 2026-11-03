@@ -46,7 +46,7 @@ The integration runner uses a disposable `.code-workspace` file outside the repo
 
 ## Remaining boundaries
 
-- Real Remote SSH execution and Linux/Windows runtime smoke tests remain pending. Linux CI is configured but has not yet run on a hosted repository.
+- Subsequent authorized Linux Remote SSH and public-MRI smoke tests are recorded in [0.1.0 validation](MILESTONE_0.1.0.md). Windows and full Linux CI remain unverified; hosted CI has not yet run.
 - Symbolic-link entries are not followed; the local adapter is not a security sandbox against parent-path replacement races. See SECURITY.md.
 - Cancellation stops cooperative processing and publication, not an OS directory read already in progress.
 - Listings are in-memory snapshots refreshed manually; descendants remain unknown until expanded. There is no recursive availability index or metadata inheritance.

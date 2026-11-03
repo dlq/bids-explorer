@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for the unreleased `0.0.1` development build targeting the `0.1.0` local browser. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for the unpublished `0.1.0` local milestone build. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -32,6 +32,8 @@ npm run package           # Creates dist/bids-explorer-<version>.vsix
 The integration runner needs network access on its first run and a graphical session (CI uses Xvfb). If VS Code stable is already running and prevents CLI tests, close it or launch tests from VS Code's Extension Test Runner. Install the VSIX using **Extensions: Install from VSIX**. The `bids-explorer-dev` publisher is a development placeholder, not a Marketplace registration. No publication is configured. Packaging skips the license check for this private development preview; choose a license and real publisher before distribution.
 
 The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model is shared without a bundler or runtime dependencies. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/webview/`, with styles in `media/`.
+
+To test an existing VS Code installation, set `BIDS_EXPLORER_TEST_VSCODE_PATH` to its absolute executable path before running `npm run test:integration`. This was used for current macOS VS Code, whose executable is named `Code` rather than the test downloader’s assumed `Electron`. The default still tests 1.96.0.
 
 ## Architecture and remote development
 
@@ -76,8 +78,10 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `0.0.1` (unreleased development build). [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.0.1.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `0.1.0` (unreleased development build). [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.1.0.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 
 See [TEST_DATA.md](TEST_DATA.md) for the downloaded ds000003 anatomical subset and full ds000114 public inventory, provenance, verification and opt-in test boundaries. Both are outside the repository and are not used by ordinary automated tests. The local source adapter has been smoke-tested against both; see [LOCAL_BROWSER_TESTING.md](LOCAL_BROWSER_TESTING.md).
+
+See [0.1.0 milestone validation](MILESTONE_0.1.0.md) for current test results, the authorized Remote SSH/MRI smoke test and measured cache behavior.

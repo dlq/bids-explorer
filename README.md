@@ -1,8 +1,8 @@
 # BIDS Explorer
 
-A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only local directory browsing and diffusion gradient previews**. SSH validation, ZIP, tarball and SquashFS readers are planned.
+A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only local directory browsing and diffusion gradient previews**. Directory workflows have been smoke-tested over VS Code Remote SSH; ZIP, tarball and SquashFS readers are planned.
 
-**Status: unreleased development build (`0.0.1`), working toward `0.1.0`.** There is no Marketplace release or public installation link.
+**Status: local `0.1.0` milestone build; not published.** There is no Marketplace release or public installation link.
 
 ## Available today
 
@@ -48,19 +48,21 @@ Explorer reads directory entries, requested filesystem attributes and bounded se
 
 Opening other files or using the preview’s Open as text buttons hands them to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
 
+See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observations, cache behavior and performance limits. Listings are cached in memory on the workspace host; image transfer/display uses VS Code and the selected editor. No persistent remote index or image-byte cache is implemented.
+
 ## Planned capabilities
 
-| Proposed version | Planned capability                                                                                 |
-| ---------------- | -------------------------------------------------------------------------------------------------- |
-| `0.1.0`          | Complete and verify the initial local directory browser (implemented in development, not released) |
-| `0.2.0`          | Richer BIDS interpretation and inherited metadata                                                  |
-| `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections                         |
-| `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                             |
-| `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                             |
-| `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                            |
-| `1.0.0`          | Supported core exploration across documented formats and hosts                                     |
+| Proposed version | Planned capability                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
+| `0.2.0`          | Richer BIDS interpretation and inherited metadata                                       |
+| `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections              |
+| `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
+| `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
+| `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
+| `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-These are roadmap targets, not current features or scheduled releases. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The `0.1.0` milestone is implemented; later rows are roadmap targets, not current features or scheduled releases. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 
