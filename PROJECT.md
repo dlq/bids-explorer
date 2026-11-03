@@ -4,8 +4,8 @@ Created November 3, 2026, following the native Strata prototype in `/Users/dlq/D
 
 ## Handoff documents
 
-- [Strata context and lessons](docs/STRATA_HANDOFF.md)
-- [Source/test/sample reference map](docs/REFERENCE_MAP.md)
+- [Exploration, options and source references](RESEARCH.md)
+- [Implementation plan](PLANS.md)
 - [Benchmark evidence snapshot](docs/evidence/niivue-vscode/REPORT.md)
 
 These documents distinguish agreed scope, historical observations and ideas that remain undecided.
@@ -36,7 +36,7 @@ BIDS Explorer owns navigation, indexing, archives, metadata, tables, availabilit
 
 Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
 
-Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. No extension scaffolding, dependencies, publishing, remote repository or processing jobs have been requested yet.
+Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Dataset browsing and archive readers remain to be implemented. Publishing, a remote repository and processing jobs have not been requested.
 
 ## Evidence and reusable exploration
 

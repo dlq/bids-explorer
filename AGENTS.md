@@ -1,9 +1,10 @@
 # BIDS Explorer project context
 
-Read `PROJECT.md`, then `docs/STRATA_HANDOFF.md` and `docs/REFERENCE_MAP.md` before implementing features. The benchmark snapshot is in `docs/evidence/niivue-vscode/REPORT.md`.
+Read `PROJECT.md`, then `RESEARCH.md` and `PLANS.md` before implementing features. The benchmark snapshot is in `docs/evidence/niivue-vscode/REPORT.md`.
 
 - Display name: BIDS Explorer. Directory/extension name: `bids-explorer`. Command/settings namespace: `bidsExplorer`.
-- The extension has not been scaffolded. The current work is project setup and context transfer; start implementation only when the user requests it.
+- Record notable user-visible changes in `CHANGELOG.md` under Unreleased as they are implemented. Add version/date headings only for actual releases.
+- The extension development scaffold is in place. Dataset browsing, indexing and archive readers are not implemented yet; extend the implementation when the user requests it.
 - BIDS navigation and dataset context are the initial focus. NiiVue is an optional visualization integration; embedding remains undecided.
 - Use supported viewer integration points. Private Preact/webview probes from the benchmark are not a production API.
 - Keep physical source identity separate from logical BIDS paths. Preserve provenance and duplicate-path source choices.

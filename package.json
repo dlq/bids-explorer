@@ -1,0 +1,73 @@
+{
+  "name": "bids-explorer",
+  "displayName": "BIDS Explorer",
+  "description": "Explore BIDS datasets locally and over SSH.",
+  "version": "0.0.1",
+  "publisher": "bids-explorer-dev",
+  "private": true,
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "bidsExplorer.refresh",
+        "title": "BIDS Explorer: Refresh"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "bidsExplorer.datasets",
+          "name": "BIDS Explorer"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "bidsExplorer.datasets",
+        "contents": "BIDS dataset exploration is under development.\nOpen a local folder or connect using Remote SSH to begin development."
+      }
+    ]
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "lint": "eslint src",
+    "test": "npm run build && node --test out/test/unit/*.test.js",
+    "test:integration": "npm run build && vscode-test",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "vscode:prepublish": "npm run build",
+    "package": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true })\" && vsce package --out dist/bids-explorer.vsix --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.96.0",
+    "@types/mocha": "^10.0.0",
+    "typescript": "^5.9.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.0",
+    "@vscode/vsce": "^3.0.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.1.4"
+  }
+}

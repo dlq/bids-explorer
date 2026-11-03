@@ -1,12 +1,42 @@
-# Lessons and context from Strata
+# Research and exploration
 
-Transferred November 3, 2026. This records observations and decisions from a short native macOS prototype, not a finished extension specification. Read PROJECT.md for the current scope and REFERENCE_MAP.md for code and evidence locations.
+Consolidated November 3, 2026, from the Strata handoff, source reference map and BIDS Explorer setup discussion. This replaces `docs/STRATA_HANDOFF.md` and `docs/REFERENCE_MAP.md`. It records observations, alternatives and unresolved questions; it is not a claim that the extension implements these capabilities.
 
-## What is decided, and what is open
+Use [PROJECT.md](PROJECT.md) for agreed scope, [PLANS.md](PLANS.md) for implementation order and [README.md](README.md) for development commands. Keep raw benchmark evidence in [docs/evidence/niivue-vscode](docs/evidence/niivue-vscode/REPORT.md). Historical tool versions and measurements below describe the exploration at the time; verify them before relying on them in implementation.
 
-The name is **BIDS Explorer**, with `bids-explorer` as directory/repository/extension name and `bidsExplorer` for commands and settings. Its main purpose is dataset navigation and context. The user wants clear boundaries between extensions first; NiiVue should be optional. Whether to embed NiiVue later remains open. No extension implementation, publication, dependency installation or remote repository has been requested yet.
+## Where the exploration has led
 
-Strata remains a separate native SwiftUI/Metal app. Its Apple-specific views, renderer and installations do not need to become extension components. Aim for VS Code's native tree, editor, command, settings and progress conventions rather than copying the SwiftUI interface.
+The goal is a VS Code BIDS dataset explorer for local and SSH-hosted directories, ZIP archives, tarballs and SquashFS images. The extension scaffold exists, but browsing, indexing and archive readers are not implemented. Strata remains a separate native SwiftUI/Metal prototype at `/Users/dlq/Developer/macvdb`; its models, tests and performance lessons are references, not a finished extension specification.
+
+The working direction is a native VS Code tree with dataset context, source-aware logical grouping and optional viewer handoff. Apple-specific UI and rendering code do not need to become extension components.
+
+## Options considered and current direction
+
+| Area | Exploration / alternatives | Current direction and unresolved work |
+|---|---|---|
+| Product shape | Native Strata viewer versus a VS Code dataset explorer | BIDS Explorer focuses on navigation and context. Strata stays separate. |
+| Visualization | Existing NiiVue custom editor, richer cross-extension adapter, embedded NiiVue, native renderer | Start with supported ordinary file opening; NiiVue is optional. Richer APIs and embedding remain undecided. Benchmark results support further investigation, not a universal rendering guarantee. |
+| SSH access | Strata's own SSH transport versus VS Code Remote SSH | Use the workspace extension host beside the data. Direct SSH transport is not planned by default; real remote behavior still needs verification. |
+| Dataset presentation | Physical tree versus semantic BIDS hierarchy | Provide both. Logical normalization preserves original paths and explainable provenance. Entity conflicts need an explicit policy. |
+| Collections | Treat every archive independently, infer a collection from names, or declare membership | Support declared collections and file-wise overlays, including disjoint subjects/sessions. Filename heuristics are collection-specific and cannot establish BIDS membership generally. |
+| Archive IO | Whole extraction, mounting, or indexed browsing plus selected-member extraction | Prefer indexing and exact-member extraction without mounts/root. ZIP and SquashFS were exercised in Strata; tarball support is project scope, not a validated Strata capability. |
+| Index/cache | Repeated traversal, eager full indexing, cached progressive enumeration | Lazy navigation and background indexes with explicit coverage. Persistent format, workers, refresh policy and extension cache budget remain design work. |
+| Tables | Eager native table reader versus streaming/paged/disk-backed access | Small-table behavior was explored. Large-table architecture and external join workflows remain unresolved. |
+| Processing | Recognize pipeline outputs versus execute local/HPC jobs | Recognize derivatives as dataset context. FastSurfer/CIVET/Slurm execution is later exploratory scope. |
+
+## Tarballs: scope added after the Strata exploration
+
+Tar and compressed tarballs are required source types alongside ZIP and SquashFS. No tar reader or tar performance evidence was transferred from Strata. Reader/library selection, compression variants, host dependencies and safe member handling need investigation.
+
+The implementation plan flags compressed sequential access as a constraint: listing and extracting a late member may require reading substantial compressed data. Measure that behavior on representative synthetic containers, expose indexing progress/cancellation, and define cached-index and selected-member behavior before promising efficient remote access. These are design considerations, not measured results from this project.
+
+## Extension development options and setup
+
+The initial scaffold uses TypeScript, a native Explorer view, a workspace extension host, VS Code-independent core contracts, and no runtime npm dependencies. F5 debugging, a pinned Node development version, unit tests, VS Code extension-host tests, CI configuration and local VSIX packaging are present. The sidebar is intentionally empty until dataset registration and browsing are implemented.
+
+Local checks and VSIX packaging passed during setup, including two core identity tests and two extension-host tests against VS Code 1.96. Hosted CI, real Remote SSH execution, large-data responsiveness and archive behavior have not been validated for this extension. The publisher is a development placeholder; license, actual publisher, repository hosting and publication remain open. Toolchain audit details belong in README.md and should be reassessed as dependencies change.
+
+The rest of this document preserves the detailed findings and reference locations needed to revisit these choices.
 
 ## Dataset model and interpretation
 
@@ -101,6 +131,55 @@ This was not an identical-image-quality comparison or an end-to-end latency/memo
 
 The raw-index-versus-overlay audit covered all 45 cached Tractoflow shards: 7,000 subjects, of whom 401 had both sessions, 3,412 only session 2, and 3,187 only session 3. Remote names and size/mtime revisions were checked at the time and matched those indexes. Session 2 could exist elsewhere; no evidence justified inventing it in this collection. Keep this kind of independent semantic audit as a test strategy, not a hardcoded assertion about current remote data.
 
-## Suggested first implementation slice (not yet authorized)
+## Source, test and sample reference map
 
-Use a small synthetic BIDS dataset to design the logical/physical resource model and a lazy native VS Code tree. Make subject/session grouping, partial coverage and source identity testable without a UI. Add local metadata/details and optional Open in NiiVue before remote archives. Keep large-dataset responsiveness in the design from the start. Add synthetic archive overlay fixtures before exercising a real HPC collection. No need to port every Strata feature before evaluating the first slice.
+Reference checkout: `/Users/dlq/Developer/macvdb`. The paths below are relative to it. These are references to inspect and selectively port; no implementation code was copied into BIDS Explorer.
+
+## Models, services and UI examples
+
+| Area | Reference paths | What to inspect |
+|---|---|---|
+| BIDS semantics | `native/Strata/Sources/Strata/Models/BIDSDataset.swift`; `native/Strata/Sources/Strata/Services/BIDSIndexer.swift` | Entities, nodes/scans, metadata and derivative relationships; distinguish incomplete prototype behavior from the BIDS specification |
+| Archive model | `native/Strata/Sources/Strata/Models/ArchiveManifest.swift`; `ArchiveSelection.swift` in the same directory | Physical member identity, validation and source-qualified selections |
+| Logical overlay | `native/Strata/Sources/Strata/Models/ArchiveOverlay.swift`; `ArchiveDatasetSummary.swift` | Collection membership, wrapper handling, session normalization, duplicate sources, summary semantics |
+| Background state | `native/Strata/Sources/Strata/Models/ArchiveBrowser.swift` | Independent branches, cancellation, coalescing, detached merging and throttled snapshots |
+| Archive IO | `native/Strata/Sources/Strata/Services/ArchiveService.swift`; `native/Strata/Sources/Strata/Resources/archive_reader.py` | Index caches, exact-member extraction, ZIP/old and new unsquashfs behavior, safety checks |
+| Remote index/cache | `native/Strata/Sources/Strata/Services/RemoteBIDSIndex.swift`; `RemoteImageCache.swift`; `SSHTransport.swift` | Lazy branches, revisions, bounded LRU, temporary files and transport; adapt for VS Code Remote rather than blindly porting SSH |
+| Clinical tables | `native/Strata/Sources/Strata/Services/ClinicalTable.swift`; `native/Strata/Sources/Strata/Views/ClinicalTablesView.swift` | CSV/TSV parsing, BIDS table preview and joins; current reader is not a huge-table architecture |
+| Large-tree implementation | `native/Strata/Sources/Strata/Views/NativeArchiveOutline.swift` | Lazy expansion, stable item caches and targeted updates; transfer principles, not AppKit code |
+| Overview/provenance | `native/Strata/Sources/Strata/Views/ArchiveOverlayView.swift`; `ArchiveDatasetSummaryView.swift`; `RemoteDatasetOverview.swift` | Partial counts, errors and source provenance |
+| Session/QC example | `native/Strata/Sources/Strata/Views/SessionComparisonView.swift` | Session comparison interaction and QC context |
+| General prototype documentation | `native/Strata/README.md`; `docs/StrataPlan.md` | Historical capabilities and setup details |
+
+## Tests to use as behavioral references
+
+All under `native/Strata/Tests/StrataTests/`:
+
+- `ArchiveTests.swift`: synthetic ZIP/SquashFS readers, member handling and optional remote examples.
+- `ArchiveTreeTests.swift`: source-qualified identity, independent branch state, cache reuse, and branch refresh isolation.
+- `ArchiveOverlayTests.swift`: collection membership across disjoint subjects/sessions; directory union; conflicting files and original paths; canonical and combined session paths; partial summaries; progressive indexing; optional full real-index session audit.
+- `NativeArchiveOutlineTests.swift`: checking expandability does not build descendants; view updates do not mutate the model; conflicting sources remain selectable.
+- `RemoteBIDSTests.swift`: lazy metadata branches, offline snapshots, revision invalidation, LRU behavior and orphan cleanup.
+- `BIDSIndexerTests.swift`, `BIDSSampleTests.swift`: local semantic indexes and anatomical sample.
+- `ClinicalTableTests.swift`: table parsing, identity and preview behavior.
+- `SessionComparisonTests.swift`: grouping without pairing different subjects/sessions, QC persistence and real T1/T2 comparison.
+- `ViewerComparisonBenchmarkTests.swift`: native half of the benchmark. Opt-in via STRATA_BENCHMARK_SAMPLES.
+
+Port assertions into the new language/test framework selectively. Do not port tests that merely mirror implementation or require private remote data for ordinary development. Real remote and performance tests should remain explicit opt-ins.
+
+## Samples and benchmark evidence
+
+Public sample files in the existing checkout:
+
+- `samples/nifti/chris_t1.nii.gz` and `samples/nifti/chris_t2.nii.gz`.
+- `native/Strata/Sources/Strata/Resources/siamV02_skull_input.nii.gz`: the 16-class SIAM label volume actually benchmarked; prefer this exact file over similarly named earlier segmentation outputs.
+- `output/bids/ds000003-anatomical-subset`: small anatomical BIDS sample. Provenance is in `output/bids/ds000003-download.json`.
+- `samples/nifti/manifest.json` and `tools/segmentation/siam-provenance.json`: source/provenance notes.
+
+Benchmark original: `output/benchmarks/niivue-vscode/`, with README-style REPORT.md, four raw run JSONs, and inputs.json. A small evidence snapshot is retained in this project's `docs/evidence/niivue-vscode/`; the original files remain in Strata.
+
+Instrumentation: `script/benchmarks/niivue-vscode.js`. Earlier browser comparisons in `viewer/` and `output/comparison/` are separate experiments, not the VS Code extension benchmark.
+
+The benchmark report's reproduction commands and script paths refer to the Strata repository root. Input hashes identify the exact files. Do not silently replace them with lower-resolution images when comparing performance.
+
+Machine-specific authorized test roots are recorded in ignored `.local/strata-test-context.json`. No credentials or archive listings are copied. Existing SSH authentication may require user-completed MFA; do not trigger a connection just to read this handoff.

@@ -6,3 +6,7 @@ dist/
 
 # Machine-specific test locations and runtime state
 .local/
+
+# Extension test downloads
+.vscode-test/
+coverage/
