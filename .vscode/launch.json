@@ -10,7 +10,7 @@
         "${workspaceFolder}/test/fixtures/bids"
       ],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "npm: watch"
+      "preLaunchTask": "Watch extension"
     }
   ]
 }

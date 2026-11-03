@@ -1,6 +1,23 @@
 import * as vscode from 'vscode';
+import { isGradientFile } from './gradientPreview';
 import { DatasetBrowser } from '../core/browser';
 import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory';
+
+// Use the same semantic labels as the tree description, with theme-aware built-in icons.
+const directoryIcons: Readonly<Record<string, string>> = {
+  Dataset: 'database',
+  Participant: 'person',
+  Session: 'calendar',
+  Anatomical: 'layers',
+  Functional: 'pulse',
+  Diffusion: 'git-merge',
+  'Field maps': 'symbol-color',
+  Perfusion: 'graph',
+  EEG: 'radio-tower',
+  MEG: 'magnet',
+  'Intracranial EEG': 'circuit-board',
+  PET: 'beaker',
+};
 
 export interface EntryElement {
   readonly type: 'entry';
@@ -59,10 +76,11 @@ export class DatasetTreeProvider
     item.resourceUri = vscode.Uri.parse(entry.uri);
     item.contextValue =
       entry.relativePath === '' ? 'dataset' : isDirectory ? 'directory' : entry.kind;
+    if (entry.kind === 'file' && isGradientFile(item.resourceUri)) item.contextValue = 'gradient';
     item.description = describeEntry(entry);
     item.tooltip = `${entry.uri}\n${isDirectory ? 'Lazy browsing: only expanded folders are read. Descendants are not indexed. Use Show Source Details for current listing coverage.' : entry.kind}`;
     if (isDirectory)
-      item.iconPath = new vscode.ThemeIcon(entry.relativePath === '' ? 'database' : 'folder');
+      item.iconPath = new vscode.ThemeIcon(directoryIcons[describeEntry(entry)] ?? 'folder');
     else if (entry.kind !== 'file') {
       item.iconPath = new vscode.ThemeIcon('link');
       item.description = `${entry.kind} · not followed`;

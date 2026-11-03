@@ -28,7 +28,7 @@ Treat dataset metadata, archive member names, tool output and imported tables as
 - Before archive support ships, test absolute/relative traversal, symlink escapes, special files, duplicate members, corrupt inputs and safe destination containment. Lexical path cleanup alone is insufficient against symlinks.
 - Bound listing, preview, decompression and extraction work; test oversized inputs, cancellation, process termination and cleanup of temporary files. Validate revisions and publish completed artifacts atomically.
 - Keep caches and credentials outside the repository, preserve source identity and provenance, and avoid recording sensitive paths or clinical values in logs unnecessarily.
-- Use supported VS Code/viewer APIs. Revisit webview content security policy, URI access and message validation if webviews are introduced.
+- Use supported VS Code/viewer APIs. Keep webview CSP, resource roots and messages restricted; never interpret dataset text as HTML or code.
 
 See TESTING.md for behavior and regression-test expectations. No real SSH connection or private dataset is part of ordinary CI.
 
@@ -43,3 +43,9 @@ Release preparation and security-gate requirements follow [VERSIONING.md](VERSIO
 ## Current directory access
 
 The local adapter imports read-only filesystem operations (`lstat` and `readdir`), performs no dataset writes and does not follow entries identified as symbolic links. Selected file opening is delegated to VS Code after a fresh leaf `lstat`; external editors can still save changes at the user's request. This is not a filesystem sandbox: parent-path replacement/symlink races and mounted filesystem behavior are not fully constrained by these checks. Registrations are stored through VS Code workspace state outside datasets. No BIDS validator or source-edit workflow is invoked by browsing.
+
+## Gradient preview boundary
+
+Selected pairs use asynchronous read-only file handles, bounded to 1 MiB per file and 10,000 volumes. The reader checks leaf type and source identity/revision before and after reading, closes handles on failures/cancellation, and rejects malformed UTF-8. These checks detect ordinary replacement races; they are not an atomic two-file snapshot or a filesystem sandbox. No image bytes, arbitrary directory traversal or source writes are needed for the preview.
+
+The webview loads only packaged scripts/styles from restricted resource roots, has a default-deny CSP with network connections disabled, and receives dataset values through messages rendered with `textContent`/canvas. Host messages accept only fixed actions; raw-file opening selects one of the two known source URIs rather than accepting a webview-supplied path. View state stores only selection, rotation and display thresholds. Closing a panel cancels its reload; extension disposal and Cancel Pending Listings cancel outstanding reads.

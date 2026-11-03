@@ -22,7 +22,7 @@ npm ci
 npm run check             # Includes enforced unit coverage
 ```
 
-Open this folder in VS Code and press **F5** (`Run BIDS Explorer`). The watch task compiles TypeScript, then an Extension Development Host opens the small synthetic workspace. Expand **BIDS Explorer** in the Explorer sidebar. The synthetic BIDS workspace should appear automatically, without invoking Add Dataset. Open another dataset as a workspace folder to exercise automatic recognition, or use **BIDS Explorer: Add Dataset** for an external/noncanonical directory. Expand participant/session/modality folders, open a JSON file, inspect Source Details, refresh one branch and remove its registration. These actions must not alter dataset contents. Stop debugging to close the development host.
+Open this folder in VS Code and press **F5** (`Run BIDS Explorer`). The compound watch task compiles host TypeScript and browser ES modules in parallel, then an Extension Development Host opens the small synthetic workspace. Expand **BIDS Explorer** in the Explorer sidebar. The synthetic BIDS workspace should appear automatically, without invoking Add Dataset. Open another dataset as a workspace folder to exercise automatic recognition, or use **BIDS Explorer: Add Dataset** for an external/noncanonical directory. Expand participant/session/modality folders, open a JSON file, inspect Source Details, refresh one branch and remove its registration. These actions must not alter dataset contents. Stop debugging to close the development host.
 
 ```sh
 npm run test:integration  # Downloads VS Code 1.96 and runs extension-host tests
@@ -31,10 +31,12 @@ npm run package           # Creates dist/bids-explorer-<version>.vsix
 
 The integration runner needs network access on its first run and a graphical session (CI uses Xvfb). If VS Code stable is already running and prevents CLI tests, close it or launch tests from VS Code's Extension Test Runner. Install the VSIX using **Extensions: Install from VSIX**. The `bids-explorer-dev` publisher is a development placeholder, not a Marketplace registration. No publication is configured. Packaging skips the license check for this private development preview; choose a license and real publisher before distribution.
 
+The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model is shared without a bundler or runtime dependencies. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/webview/`, with styles in `media/`.
+
 ## Architecture and remote development
 
 - `src/core/`: VS Code-independent resource identity and dataset contracts.
-- `src/ui/`: VS Code tree presentation; no filesystem scanning during rendering.
+- `src/ui/`: VS Code tree and read-only gradient webview presentation; no filesystem scanning during rendering.
 - `src/extension.ts`: activation, commands and disposable ownership.
 - `src/test/unit/`: fast tests independent of VS Code.
 - `src/test/integration/`: tests inside a real VS Code extension host.

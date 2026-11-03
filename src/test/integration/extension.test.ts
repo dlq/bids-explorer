@@ -198,6 +198,7 @@ suite('BIDS Explorer directory workflows', () => {
         vscode.TreeItemCollapsibleState.Collapsed,
       );
       assert.equal(browser.snapshot(root).coverage, 'unknown');
+      assert.equal((provider.getTreeItem(top).iconPath as vscode.ThemeIcon).id, 'database');
       const children = await provider.getChildren(top);
       assert.ok(!children.some((e) => e.type === 'entry' && e.entry.name.startsWith('.')));
       const a = children.find(
@@ -210,14 +211,18 @@ suite('BIDS Explorer directory workflows', () => {
         (e) => e.type === 'entry' && e.entry.name === 'derivatives',
       ) as EntryElement;
       assert.equal(provider.getTreeItem(a).description, 'Participant');
+      assert.equal((provider.getTreeItem(a).iconPath as vscode.ThemeIcon).id, 'person');
       assert.equal(provider.getTreeItem(derivatives).description, 'Derivatives');
       assert.equal(browser.snapshot(a.entry).coverage, 'unknown');
       const anatomy = (await provider.getChildren(a))[0] as EntryElement;
       assert.equal(provider.getTreeItem(anatomy).description, 'Anatomical');
+      assert.equal((provider.getTreeItem(anatomy).iconPath as vscode.ThemeIcon).id, 'layers');
       const session = (await provider.getChildren(b))[0] as EntryElement;
       assert.equal(provider.getTreeItem(session).description, 'Session');
+      assert.equal((provider.getTreeItem(session).iconPath as vscode.ThemeIcon).id, 'calendar');
       const functional = (await provider.getChildren(session))[0] as EntryElement;
       assert.equal(provider.getTreeItem(functional).description, 'Functional');
+      assert.equal((provider.getTreeItem(functional).iconPath as vscode.ThemeIcon).id, 'pulse');
       const file = (await provider.getChildren(anatomy))[0] as EntryElement;
       assert.equal(provider.getTreeItem(file).command?.command, 'bidsExplorer.openFile');
       assert.deepEqual(await provider.getChildren(file), []);

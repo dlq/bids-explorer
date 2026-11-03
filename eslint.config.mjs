@@ -19,4 +19,14 @@ export default tseslint.config(
       parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
   },
+  {
+    files: ['src/ui/gradientClient.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: './tsconfig.webview.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
 );

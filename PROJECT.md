@@ -36,7 +36,7 @@ Dataset exploration is read-only by default. The initial implementation must not
 
 ## Extension boundary
 
-BIDS Explorer owns navigation, indexing, archives, metadata, tables, availability and provenance. NiiVue owns visualization and display state. NiiVue should initially be optional: the browser remains useful without it and can open files using a selected viewer.
+BIDS Explorer owns navigation, indexing, archives, metadata, tables, availability and provenance. Its read-only gradient metadata preview uses raw b-vector components; it does not render images or infer anatomical orientation. NiiVue owns visualization and display state. NiiVue should initially be optional: the browser remains useful without it and can open files using a selected viewer.
 
 Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
 

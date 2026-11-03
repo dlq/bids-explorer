@@ -4,6 +4,13 @@ Record implemented changes under Unreleased. The manifest is currently `0.0.1`, 
 
 ## Unreleased
 
+- Added theme-aware participant, session and modality icons to the BIDS Explorer tree, using built-in VS Code symbols alongside the existing dataset icon.
+
+### Diffusion gradient preview
+
+- Added a read-only, paired bval/bvec preview from the BIDS tree, native Explorer context menu and command palette: rotatable direction sphere, b-value plot, linked volume selection, counts, adjustable display grouping, paged original values and raw-text opening.
+- Bound selected gradient reads and reject unusable formats, symlink leaves and detected source revisions; preserve the last snapshot if explicit reload fails. No anatomical orientation, image association, inheritance resolution or BIDS validation is implied.
+
 ### Changed
 
 - Made README user-focused with explicit implemented/planned status; moved contributor setup and tooling guidance to docs/DEVELOPMENT.md.

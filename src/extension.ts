@@ -10,6 +10,8 @@ import {
 } from './sources/localDirectory';
 import { DatasetTreeProvider, type TreeElement } from './ui/datasetTree';
 
+import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
+
 const registrationsKey = 'bidsExplorer.datasets.v1';
 
 /** Read-only dataset browser. The exported instance also supports extension-host tests. */
@@ -17,6 +19,18 @@ export function activate(context: vscode.ExtensionContext): {
   provider: DatasetTreeProvider;
   ready: Promise<void>;
 } {
+  const gradients = new GradientPreviewManager(context.extensionUri);
+  context.subscriptions.push(gradients);
+  const preview = async (uri: vscode.Uri): Promise<vscode.WebviewPanel | undefined> => {
+    try {
+      return await gradients.open(uri);
+    } catch (error) {
+      void vscode.window.showErrorMessage(
+        `BIDS Explorer could not preview gradients: ${String(error)}`,
+      );
+      return undefined;
+    }
+  };
   const source = new LocalDirectorySource();
   const browser = new DatasetBrowser(source);
   const provider = new DatasetTreeProvider(browser);
@@ -95,7 +109,10 @@ export function activate(context: vscode.ExtensionContext): {
       if (!arg) await discover();
       provider.refresh(arg);
     }),
-    command('bidsExplorer.cancel', () => provider.cancelPending()),
+    command('bidsExplorer.cancel', () => {
+      provider.cancelPending();
+      gradients.cancelPending();
+    }),
     command('bidsExplorer.showInFileExplorer', async (arg) => {
       const target = selected(arg);
       const element = target?.type === 'message' ? target.parent : target;
@@ -120,12 +137,31 @@ export function activate(context: vscode.ExtensionContext): {
       }
       await vscode.commands.executeCommand('revealInExplorer', uri);
     }),
+    vscode.commands.registerCommand(
+      'bidsExplorer.previewGradients',
+      async (arg?: vscode.Uri | TreeElement) => {
+        const target = arg instanceof vscode.Uri ? arg : undefined;
+        const element = target ? undefined : selected(arg as TreeElement | undefined);
+        const uri =
+          target ??
+          (element?.type === 'entry' && element.entry.kind === 'file'
+            ? vscode.Uri.parse(element.entry.uri)
+            : vscode.window.activeTextEditor?.document.uri);
+        if (!uri || !isGradientFile(uri)) {
+          void vscode.window.showInformationMessage('Select a .bval or .bvec file to preview.');
+          return undefined;
+        }
+        return preview(uri);
+      },
+    ),
     command('bidsExplorer.openFile', async (arg) => {
       const element = selected(arg);
       if (element?.type !== 'entry' || element.entry.kind !== 'file') return;
       try {
         await source.revision(element.entry);
-        await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(element.entry.uri));
+        const uri = vscode.Uri.parse(element.entry.uri);
+        if (isGradientFile(uri)) return preview(uri);
+        await vscode.commands.executeCommand('vscode.open', uri);
       } catch (error) {
         await vscode.window.showErrorMessage(
           `BIDS Explorer could not open the file: ${String(error)}`,

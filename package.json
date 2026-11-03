@@ -51,6 +51,10 @@
         "command": "bidsExplorer.showInFileExplorer",
         "title": "BIDS Explorer: Show Dataset in File Explorer",
         "icon": "$(files)"
+      },
+      {
+        "command": "bidsExplorer.previewGradients",
+        "title": "BIDS Explorer: Preview Diffusion Gradients"
       }
     ],
     "views": {
@@ -105,6 +109,18 @@
           "command": "bidsExplorer.showInFileExplorer",
           "when": "view == bidsExplorer.datasets && viewItem == dataset",
           "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewGradients",
+          "when": "view == bidsExplorer.datasets && viewItem == gradient",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "bidsExplorer.previewGradients",
+          "when": "resourceScheme == file && (resourceExtname == .bval || resourceExtname == .bvec)",
+          "group": "navigation"
         }
       ]
     }
@@ -118,9 +134,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -p .",
-    "watch": "tsc -watch -p .",
-    "typecheck": "tsc -p . --noEmit",
+    "build": "tsc -p . && tsc -p tsconfig.webview.json",
+    "typecheck": "tsc -p . --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "npm run build && node --test out/test/unit/*.test.js",
     "test:integration": "npm run build && vscode-test --coverage",
@@ -133,7 +148,9 @@
     "lint:fix": "eslint . --fix --max-warnings 0",
     "security:scan": "uvx --python 3.12 --from semgrep==1.183.0 semgrep scan --config .semgrep --metrics=off --disable-version-check --strict --error src",
     "security:rules": "uvx --python 3.12 --from semgrep==1.183.0 semgrep scan --test --config .semgrep/processes.yaml --metrics=off --disable-version-check test/security/processes.ts",
-    "security": "npm run security:rules && npm run security:scan"
+    "security": "npm run security:rules && npm run security:scan",
+    "watch:host": "tsc -watch -p .",
+    "watch:webview": "tsc -watch -p tsconfig.webview.json"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

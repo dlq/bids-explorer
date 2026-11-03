@@ -2,7 +2,7 @@
   "all": true,
   "src": ["out"],
   "include": ["out/**/*.js"],
-  "exclude": ["out/test/**", "out/ui/**", "out/extension.js"],
+  "exclude": ["out/test/**", "out/ui/**", "out/extension.js", "out/webview/**"],
   "reporter": ["text", "html", "lcov"],
   "reports-dir": "coverage/unit",
   "check-coverage": true,

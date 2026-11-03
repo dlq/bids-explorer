@@ -1,6 +1,6 @@
 # BIDS Explorer
 
-A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only local directory browsing**. SSH validation, ZIP, tarball and SquashFS readers are planned.
+A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only local directory browsing and diffusion gradient previews**. SSH validation, ZIP, tarball and SquashFS readers are planned.
 
 **Status: unreleased development build (`0.0.1`), working toward `0.1.0`.** There is no Marketplace release or public installation link.
 
@@ -26,17 +26,27 @@ This is an initial explorer: canonical folders are labeled in place. It does not
 
 Recognition uses at most two shallow filesystem attribute checks per workspace folder, with bounded concurrency. It does not parse the descriptor, validate conformance, scan for nested datasets or follow symbolic-link roots/markers. Open a nested dataset as its own workspace folder or add it manually.
 
-The header Refresh action reruns root recognition and refreshes all displayed datasets. The context-menu Refresh action affects its selected branch. Filesystem changes are not watched automatically; refresh after external changes. Use **BIDS Explorer: Cancel Pending Listings** (the stop button) to cancel pending listing work. Cancellation prevents publication and stops cooperative processing; an already-issued OS directory read may finish first. Completed listings remain cached in memory.
+The header Refresh action reruns root recognition and refreshes all displayed datasets. The context-menu Refresh action affects its selected branch. Filesystem changes are not watched automatically; refresh after external changes. Use **BIDS Explorer: Cancel Pending Listings** (the stop button) to cancel pending listings and gradient reads. Cancellation prevents publication and stops cooperative processing; an already-issued OS directory read may finish first. Completed listings remain cached in memory.
 
 Right-click a dataset root and choose **Show Dataset in File Explorer** for its complete physical tree in the normal EXPLORER file section. This explicitly changes the workspace folder list; VS Code may reload when converting a single-folder window to a workspace. The native Explorer follows your usual file-exclusion settings. BIDS Explorer keeps original names but omits entries outside its current recognition vocabulary; this does not mean they are invalid or absent. Source Details reports coverage for immediate children only. Unexpanded descendants remain unknown even when their parent has been enumerated. No recursive dataset counts are presented yet.
+
+## Diffusion gradient preview
+
+Click a `.bval` or `.bvec` file in BIDS Explorer, or right-click it in the normal File Explorer and choose **BIDS Explorer: Preview Diffusion Gradients**. The command also works on the active gradient text editor.
+
+The preview combines a rotatable direction sphere, b-value by volume plot, summary counts and linked volume selection. Use the volume controls or paged numeric table for keyboard selection. Adjust the low-b cutoff and grouping tolerance as display choices; defaults are 50 s/mm² each. Low-b volumes are counted separately and shown on the b-value plot. High-b zero-length vectors are counted but cannot appear on the sphere. Directions are normalized for display only, in stored b-vector axes; anatomical orientation is not inferred.
+
+The preview reads only a same-directory, same-basename pair, such as `dwi.bval` and `dwi.bvec`. It does not resolve inherited applicability, associate a NIfTI image or check its volume count. It supports three-row FSL b-vectors, up to 10,000 volumes and 1 MiB per file. Missing partners or unusable numeric shapes produce an error; this is not BIDS validation.
+
+Original values are available in the numeric table and **Open .bval/.bvec as text**. Previewing never changes them. **Reload snapshot** explicitly rereads both files; on failure the prior snapshot stays visible with an error. Source URIs and the snapshot time appear below the plots.
 
 ## Requirements and data handling
 
 Use desktop **VS Code 1.96 or newer** with a trusted, non-virtual workspace. The directory adapter accepts `file:` URIs on the workspace host. Remote SSH execution is configured but not yet validated; browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported. No Python, archive tools or NiiVue installation is required by the runtime.
 
-Explorer reads directory entries and requested filesystem attributes. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. There is no persistent metadata index, image cache or telemetry implementation. No separate SSH transport or dataset download is initiated by the extension.
+Explorer reads directory entries, requested filesystem attributes and bounded selected gradient pairs. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. There is no persistent metadata index, image cache or telemetry implementation. No separate SSH transport or dataset download is initiated by the extension.
 
-Opening a file hands it to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
+Opening other files or using the preview’s Open as text buttons hands them to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
 
 ## Planned capabilities
 
