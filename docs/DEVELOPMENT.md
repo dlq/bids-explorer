@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for the unpublished `0.1.0` local milestone build. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -78,7 +78,7 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `0.1.0` (unreleased development build). [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.1.0.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `0.1.0`, tagged locally as `v0.1.0` without Marketplace or GitHub publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.1.0.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 

@@ -2,7 +2,7 @@
 
 ## Version source and status
 
-`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current `0.1.0` is an unreleased development build, not a published release. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
+`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current `0.1.0` is a local tagged release (`v0.1.0`), not a Marketplace or GitHub publication. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
 
 Use three numeric components: `major.minor.patch`. Do not bump the version for every commit. Node, TypeScript, archive tool and `engines.vscode` versions are separate compatibility/development requirements; they do not track the extension version.
 

@@ -1,10 +1,12 @@
 # Changelog
 
-Record implemented changes under Unreleased. The manifest is currently `0.1.0`, an unreleased development build; no version below represents a published release. Follow VERSIONING.md (`VERSIONING.md`): use `major.minor.patch`, release tags `vX.Y.Z` and dated headings `## [X.Y.Z] - YYYY-MM-DD` when releasing. Planned versions belong in PLANS.md (`PLANS.md`), not in release history.
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.1.0` is a local tagged release, not a Marketplace or GitHub publication.
 
 ## Unreleased
 
-- Prepared the `0.1.0` local milestone build, with recorded minimum/current VS Code tests and authorized Remote SSH/public MRI smoke evidence. No tag or publication has been created.
+## [0.1.0] - 2026-11-03
+
+- Prepared the `0.1.0` local milestone build, with recorded minimum/current VS Code tests and authorized Remote SSH/public MRI smoke evidence. Prepared for the local `v0.1.0` release tag; no Marketplace or GitHub publication.
 
 - Added theme-aware participant, session, modality, derivatives and pipeline icons to the BIDS Explorer tree, using built-in VS Code symbols alongside the existing dataset icon.
 
@@ -41,4 +43,4 @@ Record implemented changes under Unreleased. The manifest is currently `0.1.0`, 
 - F5 debugging, watch builds, type checking, linting, unit and extension-host tests, CI configuration and local VSIX packaging.
 - Project scope, research notes, implementation plan and retained Strata benchmark evidence.
 
-Initial local directory browsing is implemented. Metadata inheritance, persistent indexing, archive readers, validation and restructuring remain future work. No release has been published.
+Initial local directory browsing is implemented. Metadata inheritance, persistent indexing, archive readers, validation and restructuring remain future work. No Marketplace or GitHub release has been published.

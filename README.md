@@ -2,7 +2,7 @@
 
 A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only local directory browsing and diffusion gradient previews**. Directory workflows have been smoke-tested over VS Code Remote SSH; ZIP, tarball and SquashFS readers are planned.
 
-**Status: local `0.1.0` milestone build; not published.** There is no Marketplace release or public installation link.
+**Status: local tagged release `v0.1.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
 ## Available today
 

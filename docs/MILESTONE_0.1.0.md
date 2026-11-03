@@ -1,6 +1,6 @@
 # 0.1.0 local milestone validation
 
-November 3, 2026. The initial directory-browser milestone is complete as a local development build. The manifest is `0.1.0`; this is not a Marketplace/GitHub publication or a tagged release. Archive readers, inherited metadata, persistent indexing and richer viewer integration remain future work.
+November 3, 2026. The initial directory-browser milestone is complete as a local development build. The manifest is `0.1.0`; the local release tag is `v0.1.0`. This is not a Marketplace or GitHub publication. Archive readers, inherited metadata, persistent indexing and richer viewer integration remain future work.
 
 ## Scope and compatibility
 

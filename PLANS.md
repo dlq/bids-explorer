@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is currently `0.1.0`, an unreleased development build. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is currently `0.1.0`, tagged locally as `v0.1.0` without Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -42,7 +42,7 @@ Patch releases such as `0.3.1` fix an existing milestone; new functionality goes
 
 ## 0.1.0 — First usable local dataset browser
 
-**Status:** complete as the unpublished `0.1.0` local milestone. See [milestone validation](docs/MILESTONE_0.1.0.md) for minimum/current VS Code checks, local scale evidence, authorized Linux Remote SSH browsing and public MRI handoff. Canonical folder labeling is implemented; richer entity normalization belongs to `0.2.0`. This does not complete persistent indexing or the broader `0.6.0` remote workflow gates.
+**Status:** complete as the locally tagged `v0.1.0` milestone, without Marketplace or GitHub publication. See [milestone validation](docs/MILESTONE_0.1.0.md) for minimum/current VS Code checks, local scale evidence, authorized Linux Remote SSH browsing and public MRI handoff. Canonical folder labeling is implemented; richer entity normalization belongs to `0.2.0`. This does not complete persistent indexing or the broader `0.6.0` remote workflow gates.
 
 Automatically recognize each open workspace folder with a root-level ordinary `dataset_description.json`, without parsing it, validating structure or recursively searching. React to workspace-folder changes and global Refresh. Retain **BIDS Explorer: Add Dataset** for external or noncanonical roots. Keep automatic ownership separate from persisted explicit registration; closing a workspace folder must not discard a manually added dataset. Show dataset → participant → session → modality, with raw data and derivatives kept distinct. Support sessionless datasets. Leave unfamiliar/administrative entries to the native file tree, accessible via Show Dataset in File Explorer; filtering is not BIDS validation.
 

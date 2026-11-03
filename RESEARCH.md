@@ -6,7 +6,7 @@ Use [PROJECT.md](PROJECT.md) for agreed scope, [PLANS.md](PLANS.md) for implemen
 
 ## Where the exploration has led
 
-The goal is a VS Code BIDS dataset explorer for local and SSH-hosted directories, ZIP archives, tarballs and SquashFS images. The extension now has initial read-only local directory browsing at unreleased manifest version `0.1.0`; indexing and archive readers are not implemented. Proposed release assignments live in [PLANS.md](PLANS.md); [VERSIONING.md](VERSIONING.md) defines release conventions. Strata remains a separate native SwiftUI/Metal prototype at `/Users/dlq/Developer/macvdb`; its models, tests and performance lessons are references, not a finished extension specification.
+The goal is a VS Code BIDS dataset explorer for local and SSH-hosted directories, ZIP archives, tarballs and SquashFS images. The extension now has initial read-only local directory browsing at locally tagged version `v0.1.0`; indexing and archive readers are not implemented. Proposed release assignments live in [PLANS.md](PLANS.md); [VERSIONING.md](VERSIONING.md) defines release conventions. Strata remains a separate native SwiftUI/Metal prototype at `/Users/dlq/Developer/macvdb`; its models, tests and performance lessons are references, not a finished extension specification.
 
 The working direction is a native VS Code tree with dataset context, source-aware logical grouping and optional viewer handoff. Apple-specific UI and rendering code do not need to become extension components.
 
