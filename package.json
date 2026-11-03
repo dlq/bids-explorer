@@ -19,7 +19,38 @@
     "commands": [
       {
         "command": "bidsExplorer.refresh",
-        "title": "BIDS Explorer: Refresh"
+        "title": "BIDS Explorer: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "bidsExplorer.addDataset",
+        "title": "BIDS Explorer: Add Dataset",
+        "icon": "$(add)"
+      },
+      {
+        "command": "bidsExplorer.removeDataset",
+        "title": "BIDS Explorer: Remove Dataset",
+        "icon": "$(close)"
+      },
+      {
+        "command": "bidsExplorer.showDetails",
+        "title": "BIDS Explorer: Show Source Details",
+        "icon": "$(info)"
+      },
+      {
+        "command": "bidsExplorer.openFile",
+        "title": "BIDS Explorer: Open File",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "bidsExplorer.cancel",
+        "title": "BIDS Explorer: Cancel Pending Listings",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "bidsExplorer.showInFileExplorer",
+        "title": "BIDS Explorer: Show Dataset in File Explorer",
+        "icon": "$(files)"
       }
     ],
     "views": {
@@ -33,9 +64,50 @@
     "viewsWelcome": [
       {
         "view": "bidsExplorer.datasets",
-        "contents": "BIDS dataset exploration is under development.\nOpen a local folder or connect using Remote SSH to begin development."
+        "contents": "Browse a dataset without changing its files.\n[Add Dataset](command:bidsExplorer.addDataset)\nDirectories only. Archives and metadata inheritance are planned."
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "bidsExplorer.addDataset",
+          "when": "view == bidsExplorer.datasets",
+          "group": "navigation@0"
+        },
+        {
+          "command": "bidsExplorer.refresh",
+          "when": "view == bidsExplorer.datasets",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bidsExplorer.cancel",
+          "when": "view == bidsExplorer.datasets",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "bidsExplorer.removeDataset",
+          "when": "view == bidsExplorer.datasets && viewItem == dataset",
+          "group": "inline"
+        },
+        {
+          "command": "bidsExplorer.refresh",
+          "when": "view == bidsExplorer.datasets && (viewItem == dataset || viewItem == directory)",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.showDetails",
+          "when": "view == bidsExplorer.datasets && viewItem != message",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.showInFileExplorer",
+          "when": "view == bidsExplorer.datasets && viewItem == dataset",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -78,5 +150,8 @@
   },
   "overrides": {
     "serialize-javascript": "^7.1.4"
-  }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ]
 }

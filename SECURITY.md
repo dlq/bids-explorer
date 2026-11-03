@@ -1,6 +1,6 @@
 # Security
 
-BIDS Explorer is an unreleased development scaffold. Archive readers and remote data workflows are not implemented yet. These checks reduce risk but do not establish that future dataset handling is safe.
+BIDS Explorer is an unreleased read-only directory browser. Archive readers and remote data workflows are not implemented yet. These checks reduce risk but do not establish that future dataset handling is safe.
 
 ## Development checks
 
@@ -39,3 +39,7 @@ When creating the GitHub repository, enable available secret scanning and push p
 There is no public release or reporting channel yet. Once private vulnerability reporting is enabled, use the repository's Security tab for vulnerabilities. Do not put credentials, private datasets or exploit details exposing sensitive information in public issues.
 
 Release preparation and security-gate requirements follow [VERSIONING.md](VERSIONING.md). A version bump does not authorize publication.
+
+## Current directory access
+
+The local adapter imports read-only filesystem operations (`lstat` and `readdir`), performs no dataset writes and does not follow entries identified as symbolic links. Selected file opening is delegated to VS Code after a fresh leaf `lstat`; external editors can still save changes at the user's request. This is not a filesystem sandbox: parent-path replacement/symlink races and mounted filesystem behavior are not fully constrained by these checks. Registrations are stored through VS Code workspace state outside datasets. No BIDS validator or source-edit workflow is invoked by browsing.

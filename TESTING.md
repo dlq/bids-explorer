@@ -36,7 +36,7 @@ Compare logical inventories and counts with independently constructed expected i
 
 Use a real extension host for activation, commands, registration/disposal, lazy tree behavior, event delivery, refresh isolation and supported file/viewer handoff. Assert state and observable behavior rather than event counts alone. Add tests alongside each implemented interaction, including its failure path. Visual/manual checks still matter for expansion, selection and responsiveness.
 
-The scaffold's tests only establish identity invariants, activation and empty-tree refresh. They are not evidence for dataset or archive functionality.
+The current tests cover automatic startup/workspace recognition, manual versus automatic ownership, session dismissal, bounded root probing and late results, plus source identity, canonical folder labels, real directory reads, unchanged dataset contents, symlinks/special files, registration persistence/failure, lazy coverage, cancellation races, refresh isolation and error recovery. Extension-host tests cover commands, file/details opening and the native tree. These do not establish archive or Remote SSH functionality. See [local browser validation](docs/LOCAL_BROWSER_TESTING.md) for manual and scale evidence.
 
 ### Remote, compatibility and performance
 

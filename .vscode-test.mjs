@@ -1,4 +1,15 @@
 import { defineConfig } from '@vscode/test-cli';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+
+// A disposable workspace file keeps native folder handoff from reloading the test host
+// or writing temporary workspace paths into the checked-in fixture directory.
+const temporary = mkdtempSync(join(tmpdir(), 'bids-extension-tests-'));
+const workspace = join(temporary, 'explorer.code-workspace');
+writeFileSync(workspace, JSON.stringify({ folders: [{ path: resolve('test/fixtures/bids') }] }));
+process.once('exit', () => rmSync(temporary, { recursive: true, force: true }));
+
 export default defineConfig({
   files: 'out/test/integration/**/*.test.js',
   version: '1.96.0',
@@ -8,6 +19,12 @@ export default defineConfig({
     includeAll: true,
     reporter: ['text', 'html', 'lcov'],
   },
-  workspaceFolder: './test/fixtures/bids',
-  launchArgs: ['--disable-extensions', '--skip-welcome', '--skip-release-notes'],
+  workspaceFolder: workspace,
+  launchArgs: [
+    '--user-data-dir=' + join(temporary, 'user-data'),
+    '--extensions-dir=' + join(temporary, 'extensions'),
+    '--disable-extensions',
+    '--skip-welcome',
+    '--skip-release-notes',
+  ],
 });

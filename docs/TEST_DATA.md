@@ -57,6 +57,6 @@ Use this sample to check participant/session/modality grouping, task/entity filt
 
 ## Using it
 
-Use VS Code's ordinary **File: Open Folder** to inspect either downloaded directory. The BIDS Explorer scaffold cannot register or browse it yet. Once directory browsing is implemented, use these samples for manual smoke tests of participant/modality grouping, file opening and metadata display.
+Use VS Code's ordinary **File: Open Folder** to inspect either downloaded directory. Use **BIDS Explorer: Add Dataset** to register either directory for read-only browsing. Canonical participant/session/modality labels and source details are implemented; metadata inheritance is not. See [LOCAL_BROWSER_TESTING.md](LOCAL_BROWSER_TESTING.md) for smoke-test results.
 
 Keep regular CI on tiny synthetic fixtures. Any automated use of downloaded images must be explicit opt-in and skip clearly when the sample is unavailable, with no automatic network download or SSH connection. Archive variants can later be generated outside Git from this sample when reader testing is authorized.

@@ -16,7 +16,11 @@ Build a VS Code extension for exploring BIDS datasets locally and over SSH, whet
 
 This is a separate project from the native SwiftUI/Metal viewer. Begin by designing clear boundaries with the existing NiiVue extension; embedding a viewer remains undecided.
 
+Dataset exploration is read-only by default. The initial implementation must not rename, move, restructure, rewrite or automatically validate/fix datasets. Explicit validation and rationalization workflows are later, separate work in PLANS.md.
+
 ## Navigation and dataset context
+
+- Automatically recognize BIDS workspace roots by the presence of an ordinary root-level `dataset_description.json`; no recursive discovery or conformance validation. Manual registration remains available for external/noncanonical directories.
 
 - Dataset → participant → session → modality and processing folders.
 - Raw data and derivatives; alternative views by modality and pipeline.
@@ -28,7 +32,7 @@ This is a separate project from the native SwiftUI/Metal viewer. Begin by design
 - Associate combined `sub-…_ses-…` folders and session-tagged files with logical subject/session folders while preserving original member paths.
 - Expose conflicting paths as source choices. Preserve extraction provenance.
 - Distinguish absent data from unindexed data. Show indexed-container coverage and explicitly partial overview counts.
-- Keep a physical-file view available alongside the logical BIDS interpretation.
+- Limit the BIDS EXPLORER section to recognizable BIDS elements. Use the normal EXPLORER file section for the complete physical tree, including `.datalad` and unfamiliar entries. Filtering is not validation.
 
 ## Extension boundary
 
@@ -36,7 +40,7 @@ BIDS Explorer owns navigation, indexing, archives, metadata, tables, availabilit
 
 Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
 
-Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Dataset browsing and archive readers remain to be implemented. Publishing, a remote repository and processing jobs have not been requested.
+Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Initial read-only local directory browsing is implemented; archive readers, metadata inheritance and persistent indexing remain to be implemented. Publishing, a remote repository and processing jobs have not been requested.
 
 ## Evidence and reusable exploration
 

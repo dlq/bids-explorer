@@ -6,13 +6,13 @@ Working plan, November 3, 2026. Update this as implementation reveals constraint
 
 Make a VS Code extension for exploring BIDS datasets locally and over SSH, in ordinary directories, ZIP archives, tarballs and SquashFS images. Navigation and dataset context are the product; visualization is optional.
 
-The TypeScript scaffold provides an empty Explorer view, a refresh command, F5 debugging, unit and extension-host tests, CI configuration and VSIX packaging. Dataset registration, browsing, indexing and archive readers remain unimplemented. Local checks and packaging passed; CI has not yet run on a hosted runner, and Remote SSH behavior has not yet been exercised.
+The unreleased implementation now includes automatic shallow workspace-root recognition, workspace-scoped manual registration, lazy local directory browsing, canonical BIDS-only folder/file recognition, source details, file opening, branch refresh/retry and cancellation. Dataset access is read-only. Archive readers, inherited metadata and persistent indexing remain unimplemented. Hosted CI and real Remote SSH behavior have not yet been exercised.
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and source references before implementing. Strata is reference material, not an implementation to copy wholesale.
 
 ## Version targets
 
-The manifest is currently `0.0.1`, an unreleased scaffold. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is currently `0.0.1`, an unreleased development build. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -32,16 +32,19 @@ Patch releases such as `0.3.1` fix an existing milestone; new functionality goes
 ## Design rules throughout
 
 - Keep physical resources (host, URI, container and original member path), logical BIDS paths, semantic metadata and indexing coverage separate. Stable selections retain source identity; revisions invalidate caches.
-- Preserve a physical-file view. Logical normalization must not rename files or lose provenance. Ambiguous mappings and duplicate logical paths require visible source choices.
+- Keep the BIDS EXPLORER tree limited to recognizable BIDS elements. Use the native EXPLORER file section for the complete physical tree, including administrative/unrecognized entries. Logical normalization must not rename files or lose provenance. Ambiguous mappings and duplicate logical paths require visible source choices.
 - Start with lazy enumeration. Move substantial parsing, indexing, merging, sorting and summaries into cancellable background work. The extension host still needs to remain responsive; asynchronous filesystem calls alone do not solve CPU-heavy work.
 - Publish bounded, immutable results and targeted tree refreshes. Preserve selection and expansion; already indexed branches remain usable during other work.
 - Distinguish present, absent within a completely indexed scope, unknown and failed. Every count needs a defined scope and coverage.
 - Run beside the filesystem through VS Code's workspace extension host. Use URI-aware boundaries and host-local workers/tools; do not introduce a second SSH transport by default.
 - Keep indexes, image caches, credentials and large fixtures outside the repository. Use supported viewer APIs only.
+- Dataset access is read-only by default. Initial exploration must not validate/fix, rename, move, rewrite metadata or otherwise rationalize source datasets. Store registrations and view preferences outside dataset directories.
 
 ## 0.1.0 — First usable local dataset browser
 
-Register a directory explicitly using **BIDS Explorer: Add Dataset**. Show dataset → participant → session → modality, with raw data and derivatives kept distinct. Support sessionless datasets and preserve unfamiliar files in the physical view.
+**Status:** initial local implementation is present in the unreleased 0.0.1 development build. No version bump or release has been made. Canonical folder labeling is implemented; richer entity normalization belongs to 0.2.0. Local unit/integration checks and public-data smoke tests are recorded in docs/LOCAL_BROWSER_TESTING.md. Real Remote SSH smoke testing remains pending.
+
+Automatically recognize each open workspace folder with a root-level ordinary `dataset_description.json`, without parsing it, validating structure or recursively searching. React to workspace-folder changes and global Refresh. Retain **BIDS Explorer: Add Dataset** for external or noncanonical roots. Keep automatic ownership separate from persisted explicit registration; closing a workspace folder must not discard a manually added dataset. Show dataset → participant → session → modality, with raw data and derivatives kept distinct. Support sessionless datasets. Leave unfamiliar/administrative entries to the native file tree, accessible via Show Dataset in File Explorer; filtering is not BIDS validation.
 
 Extend the core model with dataset registration, source revisions, coverage scope and structured errors. Define the source-adapter boundary early: enumerate children, index a scope, read bounded metadata and resolve a selected resource for opening. Keep these contracts independent of the VS Code UI and avoid building archive machinery before a directory adapter exercises them.
 
@@ -133,13 +136,27 @@ Use `1.1.0`, `1.2.0`, etc. for independently scoped, compatible improvements cho
 
 Reserve `2.0.0` for a justified breaking change to documented commands/settings, dataset registration, persisted selections or supported workflows. It requires its own migration plan and changelog guidance. Do not schedule a major bump merely because a feature is large.
 
+### Proposed follow-on sequence: validation and rationalization
+
+These are future planning options, not authorization to implement mutations now. They follow the supported read-only explorer at 1.0 and can be reordered alongside other compatible minor features.
+
+| Candidate        | Scope                                                              | Boundary                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1.1.0`          | Explicit, read-only BIDS validation using an established validator | Report issues and validation coverage without changing files; distinguish validation from tolerant navigation. No validation scans triggered by ordinary browsing.                                |
+| `1.2.0`          | Rationalization and rename/restructure previews                    | Produce a reviewable dry-run plan showing source/target paths, entity conflicts, affected references and proposed metadata changes. No source writes.                                             |
+| `1.3.0` or later | Optional, explicitly requested application of approved changes     | Separate edit workflow with collision checks, provenance, recovery/rollback strategy and cancellation/failure handling. Recheck sources before applying; never silently fix data while exploring. |
+
+Validation must work with directories and archive-backed sources without implying that every member was inspected when coverage is partial. Archive mutation is a separate design decision: do not silently repack containers or treat extracted cache files as editable source data. Dataset restructuring also needs a policy for sidecars, inheritance, table references and derivative provenance; a filename-only rename is insufficient.
+
+Before enabling writes, define and test dry-run accuracy, symlink handling, external changes, interrupted operations, rollback and backups. Per-operation user authorization is required; browsing and registering a dataset never authorize edits. Keep exploration read-only by default even after these optional tools exist. Such additive tools can use minor releases; reserve a major version for breaking existing documented contracts, as described above.
+
 ## Validation and next slice
 
 Follow [TESTING.md](TESTING.md) for enforced coverage and behavioral test expectations.
 
 Use fast core tests for semantics and identity, extension-host tests for commands and tree behavior, and synthetic archive/large-tree tests for IO and responsiveness. Keep real private datasets and performance runs opt-in. Measure indexing, tree publication, extraction, transfer and viewer opening separately before optimizing.
 
-The next implementation slice targets 0.1.0: register one local directory, browse it lazily, inspect its physical identity and open a file. Include coverage and cancellation contracts from the start, then verify the same path in a Remote SSH workspace. This provides a usable foundation before metadata richness and archive complexity grow.
+The initial 0.1.0 directory slice is implemented. Next, review the local browser in normal use and perform an explicitly authorized synthetic Remote SSH smoke test before archive investment. Address any resulting directory/host issues, then begin 0.2.0 metadata interpretation. Do not treat the local result as evidence of remote compatibility.
 
 When the GitHub repository is created, enable the repository controls listed in [SECURITY.md](SECURITY.md). When it is pushed, add `CONTRIBUTING.md` covering development setup, tests, pull requests and changelog expectations.
 
