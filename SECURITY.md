@@ -4,7 +4,7 @@ BIDS Explorer is an unreleased development scaffold. Archive readers and remote 
 
 ## Development checks
 
-Install `uv` (https://docs.astral.sh/uv/getting-started/installation/) and Node as described in README.md, then run:
+Install `uv` (https://docs.astral.sh/uv/getting-started/installation/) and Node as described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md), then run:
 
 ```sh
 npm run check
@@ -18,7 +18,7 @@ The current baseline has three project rules: reject shell command execution thr
 
 `security:scan` scans `src`, with Semgrep's default exclusions (including test paths). `security:rules` separately checks intentionally unsafe fixtures in `test/security`; those fixtures are never compiled or shipped. Findings and scan errors fail CI. Any suppression needs an adjacent explanation of why it is safe, supported by tests where practical. Do not lower severity or disable rules merely to pass CI.
 
-CI runs Semgrep and npm audit in a separate security job with read-only repository permissions. The audit gate fails on high/critical findings, including development dependencies. Lower-severity findings remain visible for review; existing development-tool findings are documented in README.md. Dependabot is configured for weekly npm and GitHub Actions updates. Hosted checks and update PRs start after the repository is pushed and GitHub enables them.
+CI runs Semgrep and npm audit in a separate security job with read-only repository permissions. The audit gate fails on high/critical findings, including development dependencies. Lower-severity findings remain visible for review; existing development-tool findings are documented in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Dependabot is configured for weekly npm and GitHub Actions updates. Hosted checks and update PRs start after the repository is pushed and GitHub enables them.
 
 ## Trust boundaries and required implementation tests
 

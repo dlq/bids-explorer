@@ -1,81 +1,56 @@
 # BIDS Explorer
 
-A VS Code extension in early development for navigating BIDS datasets and their derivatives.
+A VS Code extension being built to explore BIDS neuroimaging datasets and their derivatives, locally and over SSH, in directories, ZIP archives, tarballs and SquashFS images.
 
-- Repository/directory and extension identifier: `bids-explorer`
-- Display name: **BIDS Explorer**
-- Settings and command namespace: `bidsExplorer`
+**Status: unreleased development scaffold (`0.0.1`). Dataset browsing is not available yet.** There is no Marketplace release or public installation link.
 
-The development scaffold is in place; dataset browsing and archive readers are not implemented yet. See PROJECT.md (`PROJECT.md`) for the scope and decisions carried over from the Strata exploration.
+## Available today
 
-## Pick up work here
+- A **BIDS Explorer** view in VS Code's Explorer sidebar, showing a welcome message.
+- **BIDS Explorer: Refresh**, available from the Command Palette, which refreshes the empty view.
 
-1. Read PROJECT.md (`PROJECT.md`) for scope and decisions.
-2. Read RESEARCH.md (`RESEARCH.md`) for exploration, options, lessons and source/test/sample references.
-3. Read PLANS.md (`PLANS.md`) for implementation phases and readiness checks.
-4. Consult the benchmark snapshot (`docs/evidence/niivue-vscode/REPORT.md`) and its provenance note (`docs/evidence/niivue-vscode/SNAPSHOT.md`).
+The extension does not yet register datasets, scan files, extract archives or open images. It contributes no settings. The workspace-host configuration is in place for Remote SSH, but remote dataset workflows have not been validated.
 
-The repository includes a TypeScript workspace extension, an empty Explorer view, and build/test tooling. Large samples, processing installations and caches remain in Strata. Local-only SSH test locations are in ignored `.local/strata-test-context.json`.
+## Planned capabilities
 
-## Development
+These are roadmap targets, not features in the current build:
 
-Install Node.js 22.23.4 (the version in `.nvmrc`; with nvm, run `nvm install` and `nvm use`) and VS Code 1.96 or newer. Then:
+| Proposed version | Planned capability                                                             |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `0.1.0`          | Register and browse local dataset directories; open selected files             |
+| `0.2.0`          | BIDS-aware grouping and inherited metadata                                     |
+| `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections     |
+| `0.6.0`          | Validated Remote SSH workflows and persistent indexing                         |
+| `0.7.0`          | Coverage-aware summaries, filters and participant/session availability         |
+| `0.8.0`–`0.9.0`  | Optional viewer handoff, distribution preparation and stabilization            |
+| `1.0.0`          | Supported, reliable core workflows across documented storage formats and hosts |
 
-```sh
-npm ci
-npm run check             # Includes enforced unit coverage
-```
+The intended browser will preserve original source paths and conflicting source choices, distinguish unindexed data from missing data, and keep a physical-file view alongside its BIDS interpretation. NiiVue integration is optional and remains unimplemented. Release targets may change as development proceeds.
 
-Open this folder in VS Code and press **F5** (`Run BIDS Explorer`). The watch task compiles TypeScript, then an Extension Development Host opens the small synthetic workspace. Expand **BIDS Explorer** in the Explorer sidebar. The empty welcome view and **BIDS Explorer: Refresh** command verify activation; they do not index data yet. Stop debugging to close the development host.
+## Trying the development build
 
-```sh
-npm run test:integration  # Downloads VS Code 1.96 and runs extension-host tests
-npm run package           # Creates dist/bids-explorer-<version>.vsix
-```
+A locally built VSIX can be installed for a preview of the scaffold:
 
-The integration runner needs network access on its first run and a graphical session (CI uses Xvfb). If VS Code stable is already running and prevents CLI tests, close it or launch tests from VS Code's Extension Test Runner. Install the VSIX using **Extensions: Install from VSIX**. The `bids-explorer-dev` publisher is a development placeholder, not a Marketplace registration. No publication is configured. Packaging skips the license check for this private development preview; choose a license and real publisher before distribution.
+1. Use VS Code **1.96 or newer** in a trusted workspace.
+2. Run **Extensions: Install from VSIX** and select `bids-explorer-0.0.1.vsix` from the local build output.
+3. Open the Explorer sidebar and expand **BIDS Explorer** to see its welcome message.
+4. Run **BIDS Explorer: Refresh** from the Command Palette to refresh the view.
 
-## Architecture and remote development
+There is no Add Dataset command yet. No archive tools or NiiVue installation are required for this build. Untrusted and virtual workspaces are not supported. This is a desktop extension scaffold; browser-only VS Code is not a supported target.
 
-- `src/core/`: VS Code-independent resource identity and dataset contracts.
-- `src/ui/`: VS Code tree presentation; no filesystem scanning during rendering.
-- `src/extension.ts`: activation, commands and disposable ownership.
-- `src/test/unit/`: fast tests independent of VS Code.
-- `src/test/integration/`: tests inside a real VS Code extension host.
-- `test/fixtures/`: tiny synthetic metadata only; no private or real imaging data.
+For instructions to build the VSIX or run it in a development host, see `docs/DEVELOPMENT.md` in the repository.
 
-The manifest uses `extensionKind: ["workspace"]`. In a Remote SSH window, the extension runs on the remote workspace host. To develop there, open a checkout on the remote host with Remote SSH, install Node/dependencies there, and use the same F5 workflow. This scaffold does not initiate SSH connections. Verify the execution location with **Developer: Show Running Extensions**.
+## Data and limitations
 
-Future directory, ZIP, tarball and SquashFS adapters must preserve source URI/member identity separately from logical BIDS paths, report partial coverage, support cancellation and publish bounded background results. Archive readers and workers are not implemented. Detect extraction-tool availability on the workspace host when those adapters are added; no Python, tar or unsquashfs dependency is required by this scaffold. Keep indexes and image caches in VS Code-provided storage outside the checkout. NiiVue remains optional.
+The current runtime does not read or modify datasets, extract files, create dataset caches, or initiate network transfers. It has no telemetry implementation. Those statements describe the scaffold only; storage, tool requirements and data handling will be documented as features are implemented.
 
-CI runs type checking, linting, unit tests, extension-host tests and VSIX packaging on Linux. Before shipping archive support, add local/Remote SSH validation with synthetic containers, duplicate source paths, cancellation and incomplete coverage.
+BIDS interpretation and validation are separate concerns. Planned navigation must not be taken as proof that a dataset conforms to BIDS.
 
-### Dependency audit
+## Documentation and feedback
 
-The development toolchain currently has 18 npm audit findings (17 moderate, 1 low), including transitive glob/minimatch dependencies in the VS Code test and packaging tools. These development packages are excluded from the VSIX; the extension has no runtime npm dependencies. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
+- `CHANGELOG.md`: implemented changes; all work is currently Unreleased.
+- `PLANS.md`: proposed versions and readiness checks.
+- `docs/DEVELOPMENT.md`: contributor setup, checks and packaging.
+- `SECURITY.md`: development security checks and future vulnerability-reporting setup.
 
-## Testing expectations
-
-See TESTING.md (`TESTING.md`) for coverage thresholds, test layers and feature acceptance expectations. Run `npm run check` and `npm run test:integration` before submitting behavior changes.
-
-## Formatting and linting
-
-Install the workspace's recommended Prettier and ESLint extensions. Workspace settings enable format on save and ESLint fixes on explicit save. Prettier owns formatting; ESLint checks code correctness, including TypeScript rules that detect unhandled promises. `.editorconfig` defines whitespace defaults.
-
-```sh
-npm run format        # Format source, configuration and documentation
-npm run format:check  # Check formatting without changing files
-npm run lint          # Type-aware ESLint checks; warnings fail
-npm run lint:fix      # Apply available ESLint fixes
-npm run check         # Formatting, types, linting and unit coverage
-```
-
-CI runs the same checks. Generated output, caches, local state and imported benchmark evidence are excluded from formatting. No Git hooks are required; run checks before committing.
-
-## Security checks
-
-Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongside `npm run check`. See SECURITY.md (`SECURITY.md`) for the pinned Semgrep setup, rule limitations, dependency checks and GitHub setup steps.
-
-## Versioning
-
-The current manifest version is `0.0.1` (unreleased scaffold). PLANS.md (`PLANS.md`) assigns proposed minor milestones through `1.0.0`; VERSIONING.md (`VERSIONING.md`) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.0.1.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+A public issue tracker and private vulnerability-reporting channel will be linked when the GitHub repository is available. Do not share private datasets, credentials or sensitive clinical information in public reports.

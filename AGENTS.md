@@ -16,3 +16,4 @@ Read `PROJECT.md`, then `RESEARCH.md` and `PLANS.md` before implementing feature
 - Use Prettier for formatting and ESLint for code checks. Run `npm run check` before finishing code changes; use `npm run format` and `npm run lint:fix` for fixes. Preserve imported benchmark evidence verbatim.
 - Follow `SECURITY.md`: run `npm run security` for code or rule changes, review dependency audit findings, and add security regression cases as archive/process APIs are implemented.
 - Follow `VERSIONING.md` and version targets in `PLANS.md`. Keep `package.json` and the lockfile synchronized on release bumps; derive VSIX names from the manifest. Do not bump versions or create release tags for routine commits.
+- Keep `README.md` user-focused and explicit about implemented versus planned behavior. Contributor setup and tooling commands belong in `docs/DEVELOPMENT.md`.

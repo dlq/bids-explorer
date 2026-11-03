@@ -2,7 +2,7 @@
 
 Consolidated November 3, 2026, from the Strata handoff, source reference map and BIDS Explorer setup discussion. This replaces `docs/STRATA_HANDOFF.md` and `docs/REFERENCE_MAP.md`. It records observations, alternatives and unresolved questions; it is not a claim that the extension implements these capabilities.
 
-Use [PROJECT.md](PROJECT.md) for agreed scope, [PLANS.md](PLANS.md) for implementation order and [README.md](README.md) for development commands. Keep raw benchmark evidence in [docs/evidence/niivue-vscode](docs/evidence/niivue-vscode/REPORT.md). Historical tool versions and measurements below describe the exploration at the time; verify them before relying on them in implementation.
+Use [PROJECT.md](PROJECT.md) for agreed scope, [PLANS.md](PLANS.md) for implementation order and [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development commands. Keep raw benchmark evidence in [docs/evidence/niivue-vscode](docs/evidence/niivue-vscode/REPORT.md). Historical tool versions and measurements below describe the exploration at the time; verify them before relying on them in implementation.
 
 ## Where the exploration has led
 
@@ -34,7 +34,7 @@ The implementation plan flags compressed sequential access as a constraint: list
 
 The initial scaffold uses TypeScript, a native Explorer view, a workspace extension host, VS Code-independent core contracts, and no runtime npm dependencies. F5 debugging, a pinned Node development version, unit tests, VS Code extension-host tests, CI configuration and local VSIX packaging are present. The sidebar is intentionally empty until dataset registration and browsing are implemented.
 
-Local checks and VSIX packaging passed during setup, including two core identity tests and two extension-host tests against VS Code 1.96. Hosted CI, real Remote SSH execution, large-data responsiveness and archive behavior have not been validated for this extension. The publisher is a development placeholder; license, actual publisher, repository hosting and publication remain open. Toolchain audit details belong in README.md and should be reassessed as dependencies change.
+Local checks and VSIX packaging passed during setup, including two core identity tests and two extension-host tests against VS Code 1.96. Hosted CI, real Remote SSH execution, large-data responsiveness and archive behavior have not been validated for this extension. The publisher is a development placeholder; license, actual publisher, repository hosting and publication remain open. Toolchain audit details belong in docs/DEVELOPMENT.md and should be reassessed as dependencies change.
 
 The rest of this document preserves the detailed findings and reference locations needed to revisit these choices.
 

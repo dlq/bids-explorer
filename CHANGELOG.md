@@ -4,6 +4,10 @@ Record implemented changes under Unreleased. The manifest is currently `0.0.1`, 
 
 ## Unreleased
 
+### Changed
+
+- Made README user-focused with explicit implemented/planned status; moved contributor setup and tooling guidance to docs/DEVELOPMENT.md.
+
 ### Added
 
 - Versioned roadmap through 1.0.0, release conventions and manifest-derived VSIX filenames.
