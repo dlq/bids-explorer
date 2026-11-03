@@ -20,3 +20,12 @@ PROJECT.md
 package-lock.json
 PLANS.md
 RESEARCH.md
+.c8rc.json
+TESTING.md
+coverage/**
+.editorconfig
+.prettierrc.json
+.prettierignore
+.semgrep/**
+SECURITY.md
+VERSIONING.md

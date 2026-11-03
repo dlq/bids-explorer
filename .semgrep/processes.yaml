@@ -1,0 +1,82 @@
+rules:
+  - id: no-shell-command-execution
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Use execFile/spawn with an argument array and shell disabled; never build shell commands from dataset paths.
+    pattern-either:
+      - pattern: require('child_process').exec(...)
+      - pattern: require('child_process').execSync(...)
+      - pattern: require('node:child_process').exec(...)
+      - pattern: require('node:child_process').execSync(...)
+      - patterns:
+          - pattern-inside: |
+              import { exec as $EXEC } from 'node:child_process';
+              ...
+          - pattern: $EXEC(...)
+      - patterns:
+          - pattern-inside: |
+              import * as $CP from 'node:child_process';
+              ...
+          - pattern: $CP.exec(...)
+      - patterns:
+          - pattern-inside: |
+              import { execSync as $EXEC } from 'node:child_process';
+              ...
+          - pattern: $EXEC(...)
+      - patterns:
+          - pattern-inside: |
+              import * as $CP from 'node:child_process';
+              ...
+          - pattern: $CP.execSync(...)
+      - patterns:
+          - pattern-inside: |
+              import { exec as $EXEC } from 'child_process';
+              ...
+          - pattern: $EXEC(...)
+      - patterns:
+          - pattern-inside: |
+              import * as $CP from 'child_process';
+              ...
+          - pattern: $CP.exec(...)
+      - patterns:
+          - pattern-inside: |
+              import { execSync as $EXEC } from 'child_process';
+              ...
+          - pattern: $EXEC(...)
+      - patterns:
+          - pattern-inside: |
+              import * as $CP from 'child_process';
+              ...
+          - pattern: $CP.execSync(...)
+      - patterns:
+          - pattern-inside: |
+              import { exec } from 'node:child_process';
+              ...
+          - pattern: exec(...)
+      - patterns:
+          - pattern-inside: |
+              import { execSync } from 'node:child_process';
+              ...
+          - pattern: execSync(...)
+      - patterns:
+          - pattern-inside: |
+              import { exec } from 'child_process';
+              ...
+          - pattern: exec(...)
+      - patterns:
+          - pattern-inside: |
+              import { execSync } from 'child_process';
+              ...
+          - pattern: execSync(...)
+  - id: no-shell-enabled-process
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Shell-enabled process execution requires security review; use an argument array with shell disabled.
+    pattern: '$CALL(..., { ..., shell: true, ... }, ...)'
+  - id: no-dynamic-code
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Dataset content must never be evaluated as executable code.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)

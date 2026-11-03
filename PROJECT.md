@@ -49,3 +49,7 @@ NiiVue VS Code 2.9.0 was tested against Strata on Apple M3 with full-resolution 
 The supplied remote Tractoflow collection contained 45 SquashFS files and 7,000 subjects. An audit confirmed every indexed subject/session was preserved by the overlay; session-3-only subjects really were present in this subset. Do not infer missing sessions from expectations.
 
 Keep public sample data and large caches in their existing locations until a concrete implementation needs fixtures. Do not copy credentials, SSH keys, private datasets or caches into this repository.
+
+## Version and release direction
+
+The current manifest version is `0.0.1` and has not been released. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.

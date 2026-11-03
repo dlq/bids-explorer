@@ -13,7 +13,9 @@ suite('BIDS Explorer scaffold', () => {
   test('empty tree refreshes without scanning the workspace', () => {
     const provider = new DatasetTreeProvider();
     let refreshed = false;
-    const subscription = provider.onDidChangeTreeData(() => { refreshed = true; });
+    const subscription = provider.onDidChangeTreeData(() => {
+      refreshed = true;
+    });
     assert.deepEqual(provider.getChildren(), []);
     provider.refresh();
     assert.ok(refreshed);

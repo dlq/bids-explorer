@@ -1,0 +1,9 @@
+node_modules/
+out/
+dist/
+coverage/
+.vscode-test/
+.local/
+# Preserve imported benchmark evidence verbatim.
+docs/evidence/
+package-lock.json

@@ -9,9 +9,7 @@
         "--extensionDevelopmentPath=${workspaceFolder}",
         "${workspaceFolder}/test/fixtures/bids"
       ],
-      "outFiles": [
-        "${workspaceFolder}/out/**/*.js"
-      ],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
       "preLaunchTask": "npm: watch"
     }
   ]
