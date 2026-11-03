@@ -1,0 +1,8 @@
+node_modules/
+out/
+dist/
+*.vsix
+.DS_Store
+
+# Machine-specific test locations and runtime state
+.local/

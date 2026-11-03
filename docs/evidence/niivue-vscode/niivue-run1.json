@@ -1,0 +1,164 @@
+[
+  {
+    "sample": "T1",
+    "mode": "volume",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.3,
+      0.6
+    ],
+    "gpu_ms": [
+      1.068499,
+      2.058958
+    ],
+    "cadence_ms": [
+      8.3,
+      9.2
+    ],
+    "load_ms": [
+      152.9,
+      316,
+      120.3
+    ],
+    "disjoint": false
+  },
+  {
+    "sample": "T1",
+    "mode": "axial",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.7,
+      1
+    ],
+    "gpu_ms": [
+      0.187875,
+      1.162333
+    ],
+    "cadence_ms": [
+      8.3,
+      9.1
+    ],
+    "load_ms": [
+      152.9,
+      316,
+      120.3
+    ],
+    "disjoint": false
+  },
+  {
+    "sample": "T2",
+    "mode": "volume",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.3,
+      0.5
+    ],
+    "gpu_ms": [
+      1.115624,
+      2.195291
+    ],
+    "cadence_ms": [
+      8.3,
+      9.3
+    ],
+    "load_ms": [
+      130.2,
+      90.1,
+      99.4
+    ],
+    "disjoint": false
+  },
+  {
+    "sample": "T2",
+    "mode": "axial",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.6,
+      1
+    ],
+    "gpu_ms": [
+      0.196041,
+      1.091458
+    ],
+    "cadence_ms": [
+      8.3,
+      9.4
+    ],
+    "load_ms": [
+      130.2,
+      90.1,
+      99.4
+    ],
+    "disjoint": false
+  },
+  {
+    "sample": "T1+SIAM",
+    "mode": "volume",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.3,
+      0.5
+    ],
+    "gpu_ms": [
+      2.49925,
+      4.194625
+    ],
+    "cadence_ms": [
+      8.3,
+      9.6
+    ],
+    "load_ms": [
+      591.5,
+      381,
+      361.5
+    ],
+    "disjoint": false
+  },
+  {
+    "sample": "T1+SIAM",
+    "mode": "axial",
+    "frames": 270,
+    "pixels": [
+      840,
+      700
+    ],
+    "submit_ms": [
+      0.6,
+      0.9
+    ],
+    "gpu_ms": [
+      0.309124,
+      1.301375
+    ],
+    "cadence_ms": [
+      8.3,
+      9.2
+    ],
+    "load_ms": [
+      591.5,
+      381,
+      361.5
+    ],
+    "disjoint": false
+  }
+]
