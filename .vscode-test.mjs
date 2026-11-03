@@ -13,6 +13,9 @@ process.once('exit', () => rmSync(temporary, { recursive: true, force: true }));
 export default defineConfig({
   files: 'out/test/integration/**/*.test.js',
   version: '1.96.0',
+  useInstallation: process.env.BIDS_EXPLORER_TEST_VSCODE_PATH
+    ? { fromPath: process.env.BIDS_EXPLORER_TEST_VSCODE_PATH }
+    : undefined,
   coverage: {
     include: ['src/**/*.ts'],
     exclude: ['src/test/**'],

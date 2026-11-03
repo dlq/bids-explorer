@@ -123,6 +123,8 @@ Test disconnect/reconnect, stale indexes, missing tools, permissions, cancelled 
 
 ## 0.7.0 — Dataset overview and exploration
 
+Add a participant-centred view that brings together raw acquisitions and derivative outputs across pipelines and sessions. Keep explicit **Raw** and named **Pipeline** groupings, retain access to the physical `derivatives/<pipeline>/sub-…` hierarchy, and support separately registered derivative datasets through explicit source-dataset relationships. Match subjects/sessions using source-backed entities and provenance; labels alone must not silently join unrelated datasets. Preserve pipeline/version/variant identity, original paths, duplicate source choices and partial coverage. This is a logical navigation view, never a move or restructure of source files. Establish relationships in `0.2.0` before implementing the combined view.
+
 Build entity filters, participant × session availability and summaries on background index snapshots. Show coverage alongside results; unknown cells must not become missing data. Add modality/pipeline views and saved selections once the underlying identity and refresh behavior are stable.
 
 External clinical CSV/TSV joins, large-table support and QC annotations are candidates for later minor releases; they are not required for 0.7.0 or 1.0.0. Before adding them, expand table support. Preview and validate joins using explicit keys, duplicates and unmatched rows. Large tables require paging/streaming or disk-backed handling before being offered as a general capability. QC annotations need separate provenance and must not modify source data implicitly.
@@ -132,6 +134,8 @@ External clinical CSV/TSV joins, large-table support and QC annotations are cand
 ## 0.8.0 — Optional viewer handoff and distribution preparation
 
 Review NiiVue's user interface before choosing the integration approach. Evaluate its controls, layout, navigation, file icons, editor/toolbars and display-state behavior in normal dataset exploration. Identify which surfaces should belong to BIDS Explorer and which should remain with NiiVue, including how to keep navigation and metadata coherent when opening images. Compare a separate optional viewer, supported coordinated integration and embedding without assuming any approach is already selected. Record usability findings and supported customization points; include the current NIfTI file icon in this review. Keep the review separate from the existing rendering-performance benchmark.
+
+Revisit [progressive NIfTI loading research](RESEARCH.md#progressive-nifti-loading-revisit-with-niivue-integration): header-first metadata, limited initial 4D volumes and deferred loading, compression/format constraints, and any supported chunked or multiresolution alternatives. Verify what the actual VS Code viewer exposes through public APIs and whether the Remote SSH webview resource path supports the required partial reads and cancellation. Measure first useful image, transferred bytes, memory and deferred-load costs with cold/warm 3D and 4D cases before promising streaming. This is planned investigation; the current image handoff has no progressive-loading guarantee.
 
 Ordinary file opening should work from the first slice. Add **Open With** and an optional NiiVue adapter after verifying the installed extension's supported integration points. Establish ownership of extracted-file lifetime before viewer handoff. Rich comparison, overlays, label controls and embedding remain separate decisions; private webview/Preact probes are excluded.
 

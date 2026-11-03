@@ -8,6 +8,8 @@ const directoryIcons: Readonly<Record<string, string>> = {
   Dataset: 'database',
   Participant: 'person',
   Session: 'calendar',
+  Derivatives: 'git-branch',
+  Pipeline: 'settings-gear',
   Anatomical: 'layers',
   Functional: 'pulse',
   Diffusion: 'git-merge',

@@ -4,7 +4,7 @@ Record implemented changes under Unreleased. The manifest is currently `0.0.1`, 
 
 ## Unreleased
 
-- Added theme-aware participant, session and modality icons to the BIDS Explorer tree, using built-in VS Code symbols alongside the existing dataset icon.
+- Added theme-aware participant, session, modality, derivatives and pipeline icons to the BIDS Explorer tree, using built-in VS Code symbols alongside the existing dataset icon.
 
 ### Diffusion gradient preview
 

@@ -32,6 +32,18 @@ The implementation plan flags compressed sequential access as a constraint: list
 
 ## Extension development options and setup
 
+### Progressive NIfTI loading: revisit with NiiVue integration
+
+Recorded November 3, 2026, during the authorized Remote SSH MRI smoke test. The current BIDS Explorer handoff does not implement image streaming or an image-byte cache. Dataset-tree laziness and cached directory listings are separate from progressive voxel loading.
+
+- Header-first inspection is feasible: the [NIfTI layout](https://nifti.nimh.nih.gov/nifti-1/documentation/faq/index.html) separates header information from voxel data using an offset. For compressed files, read only a bounded decompressed prefix when inspecting headers.
+- NiiVue's library documents limited initial 4D loading through `limitFrames4D`, followed by [loading deferred volumes](https://niivue.com/docs/api/niivue/classes/Niivue/#loaddeferred4dvolumes). Treat initial volumes, later volumes, spatial slices and multiresolution detail as different capabilities.
+- Ordinary `.nii` allows offset-based reads if the transport and viewer support them. Ordinary `.nii.gz` generally needs sequential decompression to reach later data; early-prefix loading can still stop before the full file. Do not assume arbitrary compressed byte ranges correspond to voxel ranges, or that every partial loader supports every NIfTI variant.
+- Static inspection of installed NiiVue VS Code 2.9.0 found `limitFrames4D` in its bundled library, but no exposure in its extension-host wrapper. This is an observation about that installed build, not a supported cross-extension API or a guarantee about newer releases. The current handoff must not claim progressive loading.
+- For the in-workspace NIfTI path inspected in that build, NiiVue uses VS Code's `asWebviewUri`; other paths/formats can use `workspace.fs.readFile`. Preserve supported VS Code Remote SSH resource handling rather than adding a parallel SSH transport. Range handling, early cancellation and transferred-byte savings through this resource path remain unmeasured.
+
+When revisiting integration, verify the installed viewer's public configuration/API and exact library version. Compare header-first metadata, limited initial 4D volumes and any supported chunked/multiresolution alternatives using real 3D and 4D fixtures. Measure bytes transferred, time to first useful image, deferred-load latency, memory and cancellation separately under cold and warm conditions. Keep source files unchanged; any derived previews or indexes need explicit provenance and bounded storage outside datasets. Do not use private webview/Preact instrumentation as a production integration.
+
 The initial scaffold uses TypeScript, a native Explorer view, a workspace extension host, VS Code-independent core contracts, and no runtime npm dependencies. F5 debugging, a pinned Node development version, unit tests, VS Code extension-host tests, CI configuration and local VSIX packaging are present. The initial sidebar was empty; read-only registration and local directory browsing have since been implemented. Current behavior is documented in README.md.
 
 Local checks and VSIX packaging passed during setup, including two core identity tests and two extension-host tests against VS Code 1.96. Hosted CI, real Remote SSH execution, large-data responsiveness and archive behavior have not been validated for this extension. The publisher is a development placeholder; license, actual publisher, repository hosting and publication remain open. Toolchain audit details belong in docs/DEVELOPMENT.md and should be reassessed as dependencies change.

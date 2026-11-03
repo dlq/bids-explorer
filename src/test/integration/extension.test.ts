@@ -213,6 +213,16 @@ suite('BIDS Explorer directory workflows', () => {
       assert.equal(provider.getTreeItem(a).description, 'Participant');
       assert.equal((provider.getTreeItem(a).iconPath as vscode.ThemeIcon).id, 'person');
       assert.equal(provider.getTreeItem(derivatives).description, 'Derivatives');
+      assert.equal(
+        (provider.getTreeItem(derivatives).iconPath as vscode.ThemeIcon).id,
+        'git-branch',
+      );
+      const pipeline = (await provider.getChildren(derivatives))[0];
+      assert.equal(provider.getTreeItem(pipeline).description, 'Pipeline');
+      assert.equal(
+        (provider.getTreeItem(pipeline).iconPath as vscode.ThemeIcon).id,
+        'settings-gear',
+      );
       assert.equal(browser.snapshot(a.entry).coverage, 'unknown');
       const anatomy = (await provider.getChildren(a))[0] as EntryElement;
       assert.equal(provider.getTreeItem(anatomy).description, 'Anatomical');
