@@ -40,7 +40,7 @@ BIDS Explorer owns navigation, indexing, archives, metadata, tables, availabilit
 
 Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
 
-Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Initial read-only local directory browsing is implemented; archive readers, metadata inheritance and persistent indexing remain to be implemented. Publishing, a remote repository and processing jobs have not been requested.
+Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Read-only directory browsing, literal dataset-description previews, source-backed entity interpretation and in-place combined-folder recognition and explicit selected-file JSON inheritance/DWI companion reports and bounded participant/session/scan table previews are implemented. Metadata descriptions now enrich dataset/pipeline roots, task NIfTI files and explicitly mapped participant/session folders; broader relationships, archive readers and persistent indexing remain to be implemented. A tolerant CHANGES view, readable metadata inspector and inherited-gradient opening complete the agreed 0.2.0 feature scope. Publishing, a remote repository and processing jobs have not been requested.
 
 ## Evidence and reusable exploration
 
@@ -56,4 +56,4 @@ Keep public sample data and large caches in their existing locations until a con
 
 ## Version and release direction
 
-The current manifest version is `0.1.0`, tagged locally as `v0.1.0`; it has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
+The current manifest version remains `0.1.0`; development toward `0.2.0` has started after the local `v0.1.0` tag; it has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.

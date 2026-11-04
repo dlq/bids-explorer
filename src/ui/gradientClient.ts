@@ -335,6 +335,12 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
         decodeURIComponent(new URL(message.bvalUri).pathname.split('/').at(-1)!) +
         ' + ' +
         decodeURIComponent(new URL(message.bvecUri).pathname.split('/').at(-1)!);
+      element('association').textContent =
+        'imageUri' in message && typeof message.imageUri === 'string'
+          ? 'Inherited pair for ' +
+            message.imageUri +
+            '. No image-volume count or anatomical orientation check. Reload resolves applicability again.'
+          : 'Same-directory, same-basename pair. No image association or inherited applicability is inferred.';
       const sources = element('sources');
       sources.replaceChildren();
       for (const uri of [message.bvalUri, message.bvecUri]) {

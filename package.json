@@ -44,7 +44,7 @@
       },
       {
         "command": "bidsExplorer.cancel",
-        "title": "BIDS Explorer: Cancel Pending Listings",
+        "title": "BIDS Explorer: Cancel Pending Work",
         "icon": "$(debug-stop)"
       },
       {
@@ -55,6 +55,26 @@
       {
         "command": "bidsExplorer.previewGradients",
         "title": "BIDS Explorer: Preview Diffusion Gradients"
+      },
+      {
+        "command": "bidsExplorer.previewMetadata",
+        "title": "BIDS Explorer: Preview Dataset Description"
+      },
+      {
+        "command": "bidsExplorer.inspectMetadata",
+        "title": "BIDS Explorer: Inspect Metadata and Related Files"
+      },
+      {
+        "command": "bidsExplorer.previewParticipants",
+        "title": "BIDS Explorer: Preview Participants Table"
+      },
+      {
+        "command": "bidsExplorer.previewTable",
+        "title": "BIDS Explorer: Preview BIDS Table"
+      },
+      {
+        "command": "bidsExplorer.previewHistory",
+        "title": "BIDS Explorer: Preview Dataset History"
       }
     ],
     "views": {
@@ -68,7 +88,7 @@
     "viewsWelcome": [
       {
         "view": "bidsExplorer.datasets",
-        "contents": "Browse a dataset without changing its files.\n[Add Dataset](command:bidsExplorer.addDataset)\nDirectories only. Archives and metadata inheritance are planned."
+        "contents": "Browse a dataset without changing its files.\n[Add Dataset](command:bidsExplorer.addDataset)\nDirectories only. Archive browsing is planned."
       }
     ],
     "menus": {
@@ -114,6 +134,31 @@
           "command": "bidsExplorer.previewGradients",
           "when": "view == bidsExplorer.datasets && viewItem == gradient",
           "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewMetadata",
+          "when": "view == bidsExplorer.datasets && viewItem == metadata",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.inspectMetadata",
+          "when": "view == bidsExplorer.datasets && (viewItem == file || viewItem == participants || viewItem == summaryTable) && resourceFilename =~ /\\.(nii|tsv)(\\.gz)?$/",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewParticipants",
+          "when": "view == bidsExplorer.datasets && viewItem == participants",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewTable",
+          "when": "view == bidsExplorer.datasets && viewItem == summaryTable",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewHistory",
+          "when": "view == bidsExplorer.datasets && viewItem == history",
+          "group": "navigation"
         }
       ],
       "explorer/context": [
@@ -121,8 +166,47 @@
           "command": "bidsExplorer.previewGradients",
           "when": "resourceScheme == file && (resourceExtname == .bval || resourceExtname == .bvec)",
           "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewMetadata",
+          "when": "resourceScheme == file && resourceFilename == dataset_description.json",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewParticipants",
+          "when": "resourceScheme == file && resourceFilename == participants.tsv",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewTable",
+          "when": "resourceScheme == file && resourceFilename =~ /^sub-[a-zA-Z0-9+]+(_ses-[a-zA-Z0-9+]+)?_(sessions|scans)\\.tsv$/",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewHistory",
+          "when": "resourceScheme == file && resourceFilename == CHANGES",
+          "group": "navigation"
         }
       ]
+    },
+    "configuration": {
+      "title": "BIDS Explorer",
+      "properties": {
+        "bidsExplorer.participantLabelColumn": {
+          "type": "string",
+          "default": "",
+          "maxLength": 200,
+          "scope": "resource",
+          "description": "Exact TSV column to use as the participant tree description. Empty disables table-based labels. Identifiers are never replaced; unique source rows and unambiguous columns are required."
+        },
+        "bidsExplorer.sessionLabelColumn": {
+          "type": "string",
+          "default": "",
+          "maxLength": 200,
+          "scope": "resource",
+          "description": "Exact TSV column to use as the session tree description. Empty disables table-based labels. Identifiers are never replaced; unique source rows and unambiguous columns are required."
+        }
+      }
     }
   },
   "capabilities": {

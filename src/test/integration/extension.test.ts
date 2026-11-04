@@ -111,6 +111,7 @@ suite('BIDS Explorer directory workflows', () => {
     const folder = await mkdtemp(join(tmpdir(), 'bids-extension-'));
     try {
       await mkdir(join(folder, 'sub-01', 'anat'), { recursive: true });
+      await writeFile(join(folder, 'sub-01', 'anat', 'sub-01_T1w.json'), '{}');
       await writeFile(
         join(folder, 'dataset_description.json'),
         '{"Name":"Synthetic integration data"}\n',
@@ -127,9 +128,9 @@ suite('BIDS Explorer directory workflows', () => {
         1,
       );
       const rows = await provider.getChildren(root);
-      const file = rows.find(
-        (e) => e.type === 'entry' && e.entry.name === 'dataset_description.json',
-      ) as EntryElement;
+      const participant = rows.find((e) => e.type === 'entry' && e.entry.name === 'sub-01')!;
+      const anatomy = (await provider.getChildren(participant))[0];
+      const file = (await provider.getChildren(anatomy))[0] as EntryElement;
       await vscode.commands.executeCommand('bidsExplorer.openFile', file);
       assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), file.entry.uri);
       await vscode.commands.executeCommand('bidsExplorer.showDetails', file);

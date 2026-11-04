@@ -1,0 +1,18 @@
+{
+  "hostPlatform": "linux",
+  "node": "v24.22.1",
+  "scope": "Compiled 0.2.0 core/source API smoke over SSH in a new synthetic temporary fixture; not VS Code UI or network latency",
+  "listingMs": 39.590175999999985,
+  "cachedMs": 0.007940000000019154,
+  "additionalCachedListings": 0,
+  "descriptions": [
+    "Remote synthetic study",
+    "Remote participant",
+    "Remote visit",
+    "Remote rest"
+  ],
+  "descriptionMs": 21.539918,
+  "inheritedGradientMs": 3.4097600000000057,
+  "gradientVolumes": 2,
+  "sourceBytesUnchanged": true
+}

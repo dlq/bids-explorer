@@ -52,6 +52,14 @@ The rest of this document preserves the detailed findings and reference location
 
 ## Dataset model and interpretation
 
+### Initial entity interpretation policy
+
+The current `0.2.0` slice records lexical evidence from canonical subject/session folders, exact combined `sub-…_ses-…` folder names and entity-bearing filenames. The known-key vocabulary comes from the [BIDS 1.11.2 entity schema](https://github.com/bids-standard/bids-specification/blob/v1.11.2/src/schema/objects/entities.yaml). [Common principles](https://bids-specification.readthedocs.io/en/v1.11.2/common-principles.html#entities) define label/index distinctions; labels can include `+`, and compound extensions start at the first eligible period.
+
+Every observation retains its original token, relative path and origin. Equal known values can agree; conflicting values and repeated filename entities remain unresolved. Unknown keys and uninterpreted tokens are retained. Values stay strings, including indices: no case folding, zero-padding normalization, entity-order checks or full schema validation. Do not reuse a resolved lexical token as proof of metadata applicability without applying inheritance rules.
+
+Grouping suggestions include the registered source and pipeline namespace, excluding the pipeline folder name from subject/session interpretation. These are evidence-backed suggestions, not file identity, automatic dataset joins or tree reparenting. Physical URIs/paths remain authoritative. JSON inheritance and explicit source-dataset linking are subsequent work.
+
 Separate the following concepts explicitly:
 
 1. Physical resource: a file/URI, directory, archive or member, with host and source revision.
@@ -195,3 +203,31 @@ Instrumentation: `script/benchmarks/niivue-vscode.js`. Earlier browser compariso
 The benchmark report's reproduction commands and script paths refer to the Strata repository root. Input hashes identify the exact files. Do not silently replace them with lower-resolution images when comparing performance.
 
 Machine-specific authorized test roots are recorded in ignored `.local/strata-test-context.json`. No credentials or archive listings are copied. Existing SSH authentication may require user-completed MFA; do not trigger a connection just to read this handoff.
+
+### Initial inheritance policy
+
+The selected-file resolver follows the [BIDS 1.11.2 inheritance rules](https://bids-specification.readthedocs.io/en/stable/common-principles.html#the-inheritance-principle): ancestor location, equal suffix and a metadata filename entity subset. It never uses filename specificity to break a same-directory tie. Whole top-level JSON values override ancestors, preserving exact tokens and each field's contributing sources. Known numeric index entities (run, echo, flip, inv, split, chunk) compare without zero padding; label strings remain literal.
+
+The initial scope is explicit NIfTI/TSV inspection and DWI bval/bvec discovery, with registered-root, derivative-pipeline and nearer ordinary nested-descriptor boundaries. Incomplete inventories, skipped applicable links, unreadable JSON, duplicate keys and same-level JSON ambiguity withhold effective fields conservatively. A JSON failure does not by itself invalidate independently determined DWI companion locations. This is applicability interpretation, not full BIDS validation or an atomic filesystem snapshot. Richer UI, inherited-gradient opening, events/fieldmaps and metadata tree descriptions remain future work.
+
+### Initial participant-table preview
+
+The [BIDS tabular-file rules](https://bids-specification.readthedocs.io/en/v1.11.2/common-principles.html#tabular-files) allow quoted strings containing tabs, designate the literal `n/a` as missing, and link same-named JSON dictionary fields to columns. The initial parser also handles escaped quotes and embedded newlines while retaining exact source tokens and record line numbers. Cells remain strings, including participant identifiers and number text. Duplicate headers/IDs and uneven rows are observations for tolerant display, not a dataset validation result.
+
+The first preview targets plain `participants.tsv` only, with a same-directory literal dictionary. It retains all dictionary occurrences and recorded JSON fields rather than choosing winners, supplying defaults or converting units/levels. It does not infer participant names or joins. Reads and rendering are bounded; large/streamed tables, session/scan relationships, compressed formats and metadata-derived tree descriptions remain separate work. Table and dictionary snapshots have independent provenance and are not atomic together.
+
+### Session and scan table extension
+
+The [BIDS 1.11.2 data-summary templates](https://bids-specification.readthedocs.io/en/v1.11.2/modality-agnostic-files/data-summary-files.html) distinguish participant-level session tables (`session_id`) from session/sessionless scan tables (`filename`). The preview keeps both as recorded strings, preserves timestamps/order, and does not normalize dates, count acquisitions or automatically follow recorded paths. Session/scan dictionaries reuse the established inheritance resolver with explicit dataset and pipeline/nested boundaries, rather than assuming only a same-basename JSON applies. Whole column definitions override, ambiguity withholds effective definitions, and original source choices remain accessible. Table/dictionary reads are independent snapshots. Row navigation and metadata-derived tree descriptions remain separate planned work.
+
+### Metadata-based tree descriptions
+
+The initial enrichment uses recorded dataset/pipeline `Name` and inherited `TaskName` for task-tagged NIfTI files (see the [BIDS metadata schema](https://github.com/bids-standard/bids-specification/blob/v1.11.2/src/schema/objects/metadata.yaml)). Participant/session human-readable label columns are not standardized; explicit resource-scoped column settings define those mappings, with no guessing from a column title or dictionary LongName. Exact unique IDs and unambiguous columns/rows are required. Labels retain source revisions, row/column or JSON-pointer evidence and applicable dictionary/JSON contributors. Nested dataset and derivative boundaries prevent raw-to-pipeline joins.
+
+Enrichment runs after physical row publication through a two-job queue (32 waiting, 512 states/results). Missing/ambiguous/failed descriptions fall back to ordinary labels; entries beyond bounds may remain unloaded. Source Details exposes that coverage. Display-only whitespace flattening and shortening do not change raw values. Refresh and settings changes invalidate snapshots, while cancellation retains completed work. This is not a persistent/shared metadata index: repeated source reads and large/remote throughput remain to be measured before optimizing.
+
+### 0.2.0 closeout scope
+
+The tolerant CHANGES parser follows candidate release boundaries from [CPAN::Changes::Spec](https://metacpan.org/pod/CPAN::Changes::Spec), preserving source order, date/version strings and unparsed text without validation or repairs. The shared text-node document UI supplies paging/filtering, raw-source actions and explicit reload for history and inherited metadata. The inspector retains JSON report access and can open independently inherited DWI gradient sources; gradient reload re-resolves applicability. Image-volume/orientation checks remain separate work.
+
+Broader dataset/event/fieldmap relationships, `IntendedFor`/`DatasetLinks`, scan-row navigation and logical reparenting are deferred from 0.2.0 to later minor work. Native README/license/citation editors suffice for this milestone. Opt-in local and synthetic SSH observations are recorded in [0.2.0 validation](docs/MILESTONE_0.2.0.md), with host/UI/cache limits explicit.

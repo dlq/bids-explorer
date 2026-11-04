@@ -1,0 +1,50 @@
+.table-scroll {
+  overflow: auto;
+  max-height: 65vh;
+  margin: 16px 0;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td,
+th {
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid var(--vscode-panel-border, #8884);
+  padding: 9px 12px;
+  min-width: 100px;
+  max-width: 360px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--vscode-editor-background);
+}
+.missing,
+.note {
+  color: var(--vscode-descriptionForeground);
+}
+.source-path {
+  overflow-wrap: anywhere;
+}
+details {
+  border-bottom: 1px solid var(--vscode-panel-border, #8884);
+  padding: 12px 0;
+}
+details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 300px;
+  overflow: auto;
+}
+details p {
+  overflow-wrap: anywhere;
+  color: var(--vscode-descriptionForeground);
+}
+button,
+input {
+  margin: 4px;
+}

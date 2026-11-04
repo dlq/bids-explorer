@@ -18,10 +18,44 @@ import { pathToFileURL } from 'node:url';
 import {
   gradientPair,
   loadGradientPair,
+  loadExplicitGradientPair,
+  loadInheritedGradientPair,
   readGradientText,
   MAX_GRADIENT_BYTES,
   type GradientReadIO,
 } from '../../sources/gradientFiles';
+import { mkdir } from 'node:fs/promises';
+
+void test('inherited gradients may have different stems/directories and are re-resolved after source changes', async () => {
+  await fixture(async (folder, uri) => {
+    await mkdir(join(folder, 'sub-01/dwi'), { recursive: true });
+    const image = 'sub-01/dwi/sub-01_dwi.nii';
+    await writeFile(join(folder, image), 'never read MRI bytes');
+    const entry = {
+      datasetUri: pathToFileURL(folder).href,
+      uri: pathToFileURL(join(folder, image)).href,
+      relativePath: image,
+      name: 'sub-01_dwi.nii',
+      kind: 'file' as const,
+    };
+    await writeFile(join(folder, 'sub-01/dwi/sub-01_dwi.bval'), '0 1000 2000');
+    const data = await loadInheritedGradientPair(entry, signal());
+    assert.equal(data.imageUri, entry.uri);
+    assert.match(data.bvalUri, /sub-01_dwi.bval$/);
+    assert.equal(data.bvecUri, gradientPair(uri).bvecUri);
+    assert.equal(data.table.volumes.length, 3);
+    await writeFile(join(folder, 'sub-01/dwi/dwi.bval'), '0 1000 2000');
+    await assert.rejects(loadInheritedGradientPair(entry, signal()), /unambiguously/);
+    await rm(join(folder, 'sub-01/dwi/dwi.bval'));
+    await rm(join(folder, 'dwi.bvec'));
+    await assert.rejects(loadInheritedGradientPair(entry, signal()), /unambiguously/);
+    await assert.rejects(loadExplicitGradientPair(uri, uri, signal()), /bval and bvec/);
+    await assert.rejects(
+      loadExplicitGradientPair(uri.replace(/\.bval$/, '.json'), uri, signal()),
+      /bval and bvec/,
+    );
+  });
+});
 
 const signal = (): AbortSignal => new AbortController().signal;
 async function fixture(run: (folder: string, uri: string) => Promise<void>): Promise<void> {

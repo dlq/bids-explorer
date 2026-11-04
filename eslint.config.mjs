@@ -20,7 +20,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/ui/gradientClient.ts'],
+    files: [
+      'src/ui/gradientClient.ts',
+      'src/ui/metadataClient.ts',
+      'src/ui/tableClient.ts',
+      'src/ui/documentClient.ts',
+    ],
     languageOptions: {
       parserOptions: {
         projectService: false,

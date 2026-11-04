@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for development toward `0.2.0`, after the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -11,7 +11,7 @@ This is contributor documentation for the locally tagged `v0.1.0` milestone. The
 
 Display name: **BIDS Explorer**; package/directory: `bids-explorer`; commands/settings namespace: `bidsExplorer`. The namespace is reserved for future settings; none are contributed yet.
 
-The repository includes a TypeScript workspace extension, a read-only local directory browser, and build/test tooling. Directory registration and browsing are implemented; inherited metadata, archive readers and persistent indexing are not. Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
+The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented; broader relationships, archive readers and persistent indexing are not. Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
 
 ## Prerequisites and setup
 
@@ -31,7 +31,7 @@ npm run package           # Creates dist/bids-explorer-<version>.vsix
 
 The integration runner needs network access on its first run and a graphical session (CI uses Xvfb). If VS Code stable is already running and prevents CLI tests, close it or launch tests from VS Code's Extension Test Runner. Install the VSIX using **Extensions: Install from VSIX**. The `bids-explorer-dev` publisher is a development placeholder, not a Marketplace registration. No publication is configured. Packaging skips the license check for this private development preview; choose a license and real publisher before distribution.
 
-The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model is shared without a bundler or runtime dependencies. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/webview/`, with styles in `media/`.
+The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model and metadata message types are shared without a bundler or runtime dependencies. Type-only metadata/snapshot/revision contracts are `.d.ts` modules, keeping Node IO/parsing out of browser imports. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/webview/`, with styles in `media/`. The metadata entry is `out/webview/ui/metadataClient.js` and the table entry is `out/webview/ui/tableClient.js`; parsing runs on the host, using the shared bounded text reader and a lossless field scanner. Selected-file syntax/resource checks do not invoke a BIDS validator.
 
 To test an existing VS Code installation, set `BIDS_EXPLORER_TEST_VSCODE_PATH` to its absolute executable path before running `npm run test:integration`. This was used for current macOS VS Code, whose executable is named `Code` rather than the test downloader’s assumed `Electron`. The default still tests 1.96.0.
 
@@ -85,3 +85,7 @@ The current manifest version is `0.1.0`, tagged locally as `v0.1.0` without Mark
 See [TEST_DATA.md](TEST_DATA.md) for the downloaded ds000003 anatomical subset and full ds000114 public inventory, provenance, verification and opt-in test boundaries. Both are outside the repository and are not used by ordinary automated tests. The local source adapter has been smoke-tested against both; see [LOCAL_BROWSER_TESTING.md](LOCAL_BROWSER_TESTING.md).
 
 See [0.1.0 milestone validation](MILESTONE_0.1.0.md) for current test results, the authorized Remote SSH/MRI smoke test and measured cache behavior.
+
+Tree descriptions use a VS Code-independent bounded work queue and source-backed JSON/table selectors. The extension passes a loader to the tree provider; getTreeItem never awaits metadata. Native tree-change events update individual entries after publication. Participant/session column settings are resource-scoped and default to empty. Source Details includes description snapshots/provenance. New metadata sources must retain ambiguity rules, bounds, cancellation and refresh/generation checks; shared/persistent metadata caching and large/SSH throughput remain future work.
+
+History and the inherited-metadata inspector use `DocumentPreviewManager` with `out/webview/ui/documentClient.js`. The host supplies bounded records and captured source/action choices; the browser only renders text and dispatches fixed actions. The history parser and inherited-gradient source resolver remain VS Code-independent and unit-tested. Reload failures retain prior snapshots. Release observations and limitations live in [MILESTONE_0.2.0.md](MILESTONE_0.2.0.md).

@@ -1,0 +1,34 @@
+{
+  "dataset": "ds000114",
+  "source": "existing public test copy; read-only",
+  "recognizedFiles": 174,
+  "images": 140,
+  "taskImages": 100,
+  "taskDescriptions": 100,
+  "taskJobsCompleted": 100,
+  "listingMs": 23.755959000000004,
+  "cachedListingMs": 0.09012500000000045,
+  "additionalCachedDirectoryReads": 0,
+  "taskEnrichmentMsTwoWorkers": 98.332583,
+  "maxTimerDelayMs": 3.902916999999995,
+  "dwiInheritanceMs": 0.570791000000014,
+  "dwiStatus": "resolved",
+  "dwiCompanions": [
+    {
+      "extension": ".bval",
+      "status": "resolved",
+      "path": "dwi.bval"
+    },
+    {
+      "extension": ".bvec",
+      "status": "resolved",
+      "path": "dwi.bvec"
+    }
+  ],
+  "gradientReadMs": 1.091875000000016,
+  "gradientVolumes": 71,
+  "historySections": 6,
+  "sourceAttributesUnchanged": true,
+  "metadataHashesUnchanged": true,
+  "limitations": "Host API timings, OS cache uncontrolled; timer delay is an event-loop proxy, not native UI, network or first-frame latency. MRI bytes were not read."
+}

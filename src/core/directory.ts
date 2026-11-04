@@ -1,3 +1,6 @@
+import { combinedFolder } from './entities';
+import type { SourceRevision } from './sourceRevision';
+export type { SourceRevision } from './sourceRevision';
 import { setImmediate } from 'node:timers/promises';
 
 export type EntryKind = 'directory' | 'file' | 'symlink' | 'other';
@@ -7,10 +10,6 @@ export interface DirectoryEntry {
   readonly relativePath: string;
   readonly name: string;
   readonly kind: EntryKind;
-}
-export interface SourceRevision {
-  readonly size: number;
-  readonly modifiedAt: number;
 }
 export interface DirectorySource {
   root(uri: string): Promise<DirectoryEntry>;
@@ -22,14 +21,15 @@ export function entryKey(entry: DirectoryEntry): string {
   return JSON.stringify([entry.datasetUri, entry.relativePath]);
 }
 
-/** Canonical directory labels only. No normalization or implied BIDS validation. */
+/** Folder labels, including explicitly marked combined names. No path normalization or validation. */
 export function describeEntry(entry: DirectoryEntry): string {
   if (entry.kind !== 'directory') return entry.kind;
   if (entry.relativePath === '') return 'Dataset';
   if (entry.relativePath.startsWith('derivatives/') && entry.relativePath.split('/').length === 2)
     return 'Pipeline';
-  if (/^sub-[a-zA-Z0-9]+$/.test(entry.name)) return 'Participant';
-  if (/^ses-[a-zA-Z0-9]+$/.test(entry.name)) return 'Session';
+  if (combinedFolder(entry.name)) return 'Participant / session (combined)';
+  if (/^sub-[a-zA-Z0-9+]+$/.test(entry.name)) return 'Participant';
+  if (/^ses-[a-zA-Z0-9+]+$/.test(entry.name)) return 'Session';
   if (entry.name === 'derivatives' && entry.relativePath === 'derivatives') return 'Derivatives';
   const modalities: Record<string, string> = {
     anat: 'Anatomical',
@@ -87,7 +87,7 @@ export async function orderEntries(
   return Object.freeze(runs[0] ?? []);
 }
 
-/** Records only explicit canonical folder entities, without resolving filename conflicts. */
+/** Canonical folder evidence below the root/pipeline boundary; filename conflicts are separate. */
 export function folderEntities(entry: DirectoryEntry): readonly {
   entity: 'subject' | 'session';
   value: string;
@@ -96,8 +96,8 @@ export function folderEntities(entry: DirectoryEntry): readonly {
   const segments = entry.relativePath ? entry.relativePath.split('/') : [];
   if (entry.kind !== 'directory') segments.pop();
   const result: { entity: 'subject' | 'session'; value: string; originalFolderPath: string }[] = [];
-  for (let i = 0; i < segments.length; i++) {
-    const match = /^(sub|ses)-([a-zA-Z0-9]+)$/.exec(segments[i]);
+  for (let i = segments[0] === 'derivatives' ? 2 : 0; i < segments.length; i++) {
+    const match = /^(sub|ses)-([a-zA-Z0-9+]+)$/.exec(segments[i]);
     if (match)
       result.push({
         entity: match[1] === 'sub' ? 'subject' : 'session',
@@ -118,9 +118,9 @@ function bidsDirectoryRole(relativePath: string): string | undefined {
     if (parts.length === 2) return 'Pipeline';
     parts = parts.slice(2);
   }
-  if (!/^sub-[a-zA-Z0-9]+$/.test(parts[0])) return undefined;
+  if (!/^sub-[a-zA-Z0-9+]+$/.test(parts[0]) && !combinedFolder(parts[0])) return undefined;
   if (parts.length === 1) return 'Participant';
-  if (/^ses-[a-zA-Z0-9]+$/.test(parts[1])) {
+  if (/^ses-[a-zA-Z0-9+]+$/.test(parts[1])) {
     if (parts.length === 2) return 'Session';
     parts = [parts[0], ...parts.slice(2)];
   }
@@ -147,7 +147,7 @@ export function isRecognizedBidsEntry(entry: DirectoryEntry): boolean {
 }
 
 function bidsFileName(name: string): boolean {
-  return /^(?:[a-z][a-z0-9]*-[a-zA-Z0-9]+_)*(?:T1w|T2w|T2starw|FLAIR|FLASH|PDw|PDT2|inplaneT1|inplaneT2|angio|dwi|bold|sbref|epi|phasediff|phase[12]|magnitude[12]?|fieldmap|mask|dseg|probseg|asl|m0scan|aslcontext|events|channels|electrodes|coordsystem|sessions|scans|physio|stim|eeg|meg|ieeg|pet)\.(?:nii(?:\.gz)?|json|tsv(?:\.gz)?|bval|bvec|edf|bdf|vhdr|vmrk|eeg|set|fdt|fif|snirf|gii|h5)$/.test(
+  return /^(?:[a-z][a-z0-9]*-[a-zA-Z0-9+]+_)*(?:T1w|T2w|T2starw|FLAIR|FLASH|PDw|PDT2|inplaneT1|inplaneT2|angio|dwi|bold|sbref|epi|phasediff|phase[12]|magnitude[12]?|fieldmap|mask|dseg|probseg|asl|m0scan|aslcontext|events|channels|electrodes|coordsystem|sessions|scans|physio|stim|eeg|meg|ieeg|pet)\.(?:nii(?:\.gz)?|json|tsv(?:\.gz)?|bval|bvec|edf|bdf|vhdr|vmrk|eeg|set|fdt|fif|snirf|gii|h5)$/.test(
     name,
   );
 }

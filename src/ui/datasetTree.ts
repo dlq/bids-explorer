@@ -1,4 +1,12 @@
 import * as vscode from 'vscode';
+import { isHistoryFile } from './historyPreview';
+import {
+  DescriptionQueue,
+  type DescriptionLoader,
+  type DescriptionSnapshot,
+} from '../core/descriptionQueue';
+import { isParticipantsTable, isSummaryTable } from './tablePreview';
+import { isDatasetDescription } from './metadataPreview';
 import { isGradientFile } from './gradientPreview';
 import { DatasetBrowser } from '../core/browser';
 import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory';
@@ -7,6 +15,7 @@ import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory'
 const directoryIcons: Readonly<Record<string, string>> = {
   Dataset: 'database',
   Participant: 'person',
+  'Participant / session (combined)': 'person',
   Session: 'calendar',
   Derivatives: 'git-branch',
   Pipeline: 'settings-gear',
@@ -40,7 +49,25 @@ export class DatasetTreeProvider
   readonly onDidChangeTreeData = this.changes.event;
   private readonly elements = new Map<string, EntryElement>();
 
-  constructor(readonly browser: DatasetBrowser) {}
+  readonly descriptions?: DescriptionQueue;
+  constructor(
+    readonly browser: DatasetBrowser,
+    loadDescription?: DescriptionLoader,
+    private readonly acceptsDescription: (entry: DirectoryEntry) => boolean = () => true,
+  ) {
+    if (loadDescription)
+      this.descriptions = new DescriptionQueue(loadDescription, (entry) => {
+        const element = this.elements.get(entryKey(entry));
+        if (element) this.changes.fire(element);
+      });
+  }
+  descriptionSnapshot(entry: DirectoryEntry): DescriptionSnapshot | undefined {
+    return this.descriptions?.snapshot(entry);
+  }
+  refreshDescriptions(): void {
+    this.descriptions?.clear();
+    this.changes.fire(undefined);
+  }
 
   element(entry: DirectoryEntry): EntryElement {
     const key = entryKey(entry);
@@ -79,6 +106,13 @@ export class DatasetTreeProvider
     item.contextValue =
       entry.relativePath === '' ? 'dataset' : isDirectory ? 'directory' : entry.kind;
     if (entry.kind === 'file' && isGradientFile(item.resourceUri)) item.contextValue = 'gradient';
+    if (entry.kind === 'file' && isDatasetDescription(item.resourceUri))
+      item.contextValue = 'metadata';
+    if (entry.kind === 'file' && isSummaryTable(item.resourceUri))
+      item.contextValue = 'summaryTable';
+    if (entry.kind === 'file' && isParticipantsTable(item.resourceUri))
+      item.contextValue = 'participants';
+    if (entry.kind === 'file' && isHistoryFile(item.resourceUri)) item.contextValue = 'history';
     item.description = describeEntry(entry);
     item.tooltip = `${entry.uri}\n${isDirectory ? 'Lazy browsing: only expanded folders are read. Descendants are not indexed. Use Show Source Details for current listing coverage.' : entry.kind}`;
     if (isDirectory)
@@ -88,6 +122,21 @@ export class DatasetTreeProvider
       item.description = `${entry.kind} · not followed`;
     } else
       item.command = { command: 'bidsExplorer.openFile', title: 'Open file', arguments: [element] };
+    if (this.acceptsDescription(entry)) {
+      const metadata = this.descriptions?.request(entry);
+      if (metadata?.description) {
+        item.description = `${describeEntry(entry)} · ${metadata.description.text}`;
+        item.tooltip +=
+          `\nMetadata description: ${metadata.description.text}\n` +
+          metadata.description.evidence
+            .map(
+              (source) =>
+                `${source.sourceUri} · ${source.field ?? source.column} ${source.line ? '(line ' + source.line + ')' : source.pointer}`,
+            )
+            .join('\n') +
+          '\nShow Source Details for recorded values, source revisions and contributing sources.';
+      }
+    }
     return item;
   }
 
@@ -132,23 +181,31 @@ export class DatasetTreeProvider
 
   refresh(element?: TreeElement): void {
     const target = element?.type === 'message' ? element.parent : element;
+    this.descriptions?.clear(target?.entry);
     this.browser.refresh(target?.entry);
     this.changes.fire(target);
   }
 
   registrationChanged(): void {
     const datasets = new Set(this.browser.datasets().map((entry) => entry.datasetUri));
+    const removed = new Map<string, DirectoryEntry>();
     for (const [key, element] of this.elements)
-      if (!datasets.has(element.entry.datasetUri)) this.elements.delete(key);
+      if (!datasets.has(element.entry.datasetUri)) {
+        removed.set(element.entry.datasetUri, element.entry);
+        this.elements.delete(key);
+      }
+    for (const entry of removed.values()) this.descriptions?.clear({ ...entry, relativePath: '' });
     this.changes.fire(undefined);
   }
 
   cancelPending(): void {
     this.browser.cancel();
+    this.descriptions?.cancel();
   }
 
   dispose(): void {
     this.browser.cancel();
+    this.descriptions?.clear();
     this.elements.clear();
     this.changes.dispose();
   }

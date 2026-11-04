@@ -1,0 +1,46 @@
+.field-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.field-heading label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.metadata-field {
+  border: 1px solid var(--vscode-panel-border, #8884);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.metadata-field h3 {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.field-type {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+.metadata-field pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+}
+.source-path {
+  overflow-wrap: anywhere;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+#duplicates {
+  padding: 12px;
+  border: 1px solid var(--vscode-editorWarning-foreground);
+  border-radius: 6px;
+}
+#filter {
+  width: min(240px, 45vw);
+}
