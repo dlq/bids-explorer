@@ -2,7 +2,7 @@
 
 ## Version source and status
 
-`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current `0.1.0` is a local tagged release (`v0.1.0`), not a Marketplace or GitHub publication. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
+`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `0.2.0`, prepared locally but not tagged or published. The last existing tag remains `v0.1.0`; there is no Marketplace or GitHub publication. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
 
 Use three numeric components: `major.minor.patch`. Do not bump the version for every commit. Node, TypeScript, archive tool and `engines.vscode` versions are separate compatibility/development requirements; they do not track the extension version.
 
@@ -19,10 +19,10 @@ Documentation, internal refactoring and tooling improvements normally wait for t
 
 ## Release names and artifacts
 
-- Manifest version: `0.1.0`.
-- Git tag and GitHub release name: `v0.1.0`.
-- VSIX: `bids-explorer-0.1.0.vsix`, produced under `dist/` by `npm run package` using the manifest version.
-- Changelog heading: `## [0.1.0] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
+- Manifest version: `0.2.0`.
+- Intended tag/release name when authorized: `v0.2.0`. Preparation does not create it.
+- VSIX: `bids-explorer-0.2.0.vsix`, produced under `dist/` by `npm run package` using the manifest version.
+- Changelog heading: `## [0.2.0] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
 
 Local development builds can share the unreleased manifest version. Use their commit SHA to distinguish them; they are not immutable releases. Release artifacts must come from the tagged commit after checks pass. Do not overwrite a published version or reuse a release tag; ship a new patch instead.
 

@@ -1,8 +1,10 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.1.0` is a local tagged release, not a Marketplace or GitHub publication.
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.2.0` is prepared locally; `v0.1.0` remains the last existing tag. Neither milestone is published to the Marketplace or GitHub.
 
 ## Unreleased
+
+## [0.2.0] - 2026-11-03
 
 ### Added
 
@@ -23,6 +25,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 - Started the `0.2.0` metadata slice with a read-only dataset-description preview by default from the BIDS tree, also available explicitly from context menus and the command palette. Raw JSON remains accessible; unusable descriptors fall back to the original JSON with a warning. It shows source snapshots, BIDS specification labels, original JSON fields, duplicate-name notices, filtering/paging and raw-text opening.
 - Added a shared bounded text reader and literal metadata contracts that preserve field provenance, duplicate occurrences and numeric tokens without coercion. Preview prerequisites and limits are separate from BIDS conformance validation; source-dataset relationships remain planned.
+
+### Fixed
+
+- Serialize native Explorer workspace-folder handoffs and wait for confirmed workspace events when another update is pending, avoiding intermittent rejected additions. A real extension-host regression covers a concurrent workspace edit.
 
 ## [0.1.0] - 2026-11-03
 

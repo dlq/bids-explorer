@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for development toward `0.2.0`, after the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for local `0.2.0` preparation, after the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 

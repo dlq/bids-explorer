@@ -2,7 +2,7 @@
 
 A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; ZIP, tarball and SquashFS readers are planned.
 
-**Status: development toward `0.2.0`, after the local `v0.1.0` tag; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
+**Status: `0.2.0` prepared locally; not tagged or published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
 ## Available today
 
@@ -126,7 +126,7 @@ See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observatio
 | Proposed version | Planned capability                                                                      |
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
-| `0.2.0`          | Richer BIDS interpretation and inherited metadata                                       |
+| `0.2.0`          | Completed metadata milestone; local release prepared                                    |
 | `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections              |
 | `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
 | `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
@@ -144,3 +144,5 @@ The `0.1.0` milestone is implemented; later rows are roadmap targets, not curren
 - `SECURITY.md`: security checks and future vulnerability-reporting setup.
 
 A public issue tracker and private vulnerability-reporting channel will be linked when the GitHub repository is available. Do not share private datasets, credentials or sensitive clinical information in public reports.
+
+In the source checkout, `docs/MILESTONE_0.2.0.md` records the completed scope, compatibility checks, public-data/SSH host observations and remaining limits.

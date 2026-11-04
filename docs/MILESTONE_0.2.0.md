@@ -17,10 +17,10 @@ The release does not validate/fix datasets, follow scan-row paths, normalize sou
 
 - Clean `npm ci` from the lockfile succeeded.
 - `npm run check`: formatting, both host/browser typechecks, ESLint and **82 unit tests** passed. Every gated production file meets the 95% line/statement/function and 90% branch thresholds; new history/gradient source logic has full coverage. UI/extension code uses the separate integration layer, not this numeric gate.
-- **23 extension-host integration tests passed on VS Code 1.96.0 and the available stable 1.144.1 installation.** Tests load the packaged browser modules and exercise real DOM controls, raw-source actions, reload retention, settings, cancellation and stale-result suppression.
+- **24 extension-host integration tests passed on VS Code 1.96.0 and the available stable 1.144.1 installation.** Tests load the packaged browser modules and exercise real DOM controls, raw-source actions, reload retention, settings, cancellation and stale-result suppression. Native Explorer handoff also has a concurrent-workspace-update regression; folder membership snapshots are not treated as confirmation of an outstanding edit.
 - Semgrep rule fixtures and source scan passed: three configured process/eval rules, zero findings. This is not a general security certification.
 - `npm audit --audit-level=high` passed: zero high/critical findings. The existing development-toolchain findings remain **17 moderate and one low**; no runtime npm dependencies are shipped. Breaking forced dependency upgrades were not applied for this milestone. Publisher/license/public repository choices remain distribution prerequisites.
-- VSIX packaging and archive-content/version checks are part of final release preparation. Test fixtures, `.local`, dependency trees and source maps are excluded.
+- The local VSIX is `dist/bids-explorer-0.2.0.vsix`; its manifest and filename match 0.2.0, and packaging/archive-content checks pass. Test fixtures, `.local`, dependency trees and source maps are excluded.
 
 ## Public ds000114 metadata exercise
 
@@ -52,6 +52,6 @@ Root listing took 39.59 ms; cached revisit took 0.0079 ms with no additional dir
 
 ## Release state and follow-on work
 
-The agreed 0.2.0 feature scope and checks above are complete. Finalize the manifest/lockfile, release notes and matching local VSIX. GitHub/Marketplace publication is not configured. No release tag should be inferred from an ordinary implementation or preparation commit.
+The agreed 0.2.0 feature scope and checks above are complete. The manifest/lockfile, dated release notes and matching local VSIX are prepared; the last existing tag remains v0.1.0. GitHub/Marketplace publication is not configured. No release tag should be inferred from an ordinary implementation or preparation commit.
 
 Continue with the ZIP/declared-collection milestone next. Additional relationships and richer shared metadata caching should get explicit later-minor scope rather than expanding 0.2.0 indefinitely. Keep NiiVue interface/streaming decisions in the viewer milestone and dataset validation/edit workflows after the read-only core.

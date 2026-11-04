@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { WorkspaceFolderHandoff } from './ui/workspaceFolders';
 import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
 import { descriptionPlan, type DescriptionOptions } from './core/treeDescriptions';
 import { loadTreeDescription } from './sources/treeDescriptions';
@@ -27,6 +28,8 @@ export function activate(context: vscode.ExtensionContext): {
   provider: DatasetTreeProvider;
   ready: Promise<void>;
 } {
+  const handoff = new WorkspaceFolderHandoff();
+  context.subscriptions.push(handoff);
   const history = new HistoryPreviewManager(context.extensionUri);
   context.subscriptions.push(history);
   const tables = new TablePreviewManager(context.extensionUri);
@@ -163,23 +166,7 @@ export function activate(context: vscode.ExtensionContext): {
       const element = target?.type === 'message' ? target.parent : target;
       if (element?.type !== 'entry') return;
       const uri = vscode.Uri.parse(element.entry.datasetUri);
-      const folders = vscode.workspace.workspaceFolders ?? [];
-      const alreadyOpen = folders.some((folder) => folder.uri.toString() === uri.toString());
-      if (!alreadyOpen) {
-        await new Promise<void>((resolve, reject) => {
-          const listener = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
-            if (event.added.some((folder) => folder.uri.toString() === uri.toString())) {
-              listener.dispose();
-              resolve();
-            }
-          });
-          context.subscriptions.push(listener);
-          if (!vscode.workspace.updateWorkspaceFolders(folders.length, 0, { uri })) {
-            listener.dispose();
-            reject(new Error('Could not add the dataset to the workspace.'));
-          }
-        });
-      }
+      await handoff.add(uri);
       await vscode.commands.executeCommand('revealInExplorer', uri);
     }),
     vscode.commands.registerCommand(

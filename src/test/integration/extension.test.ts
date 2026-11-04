@@ -72,13 +72,18 @@ suite('Automatic workspace recognition', () => {
       index = vscode.workspace.workspaceFolders!.findIndex(
         (item) => item.uri.toString() === uri.toString(),
       );
-      assert.ok(vscode.workspace.updateWorkspaceFolders(index, 1));
-      await waitFor(
-        () =>
-          !vscode.workspace.workspaceFolders!.some(
-            (item) => item.uri.toString() === uri.toString(),
-          ),
-      );
+      await new Promise<void>((resolve, reject) => {
+        const listener = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+          if (event.removed.some((item) => item.uri.toString() === uri.toString())) {
+            listener.dispose();
+            resolve();
+          }
+        });
+        if (!vscode.workspace.updateWorkspaceFolders(index, 1)) {
+          listener.dispose();
+          reject(new Error('Could not request fixture workspace removal'));
+        }
+      });
       // A Refresh waits for any recognition work; manually registered roots remain.
       await vscode.commands.executeCommand('bidsExplorer.refresh');
       const retained = provider.browser.datasets().find((entry) => entry.uri === uri.toString());
@@ -102,6 +107,56 @@ suite('Automatic workspace recognition', () => {
 });
 
 suite('BIDS Explorer directory workflows', () => {
+  test('native Explorer handoff tolerates an unconfirmed workspace update', async function () {
+    this.timeout(15000);
+    const extension = vscode.extensions.getExtension<ExplorerApi>(
+      'bids-explorer-dev.bids-explorer',
+    )!;
+    const { provider } = await extension.activate();
+    const first = await mkdtemp(join(tmpdir(), 'bids-pending-workspace-'));
+    const second = await mkdtemp(join(tmpdir(), 'bids-handoff-workspace-'));
+    const firstUri = vscode.Uri.file(first),
+      secondUri = vscode.Uri.file(second);
+    try {
+      const root = await provider.browser.source.root(secondUri.toString());
+      assert.ok(
+        vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders!.length, 0, {
+          uri: firstUri,
+        }),
+      );
+      await vscode.commands.executeCommand(
+        'bidsExplorer.showInFileExplorer',
+        provider.element(root),
+      );
+      assert.ok(
+        vscode.workspace.workspaceFolders!.some(
+          (folder) => folder.uri.toString() === secondUri.toString(),
+        ),
+      );
+    } finally {
+      for (const uri of [firstUri, secondUri]) {
+        const index = vscode.workspace.workspaceFolders!.findIndex(
+          (folder) => folder.uri.toString() === uri.toString(),
+        );
+        if (index >= 0)
+          await new Promise<void>((resolve, reject) => {
+            const listener = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+              if (event.removed.some((folder) => folder.uri.toString() === uri.toString())) {
+                listener.dispose();
+                resolve();
+              }
+            });
+            if (!vscode.workspace.updateWorkspaceFolders(index, 1)) {
+              listener.dispose();
+              reject(new Error('Could not remove handoff fixture'));
+            }
+          });
+      }
+      await rm(first, { recursive: true, force: true });
+      await rm(second, { recursive: true, force: true });
+    }
+  });
+
   test('commands register a real dataset, open a file, show provenance and remove registration without deleting data', async () => {
     const extension = vscode.extensions.getExtension<ExplorerApi>(
       'bids-explorer-dev.bids-explorer',
