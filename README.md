@@ -2,7 +2,7 @@
 
 A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; ZIP, tarball and SquashFS readers are planned.
 
-**Status: `0.2.0` prepared locally; not tagged or published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
+**Status: `0.2.0` released locally as `v0.2.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
 ## Available today
 
@@ -132,18 +132,18 @@ See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observatio
 | Proposed version | Planned capability                                                                      |
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
-| `0.2.0`          | Completed metadata milestone; local release prepared                                    |
+| `0.2.0`          | Completed metadata milestone; tagged locally                                            |
 | `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections              |
 | `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
 | `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
 | `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-The `0.1.0` milestone is implemented; later rows are roadmap targets, not current features or scheduled releases. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The `0.1.0` and `0.2.0` milestones are implemented; `0.3.0` and later rows are roadmap targets, not current features or scheduled releases. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 
-- `CHANGELOG.md`: implemented changes, currently Unreleased.
+- `CHANGELOG.md`: released changes and new Unreleased work.
 - `PLANS.md`: proposed versions and readiness checks.
 - `docs/DEVELOPMENT.md`: contributor setup, checks and packaging.
 - `docs/TEST_DATA.md`: public datasets for manual/opt-in smoke tests.
