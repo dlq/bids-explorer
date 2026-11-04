@@ -4,6 +4,14 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+### Added
+
+- Added recorded JSON metadata previews for task sidecars and table dictionaries, plus bounded `*_events.tsv` previews with inherited column dictionaries. Event values and repeated onsets remain literal; no timeline or image/run association is inferred.
+
+### Changed
+
+- Simplified tree hovers into short, formatted summaries: name and description first, followed by dataset-relative location and source filename. Full URIs and internal JSON pointers remain in Source Details. Dataset text is escaped, with HTML and Markdown trust disabled.
+
 ## [0.2.0] - 2026-11-03
 
 ### Added

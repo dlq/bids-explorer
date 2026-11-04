@@ -13,6 +13,9 @@ const parse = (text: string) => parseTable(snapshot(text), new AbortController()
 
 void test('summary table families and identifier columns stay explicit; scan paths remain uninterpreted strings', async () => {
   assert.equal(summaryTableKind('participants.tsv'), 'participants');
+  assert.equal(summaryTableKind('task-rest_events.tsv'), 'events');
+  assert.equal(summaryTableKind('sub-01_ses-002_task-rest_events.tsv'), 'events');
+  assert.equal(summaryTableKind('events.tsv'), 'events');
   assert.equal(summaryTableKind('sub-001_sessions.tsv'), 'sessions');
   assert.equal(summaryTableKind('sub-A+B_ses-02_scans.tsv'), 'scans');
   assert.equal(summaryTableKind('sub-001_scans.tsv'), 'scans');
@@ -21,7 +24,6 @@ void test('summary table families and identifier columns stay explicit; scan pat
     'scans.tsv',
     'sub-01_ses-02_sessions.tsv',
     'sub-01_sessions.tsv.gz',
-    'sub-01_task-rest_events.tsv',
     'sub-01_scans.json',
     'sub-01_bad_scans.tsv',
   ])

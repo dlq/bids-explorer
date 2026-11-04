@@ -6,7 +6,7 @@ import { loadParticipants } from './participants';
 import { loadInheritedMetadata } from './inheritedMetadata';
 import { readTextSnapshot } from './previewText';
 
-/** Session/scan dictionaries use the same bounded, source-scoped inheritance resolver as images. */
+/** Session/scan/event dictionaries use the same bounded, source-scoped inheritance resolver as images. */
 export async function loadSummaryTable(
   uri: string,
   signal: AbortSignal,
@@ -14,17 +14,19 @@ export async function loadSummaryTable(
 ): Promise<SummaryTablePreview> {
   const kind = summaryTableKind(basename(fileURLToPath(uri)));
   if (!kind)
-    throw new Error('Choose participants.tsv, sub-…_sessions.tsv or sub-…[_ses-…]_scans.tsv.');
+    throw new Error(
+      'Choose participants.tsv, sub-…_sessions.tsv sub-…[_ses-…]_scans.tsv or *_events.tsv.',
+    );
   if (kind === 'participants') return loadParticipants(uri, signal);
   if (!datasetUri)
     throw new Error(
-      'Add the containing dataset to BIDS Explorer before previewing a session or scan table.',
+      'Add the containing dataset to BIDS Explorer before previewing a session, scan or event table.',
     );
   const result = await loadInheritedMetadata(datasetUri, uri, signal);
   const table = await parseTable(
     await readTextSnapshot(uri, signal),
     signal,
-    kind === 'sessions' ? 'session_id' : 'filename',
+    kind === 'sessions' ? 'session_id' : kind === 'scans' ? 'filename' : '',
   );
   const sources = Object.freeze(
     result.sources.map((source) =>

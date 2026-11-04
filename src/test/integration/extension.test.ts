@@ -166,6 +166,7 @@ suite('BIDS Explorer directory workflows', () => {
     const folder = await mkdtemp(join(tmpdir(), 'bids-extension-'));
     try {
       await mkdir(join(folder, 'sub-01', 'anat'), { recursive: true });
+      await writeFile(join(folder, 'README'), 'Synthetic dataset README\n');
       await writeFile(join(folder, 'sub-01', 'anat', 'sub-01_T1w.json'), '{}');
       await writeFile(
         join(folder, 'dataset_description.json'),
@@ -185,7 +186,10 @@ suite('BIDS Explorer directory workflows', () => {
       const rows = await provider.getChildren(root);
       const participant = rows.find((e) => e.type === 'entry' && e.entry.name === 'sub-01')!;
       const anatomy = (await provider.getChildren(participant))[0];
-      const file = (await provider.getChildren(anatomy))[0] as EntryElement;
+      await provider.getChildren(anatomy);
+      const file = rows.find(
+        (item) => item.type === 'entry' && item.entry.name === 'README',
+      ) as EntryElement;
       await vscode.commands.executeCommand('bidsExplorer.openFile', file);
       assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), file.entry.uri);
       await vscode.commands.executeCommand('bidsExplorer.showDetails', file);

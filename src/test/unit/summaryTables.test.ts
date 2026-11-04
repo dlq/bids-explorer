@@ -69,6 +69,19 @@ void test('session and scan previews resolve dictionary inheritance with provena
       loadSummaryTable(uri('sub-001/sub-001_sessions.tsv'), new AbortController().signal),
       /Add the containing dataset/,
     );
+    await put(
+      'task-rest_events.tsv',
+      'onset\tduration\ttrial_type\n0.000\t1.2\tA\n0.000\t1.2\tB\n-1.0\tn/a\tNA',
+    );
+    await put('task-rest_events.json', '{"duration":{"Description":"Event duration","Units":"s"}}');
+    const events = await load('task-rest_events.tsv');
+    assert.equal(events.kind, 'events');
+    assert.equal(events.table.identifierColumn, '');
+    assert.deepEqual(events.table.duplicateIds, []);
+    assert.equal(events.table.rows[0].cells[0], '0.000');
+    assert.equal(events.table.rows[2].cells[0], '-1.0');
+    assert.equal(events.dictionary.status, 'loaded');
+    assert.equal(events.dictionary.fields?.[0].sourceUri, uri('task-rest_events.json'));
     await assert.rejects(load('other.tsv'), /Choose/);
     const abort = new AbortController();
     abort.abort();

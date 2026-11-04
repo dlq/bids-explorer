@@ -108,7 +108,7 @@ function render(): void {
   definitions.replaceChildren();
   element('dictionary-status').textContent =
     dictionary?.status === 'loaded'
-      ? 'Definitions for the displayed columns, with source provenance. Session/scan dictionaries use BIDS inheritance; unresolved dictionaries have no selected values. No units, level labels or defaults are applied to cells.'
+      ? 'Definitions for the displayed columns, with source provenance. Session/scan/event dictionaries use BIDS inheritance; unresolved dictionaries have no selected values. No units, level labels or defaults are applied to cells.'
       : `Dictionary ${dictionary?.status ?? 'unavailable'}${dictionary?.error ? ': ' + short(dictionary.error) : ''}`;
   for (const i of columns) {
     const name = table.columns[i];
@@ -169,8 +169,13 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
       ? 'Sessions'
       : 'kind' in message && message.kind === 'scans'
         ? 'Scans'
-        : 'Participants';
+        : 'kind' in message && message.kind === 'events'
+          ? 'Events'
+          : 'Participants';
   table = message.table as TableSnapshot;
+  if ('kind' in message && message.kind === 'events')
+    element('table-note').textContent =
+      'Recorded events in source order. Onsets, durations and trial values remain literal; repeated onsets are allowed. No timeline, image/run association or time-unit conversion is inferred. n/a, empty and absent cells remain distinct.';
   element('filename').textContent = table.snapshot.sourceUri.split('/').at(-1)!;
   dictionary = message.dictionary as SummaryTablePreview['dictionary'];
   columnPage = Math.min(columnPage, Math.max(0, Math.ceil(table.columns.length / 12) - 1));

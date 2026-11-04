@@ -44,7 +44,7 @@ suite('Metadata-based tree descriptions', () => {
     try {
       await config.update('participantLabelColumn', '', vscode.ConfigurationTarget.Workspace);
       await config.update('sessionLabelColumn', '', vscode.ConfigurationTarget.Workspace);
-      await put('dataset_description.json', '{"Name":"Example <study>"}');
+      await put('dataset_description.json', '{"Name":"Example <study> [click](command:unsafe)"}');
       await put('participants.tsv', 'participant_id\tlabel\nsub-001\tAlice\nsub-01\tDifferent');
       await put('participants.json', '{"label":{"Description":"Explicit display label"}}');
       await put('sub-001/sub-001_sessions.tsv', 'session_id\tlabel\nses-002\tFollow-up');
@@ -64,6 +64,11 @@ suite('Metadata-based tree descriptions', () => {
       const initial = provider.getTreeItem(rootElement);
       assert.equal(initial.label, root.name);
       await described(rootElement, 'Example <study>');
+      const rootTooltip = provider.getTreeItem(rootElement).tooltip;
+      assert.ok(rootTooltip instanceof vscode.MarkdownString);
+      assert.ok(!rootTooltip.value.includes('[click](command:unsafe)'));
+      assert.equal(rootTooltip.isTrusted, false);
+      assert.equal(rootTooltip.supportHtml, false);
       assert.equal(provider.getTreeItem(rootElement).id, initial.id);
       assert.equal(provider.getTreeItem(rootElement).resourceUri?.toString(), root.uri);
       assert.equal(provider.getTreeItem(subject).description, 'Participant');
@@ -71,8 +76,14 @@ suite('Metadata-based tree descriptions', () => {
       await described(task, 'Resting state');
       assert.equal(provider.getTreeItem(task).label, 'sub-001_task-rest_bold.nii.gz');
       const tooltip = provider.getTreeItem(task).tooltip;
-      assert.equal(typeof tooltip, 'string');
-      assert.match(tooltip as string, /task-rest_bold.json/);
+      assert.ok(tooltip instanceof vscode.MarkdownString);
+      assert.equal(tooltip.isTrusted, false);
+      assert.equal(tooltip.supportHtml, false);
+      assert.match(tooltip.value, /Source: task/);
+      assert.ok(!tooltip.value.includes('file:///'));
+      assert.ok(!tooltip.value.includes('/TaskName'));
+      assert.ok(!tooltip.value.includes('Lazy browsing'));
+      assert.ok(tooltip.value.indexOf('Resting state') < tooltip.value.indexOf('Source:'));
       await config.update('participantLabelColumn', 'label', vscode.ConfigurationTarget.Workspace);
       await config.update('sessionLabelColumn', 'label', vscode.ConfigurationTarget.Workspace);
       await described(subject, 'Alice');

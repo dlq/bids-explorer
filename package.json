@@ -58,7 +58,7 @@
       },
       {
         "command": "bidsExplorer.previewMetadata",
-        "title": "BIDS Explorer: Preview Dataset Description"
+        "title": "BIDS Explorer: Preview JSON Metadata"
       },
       {
         "command": "bidsExplorer.inspectMetadata",
@@ -169,7 +169,7 @@
         },
         {
           "command": "bidsExplorer.previewMetadata",
-          "when": "resourceScheme == file && resourceFilename == dataset_description.json",
+          "when": "resourceScheme == file && resourceExtname == .json",
           "group": "navigation"
         },
         {
@@ -185,6 +185,11 @@
         {
           "command": "bidsExplorer.previewHistory",
           "when": "resourceScheme == file && resourceFilename == CHANGES",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.previewTable",
+          "when": "resourceScheme == file && resourceFilename =~ /(^|_)events\\.tsv$/",
           "group": "navigation"
         }
       ]

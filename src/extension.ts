@@ -19,7 +19,7 @@ import { DatasetTreeProvider, type TreeElement } from './ui/datasetTree';
 
 import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
 
-import { MetadataPreviewManager, isDatasetDescription } from './ui/metadataPreview';
+import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
 
 const registrationsKey = 'bidsExplorer.datasets.v1';
 
@@ -194,20 +194,19 @@ export function activate(context: vscode.ExtensionContext): {
         const uri =
           arg instanceof vscode.Uri
             ? arg
-            : active && isDatasetDescription(active)
+            : active && isJsonMetadata(active)
               ? active
               : element?.type === 'entry' && element.entry.kind === 'file'
                 ? vscode.Uri.parse(element.entry.uri)
                 : vscode.window.activeTextEditor?.document.uri;
-        if (!uri || !isDatasetDescription(uri)) {
-          void vscode.window.showInformationMessage(
-            'Select a dataset_description.json file to preview.',
-          );
+        if (!uri || !isJsonMetadata(uri)) {
+          void vscode.window.showInformationMessage('Select a JSON metadata file to preview.');
           return undefined;
         }
         try {
           return await metadata.open(uri);
         } catch (error) {
+          if (error instanceof Error && error.name === 'AbortError') return undefined;
           void vscode.window.showErrorMessage(
             `BIDS Explorer could not preview metadata: ${String(error)}`,
           );
@@ -229,7 +228,7 @@ export function activate(context: vscode.ExtensionContext): {
                 : active;
         if (!uri || !isSummaryTable(uri)) {
           void vscode.window.showInformationMessage(
-            'Select participants.tsv or a session/scan TSV table to preview.',
+            'Select participants.tsv or a session/scan/event TSV table to preview.',
           );
           return undefined;
         }
@@ -319,12 +318,13 @@ export function activate(context: vscode.ExtensionContext): {
             return undefined;
           }
         }
-        if (isDatasetDescription(uri)) {
+        if (isJsonMetadata(uri)) {
           try {
             return await metadata.open(uri);
           } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') return undefined;
             void vscode.window.showWarningMessage(
-              `Could not preview the dataset description; opening the original JSON instead. ${String(error)}`,
+              `Could not preview JSON metadata; opening the original JSON instead. ${String(error)}`,
             );
             await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
             return undefined;

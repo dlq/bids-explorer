@@ -17,6 +17,8 @@ function report(): void {
   if (!sourceUri) return;
   api.postMessage({
     type: 'rendered',
+    title: element('name').textContent,
+    fileName: element('file-name').textContent,
     sourceUri,
     fieldCount: fields.length,
     visibleCount: Math.min(20, filtered.length - page * 20),
@@ -132,7 +134,18 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   duplicateCount = new Set(fields.filter((field) => field.duplicated).map((field) => field.key))
     .size;
   element('name').textContent =
-    typeof summary.name === 'string' ? summary.name.slice(0, 200) : 'Dataset description';
+    typeof summary.name === 'string'
+      ? summary.name.slice(0, 200)
+      : 'documentKind' in message &&
+          message.documentKind === 'json-sidecar' &&
+          'fileName' in message &&
+          typeof message.fileName === 'string'
+        ? message.fileName.slice(0, 200)
+        : 'Dataset description';
+  element('file-name').textContent =
+    'fileName' in message && typeof message.fileName === 'string'
+      ? message.fileName
+      : 'dataset_description.json';
   const labels = [`${fields.length} recorded fields`];
   if (typeof summary.bidsVersion === 'string')
     labels.push('BIDS specification: ' + summary.bidsVersion.slice(0, 200));

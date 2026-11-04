@@ -2,13 +2,17 @@ import * as vscode from 'vscode';
 import { basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { loadDatasetDescription } from '../sources/datasetDescription';
+import { loadJsonMetadata } from '../sources/datasetDescription';
 
 export function isDatasetDescription(uri: vscode.Uri): boolean {
   return uri.scheme === 'file' && uri.path.split('/').at(-1) === 'dataset_description.json';
 }
 
-/** One read-only panel per physical descriptor, independent of any image viewer. */
+export function isJsonMetadata(uri: vscode.Uri): boolean {
+  return uri.scheme === 'file' && uri.path.endsWith('.json');
+}
+
+/** One read-only panel per physical JSON source, independent of any image viewer. */
 export class MetadataPreviewManager implements vscode.Disposable {
   private readonly panels = new Map<string, vscode.WebviewPanel>();
   private readonly pending = new Map<string, Promise<vscode.WebviewPanel>>();
@@ -34,7 +38,7 @@ export class MetadataPreviewManager implements vscode.Disposable {
   private async load(uri: vscode.Uri, controller: AbortController) {
     this.work.add(controller);
     try {
-      return await loadDatasetDescription(uri.toString(), controller.signal);
+      return await loadJsonMetadata(uri.toString(), controller.signal);
     } finally {
       this.work.delete(controller);
     }
@@ -45,7 +49,9 @@ export class MetadataPreviewManager implements vscode.Disposable {
     if (this.disposed) throw new Error('Metadata previews have been closed.');
     const panel = vscode.window.createWebviewPanel(
       'bidsExplorer.metadata',
-      'Metadata · ' + (basename(dirname(fileURLToPath(uri.toString()))) || 'Dataset'),
+      isDatasetDescription(uri)
+        ? 'Metadata · ' + (basename(dirname(fileURLToPath(uri.toString()))) || 'Dataset')
+        : 'JSON · ' + basename(fileURLToPath(uri.toString())),
       vscode.ViewColumn.Active,
       {
         enableScripts: true,
@@ -67,6 +73,8 @@ export class MetadataPreviewManager implements vscode.Disposable {
       };
       return panel.webview.postMessage({
         type: 'snapshot',
+        documentKind: data.kind,
+        fileName: basename(fileURLToPath(uri.toString())),
         source,
         fields: data.fields,
         summary: data.summary,
@@ -136,7 +144,7 @@ function metadataHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string
   return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${webview.cspSource} 'nonce-${nonce}'; style-src ${webview.cspSource}; connect-src 'none'; base-uri 'none'; form-action 'none';">
 <link rel="stylesheet" href="${resource('media', 'gradients.css')}"><link rel="stylesheet" href="${resource('media', 'metadata.css')}"><title>Dataset description</title></head><body><main>
-<header><div class="eyebrow">BIDS EXPLORER · READ-ONLY</div><h1 id="name">Dataset description</h1><p>dataset_description.json</p></header>
+<header><div class="eyebrow">BIDS EXPLORER · READ-ONLY</div><h1 id="name">Dataset description</h1><p id="file-name">dataset_description.json</p></header>
 <p class="note">Recorded fields from this file only. No inherited values, defaults, dataset links or BIDS conformance checks are applied.</p>
 <div id="error" role="alert" hidden></div><div id="summary" class="summary" aria-live="polite"></div><p id="duplicates" role="status" hidden></p>
 <section aria-label="Recorded fields"><div class="field-heading"><h2>Recorded fields</h2><label>Filter fields <input id="filter" type="search" placeholder="Field name"></label></div>

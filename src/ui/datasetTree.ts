@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type { TreeDescription } from '../core/treeDescriptions';
 import { isHistoryFile } from './historyPreview';
 import {
   DescriptionQueue,
@@ -6,7 +7,7 @@ import {
   type DescriptionSnapshot,
 } from '../core/descriptionQueue';
 import { isParticipantsTable, isSummaryTable } from './tablePreview';
-import { isDatasetDescription } from './metadataPreview';
+import { isJsonMetadata } from './metadataPreview';
 import { isGradientFile } from './gradientPreview';
 import { DatasetBrowser } from '../core/browser';
 import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory';
@@ -106,15 +107,14 @@ export class DatasetTreeProvider
     item.contextValue =
       entry.relativePath === '' ? 'dataset' : isDirectory ? 'directory' : entry.kind;
     if (entry.kind === 'file' && isGradientFile(item.resourceUri)) item.contextValue = 'gradient';
-    if (entry.kind === 'file' && isDatasetDescription(item.resourceUri))
-      item.contextValue = 'metadata';
+    if (entry.kind === 'file' && isJsonMetadata(item.resourceUri)) item.contextValue = 'metadata';
     if (entry.kind === 'file' && isSummaryTable(item.resourceUri))
       item.contextValue = 'summaryTable';
     if (entry.kind === 'file' && isParticipantsTable(item.resourceUri))
       item.contextValue = 'participants';
     if (entry.kind === 'file' && isHistoryFile(item.resourceUri)) item.contextValue = 'history';
     item.description = describeEntry(entry);
-    item.tooltip = `${entry.uri}\n${isDirectory ? 'Lazy browsing: only expanded folders are read. Descendants are not indexed. Use Show Source Details for current listing coverage.' : entry.kind}`;
+    item.tooltip = readableTooltip(entry);
     if (isDirectory)
       item.iconPath = new vscode.ThemeIcon(directoryIcons[describeEntry(entry)] ?? 'folder');
     else if (entry.kind !== 'file') {
@@ -126,15 +126,7 @@ export class DatasetTreeProvider
       const metadata = this.descriptions?.request(entry);
       if (metadata?.description) {
         item.description = `${describeEntry(entry)} · ${metadata.description.text}`;
-        item.tooltip +=
-          `\nMetadata description: ${metadata.description.text}\n` +
-          metadata.description.evidence
-            .map(
-              (source) =>
-                `${source.sourceUri} · ${source.field ?? source.column} ${source.line ? '(line ' + source.line + ')' : source.pointer}`,
-            )
-            .join('\n') +
-          '\nShow Source Details for recorded values, source revisions and contributing sources.';
+        item.tooltip = readableTooltip(entry, metadata.description);
       }
     }
     return item;
@@ -209,4 +201,68 @@ export class DatasetTreeProvider
     this.elements.clear();
     this.changes.dispose();
   }
+}
+
+/** Static formatting with escaped data; full paths and provenance stay in Source Details. */
+function readableTooltip(
+  entry: DirectoryEntry,
+  description?: TreeDescription,
+): vscode.MarkdownString {
+  const tooltip = new vscode.MarkdownString('', false);
+  tooltip.isTrusted = false;
+  tooltip.supportHtml = false;
+  const shorten = (value: string, limit: number): string => {
+    const text = value.replace(/[\s\u0000-\u001f\u007f]+/g, ' ').trim();
+    return text.slice(0, limit) + (text.length > limit ? '…' : '');
+  };
+  tooltip.appendMarkdown('**');
+  tooltip.appendText(shorten(entry.name, 120));
+  tooltip.appendMarkdown('**\n\n');
+  if (description) {
+    tooltip.appendText(
+      shorten(
+        description.evidence.map((source) => source.value).join(' · ') || description.text,
+        400,
+      ),
+    );
+    tooltip.appendMarkdown('\n\n');
+  }
+  const role =
+    entry.kind === 'directory'
+      ? describeEntry(entry)
+      : entry.kind === 'symlink'
+        ? 'Symbolic link · not followed'
+        : /\.nii(?:\.gz)?$/.test(entry.name)
+          ? 'NIfTI image'
+          : entry.name.endsWith('.json')
+            ? 'JSON metadata'
+            : entry.name.endsWith('.tsv')
+              ? 'BIDS table'
+              : 'File';
+  tooltip.appendText(role);
+  tooltip.appendMarkdown('\n\n');
+  const location =
+    entry.kind === 'directory'
+      ? entry.relativePath
+      : entry.relativePath.split('/').slice(0, -1).join('/');
+  tooltip.appendText('Location: ' + shorten(location || 'Dataset root', 180));
+  if (description) {
+    const sources = [
+      ...new Set(
+        description.evidence.map((source) => {
+          const name = vscode.Uri.parse(source.sourceUri).path.split('/').at(-1)!;
+          return name + (source.line ? ', line ' + source.line : '');
+        }),
+      ),
+    ];
+    for (const source of sources) {
+      tooltip.appendMarkdown('\n\n');
+      tooltip.appendText('Source: ' + shorten(source, 180));
+    }
+  }
+  tooltip.appendMarkdown('\n\n');
+  tooltip.appendText('Show Source Details for full paths and provenance.');
+  // appendText uses nonbreaking spaces; ordinary spaces keep descriptions naturally wrappable.
+  tooltip.value = tooltip.value.replace(/&nbsp;/g, ' ');
+  return tooltip;
 }

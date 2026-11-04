@@ -54,7 +54,13 @@ export class TablePreviewManager implements vscode.Disposable {
     if (this.disposed) throw new Error('Table previews have been closed.');
     const panel = vscode.window.createWebviewPanel(
       'bidsExplorer.table',
-      (data.kind === 'sessions' ? 'Sessions' : data.kind === 'scans' ? 'Scans' : 'Participants') +
+      (data.kind === 'sessions'
+        ? 'Sessions'
+        : data.kind === 'scans'
+          ? 'Scans'
+          : data.kind === 'events'
+            ? 'Events'
+            : 'Participants') +
         ' · ' +
         (basename(dirname(fileURLToPath(uri.toString()))) || 'Dataset'),
       vscode.ViewColumn.Active,
@@ -179,7 +185,7 @@ function tableHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${webview.cspSource} 'nonce-${nonce}'; style-src ${webview.cspSource}; connect-src 'none'; base-uri 'none'; form-action 'none';">
 <link rel="stylesheet" href="${resource('media', 'gradients.css')}"><link rel="stylesheet" href="${resource('media', 'tables.css')}"><title>BIDS table</title></head><body><main>
 <header><div class="eyebrow">BIDS EXPLORER · READ-ONLY</div><h1 id="title">BIDS table</h1><p id="filename"></p></header>
-<p class="note">Recorded cells in source order. No inferred values, table joins or BIDS conformance checks. The exact token n/a marks missing data; empty and absent cells remain distinct.</p>
+<p id="table-note" class="note">Recorded cells in source order. No inferred values, table joins or BIDS conformance checks. The exact token n/a marks missing data; empty and absent cells remain distinct.</p>
 <div id="error" role="alert" hidden></div><p id="summary" role="status"></p><p id="issues" role="status"></p>
 <label>Filter rows <input id="filter" type="search" placeholder="Text in any cell"></label>
 <p class="note">Showing 50 rows per page and 12 columns at a time. Long cells and headings are shortened to 2,000 characters; open the original for complete text.</p>

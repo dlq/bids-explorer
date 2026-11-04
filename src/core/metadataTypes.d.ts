@@ -16,8 +16,12 @@ export interface JsonMetadata {
   readonly fields: readonly RecordedMetadataField[];
   readonly duplicateKeys: readonly string[];
 }
-export interface DatasetDescription extends JsonMetadata {
-  readonly kind: 'dataset-description';
+export interface MetadataDocument extends JsonMetadata {
+  readonly kind: 'dataset-description' | 'json-sidecar';
   readonly summary: Readonly<{ name?: string; bidsVersion?: string; datasetType?: string }>;
   readonly coverage: 'selected-file-only';
+}
+
+export interface DatasetDescription extends MetadataDocument {
+  readonly kind: 'dataset-description';
 }

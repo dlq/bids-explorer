@@ -6,8 +6,11 @@ export const MAX_TABLE_ROWS = 10000;
 export const MAX_TABLE_COLUMNS = 128;
 
 /** Deliberately bounded recognition vocabulary; not full dataset validation. */
-export function summaryTableKind(name: string): 'participants' | 'sessions' | 'scans' | undefined {
+export function summaryTableKind(
+  name: string,
+): 'participants' | 'sessions' | 'scans' | 'events' | undefined {
   if (name === 'participants.tsv') return 'participants';
+  if (/^(?:[a-z][a-z0-9]*-[a-zA-Z0-9+]+_)*events\.tsv$/.test(name)) return 'events';
   if (/^sub-[a-zA-Z0-9+]+_sessions\.tsv$/.test(name)) return 'sessions';
   if (/^sub-[a-zA-Z0-9+]+(?:_ses-[a-zA-Z0-9+]+)?_scans\.tsv$/.test(name)) return 'scans';
   return undefined;
@@ -116,7 +119,9 @@ export async function parseTable(
     return Object.freeze([...duplicates]);
   };
   const header = columns!;
-  const idColumns = header.flatMap((name, i) => (name === identifierColumn ? [i] : []));
+  const idColumns = identifierColumn
+    ? header.flatMap((name, i) => (name === identifierColumn ? [i] : []))
+    : [];
   const duplicateIds =
     idColumns.length === 1
       ? repeated(
