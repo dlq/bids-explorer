@@ -1,3 +1,4 @@
+import type { SquashfsPageRead } from '../sources/squashfsDirectory';
 import type { PhysicalResource } from './resources';
 import { combinedFolder } from './entities';
 import type { SourceRevision } from './sourceRevision';
@@ -19,13 +20,22 @@ export interface DirectoryEntry {
     readonly subject?: string;
     readonly session?: string;
   };
+  readonly metadataVersions?: readonly DirectoryEntry[];
+  readonly squashfsRead?: SquashfsPageRead;
+  readonly paging?: {
+    readonly page: number;
+    readonly failures: number;
+    readonly next?: (signal: AbortSignal) => Promise<readonly DirectoryEntry[]>;
+    readonly previous?: (signal: AbortSignal) => Promise<readonly DirectoryEntry[]>;
+  };
   readonly archive?: {
-    readonly format?: 'tar';
+    readonly format?: 'tar' | 'squashfs';
     readonly datasetWrapper?: boolean;
     readonly sourceUri: string;
     readonly containerPath: string;
     readonly memberPath: string;
     readonly memberIndex?: number;
+    readonly parentIndex?: number;
     readonly choices?: readonly PhysicalResource[];
     readonly revision?: SourceRevision;
     readonly conflict?: boolean;
@@ -40,6 +50,8 @@ export interface DirectorySource {
 }
 
 export function entryKey(entry: DirectoryEntry): string {
+  if (entry.metadataVersions)
+    return JSON.stringify([entry.datasetUri, entry.relativePath, 'metadataVersions']);
   if (entry.logical && entry.logical.kind !== 'resource')
     return JSON.stringify([entry.datasetUri, entry.relativePath, 'logical', entry.logical.kind]);
   return entry.archive
@@ -169,6 +181,17 @@ function bidsDirectoryRole(relativePath: string): string | undefined {
 
 export function isRecognizedBidsEntry(entry: DirectoryEntry): boolean {
   const parts = entry.relativePath.split('/');
+  if (entry.paging || entry.metadataVersions) return true;
+  if (
+    entry.archive?.format === 'squashfs' ||
+    entry.logical?.sources.some((source) => source.archive?.format === 'squashfs')
+  )
+    return (
+      isRecognizedBidsEntry({ ...entry, archive: undefined, logical: undefined }) ||
+      !!entry.logical?.sources.some(
+        (source) => source.archive?.format !== 'squashfs' && isRecognizedBidsEntry(source),
+      )
+    );
   if (entry.logical?.visible && !parts.some((part) => part.startsWith('.'))) return true;
   if (entry.logical?.kind !== undefined && entry.logical.kind !== 'resource')
     return entry.logical.sources.some((source) => isRecognizedBidsEntry(source));

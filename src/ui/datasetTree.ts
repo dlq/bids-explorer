@@ -40,7 +40,7 @@ export interface EntryElement {
 }
 export interface MessageElement {
   readonly type: 'message';
-  readonly action: 'retry' | 'fileExplorer';
+  readonly action: 'retry' | 'fileExplorer' | 'nextPage' | 'previousPage' | 'coverage';
   readonly parent: EntryElement;
   readonly message: string;
 }
@@ -94,6 +94,17 @@ export class DatasetTreeProvider
       const item = new vscode.TreeItem(element.message);
       item.contextValue = 'message';
       item.iconPath = new vscode.ThemeIcon('warning');
+      if (element.action === 'coverage') return item;
+      if (element.action === 'nextPage' || element.action === 'previousPage') {
+        const previous = element.action === 'previousPage';
+        item.iconPath = new vscode.ThemeIcon(previous ? 'arrow-left' : 'arrow-right');
+        item.command = {
+          command: previous ? 'bidsExplorer.previousPage' : 'bidsExplorer.nextPage',
+          title: previous ? 'Previous page' : 'Next page',
+          arguments: [element.parent],
+        };
+        return item;
+      }
       item.command = {
         command:
           element.action === 'retry' ? 'bidsExplorer.refresh' : 'bidsExplorer.showInFileExplorer',
@@ -111,6 +122,23 @@ export class DatasetTreeProvider
         : vscode.TreeItemCollapsibleState.None,
     );
     item.id = entryKey(entry);
+    if (entry.metadataVersions) {
+      const description = entry.name === 'dataset_description.json';
+      item.contextValue = description ? 'datasetDescriptionVersions' : 'metadataVersions';
+      item.description = `${entry.metadataVersions.length} shard sources`;
+      item.iconPath = new vscode.ThemeIcon('files');
+      item.tooltip = description
+        ? 'Open the combined dataset description or expand to inspect each shard.'
+        : 'Expand to inspect the original from each shard.';
+      if (description)
+        item.command = {
+          command: 'bidsExplorer.openFile',
+          title: 'Compare Dataset Descriptions',
+          arguments: [element],
+        };
+      return item;
+    }
+    const squashfs = entry.archive?.format === 'squashfs';
     item.resourceUri = vscode.Uri.parse(
       entry.archive && entry.kind === 'file' ? entryArchiveUri(entry) : entry.uri,
     );
@@ -136,7 +164,7 @@ export class DatasetTreeProvider
       item.command = { command: 'bidsExplorer.openFile', title: 'Open file', arguments: [element] };
     if (entry.archive) {
       const tar = entry.archive.format === 'tar';
-      const label = tar ? 'Tar' : 'ZIP';
+      const label = squashfs ? 'SquashFS' : tar ? 'Tar' : 'ZIP';
       if (entry.kind === 'file') {
         item.description =
           entry.archive.conflict || entry.logical?.conflict
@@ -144,6 +172,7 @@ export class DatasetTreeProvider
             : /\.nii(\.gz)?$/.test(entry.name)
               ? `MRI · ${label} source`
               : `Metadata · ${label} source`;
+        if (squashfs && entry.logical?.conflict) item.description = entry.archive.containerPath;
         item.iconPath = new vscode.ThemeIcon('file');
       } else if (entry.archive.memberPath === '')
         item.description = `${label} · expand to index contents`;
@@ -213,6 +242,34 @@ export class DatasetTreeProvider
         parent: element,
         message: 'Listing canceled. Click to retry.',
       });
+    if (snapshot.paging?.previous)
+      result.push({
+        type: 'message',
+        action: 'previousPage',
+        parent: element,
+        message: `Previous page · currently page ${snapshot.paging.page}`,
+      });
+    if (snapshot.paging?.next)
+      result.push({
+        type: 'message',
+        action: 'nextPage',
+        parent: element,
+        message: `Next page · currently page ${snapshot.paging.page}`,
+      });
+    else if (snapshot.paging && snapshot.paging.page > 1)
+      result.push({
+        type: 'message',
+        action: 'coverage',
+        parent: element,
+        message: `Page ${snapshot.paging.page} · end of listing`,
+      });
+    if (snapshot.paging?.failures)
+      result.push({
+        type: 'message',
+        action: 'coverage',
+        parent: element,
+        message: `Partial coverage · ${snapshot.paging.failures} SquashFS source(s) unavailable`,
+      });
     if (snapshot.coverage === 'complete' && snapshot.physicalChildCount && result.length === 0) {
       result.push({
         type: 'message',
@@ -222,6 +279,16 @@ export class DatasetTreeProvider
       });
     }
     return result;
+  }
+
+  async nextPage(element: EntryElement, direction: 'next' | 'previous' = 'next'): Promise<void> {
+    const previous = this.browser.snapshot(element.entry).children;
+    await this.browser.nextPage(element.entry, direction);
+    const current = this.browser.snapshot(element.entry).children;
+    if (current !== previous) {
+      for (const row of previous) this.elements.delete(entryKey(row));
+    }
+    this.changes.fire(element);
   }
 
   refresh(element?: TreeElement): void {

@@ -73,7 +73,11 @@ export async function loadLogicalInheritance(
       if (markers.length) levels.length = 0;
       if (markers.length > 1)
         incomplete ??= 'Multiple dataset descriptions at the same logical level.';
-      const candidates = entries.filter((entry) => /\.(json|bval|bvec)$/.test(entry.name));
+      if (entries.some((entry) => entry.paging || entry.archive?.format === 'squashfs'))
+        incomplete ??= 'SquashFS metadata coverage is incomplete.';
+      const candidates = entries.filter(
+        (entry) => entry.archive?.format !== 'squashfs' && /\.(json|bval|bvec)$/.test(entry.name),
+      );
       levels.push({
         relativePath: path,
         coverage: incomplete ? 'incomplete' : 'complete',

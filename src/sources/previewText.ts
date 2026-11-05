@@ -1,3 +1,4 @@
+import { streamSquashfsMember } from './squashfsMember';
 import { isArchiveUri, parseArchiveUri } from '../core/archiveUri';
 import { streamTarMember } from './tarIndex';
 import { readZipMember } from './zipMember';
@@ -23,8 +24,8 @@ export async function readTextSnapshot(
   if (isArchiveUri(uri)) {
     const ref = parseArchiveUri(uri);
     const chunks: Buffer[] = [];
-    if (ref.format === 'tar')
-      await streamTarMember(
+    if (ref.format)
+      await (ref.format === 'tar' ? streamTarMember : streamSquashfsMember)(
         ref,
         signal,
         MAX_PREVIEW_BYTES,
@@ -34,10 +35,9 @@ export async function readTextSnapshot(
         },
         () => Promise.resolve(),
       );
-    const bytes =
-      ref.format === 'tar'
-        ? Buffer.concat(chunks)
-        : await readZipMember(uri, signal, MAX_PREVIEW_BYTES);
+    const bytes = ref.format
+      ? Buffer.concat(chunks)
+      : await readZipMember(uri, signal, MAX_PREVIEW_BYTES);
     return Object.freeze({
       sourceUri: uri,
       archiveSource: ref,

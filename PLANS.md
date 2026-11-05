@@ -6,7 +6,7 @@ Working plan, November 3, 2026. Update this as implementation reveals constraint
 
 Make a VS Code extension for exploring BIDS datasets locally and over SSH, in ordinary directories, ZIP archives, tarballs and SquashFS images. Navigation and dataset context are the product; visualization is optional.
 
-The unreleased implementation now includes automatic shallow workspace-root recognition, workspace-scoped manual registration, lazy local directory browsing, canonical BIDS-only folder/file recognition, source details, file opening, branch refresh/retry and cancellation. A bounded, read-only diffusion gradient preview is also implemented: sphere, b-value plot and linked original values from a selected same-basename pair. The inspector can open resolved inherited gradient pairs. Image-volume matching and orientation remain future work. Dataset access is read-only. Tar and SquashFS readers and persistent indexing remain unimplemented; explicit selected-file inheritance inspection is implemented. Hosted CI remains unverified. Early directory and public-MRI Remote SSH smoke tests passed; broader remote robustness remains future work.
+The unreleased implementation now includes automatic shallow workspace-root recognition, workspace-scoped manual registration, lazy local directory browsing, canonical BIDS-only folder/file recognition, source details, file opening, branch refresh/retry and cancellation. A bounded, read-only diffusion gradient preview is also implemented: sphere, b-value plot and linked original values from a selected same-basename pair. The inspector can open resolved inherited gradient pairs. Image-volume matching and orientation remain future work. Dataset access is read-only. SquashFS cross-source inheritance and persistent indexing remain unimplemented; explicit selected-file inheritance inspection is implemented. Hosted CI remains unverified. Early directory and public-MRI Remote SSH smoke tests passed; broader remote robustness remains future work.
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and source references before implementing. Strata is reference material, not an implementation to copy wholesale.
 
@@ -121,9 +121,11 @@ Extend the established source and collection model with tar and explicitly docum
 
 ## 0.5.0 — SquashFS
 
-Add host-local SquashFS tool detection and exact-member extraction, with capability checks for older readers. Use the existing collection model for disjoint shards and conflicting paths. Mounts, FUSE and root must not be required by the supported workflow.
+The local 0.5.0 release inspects the fixed-size SquashFS 4.0 header without opening a member index. The per-image picker now reads bounded, resumable directory pages directly from metadata blocks. The logical tree also merges shards in bounded pages, preserving duplicate source choices and showing incomplete coverage. See [SquashFS development notes](docs/SQUASHFS.md).
 
-**Ready when:** fixtures pass across the documented tool capabilities; missing tools produce actionable errors; member escaping, cleanup and collection summaries are independently verified.
+The native reader opens selected text and NIfTI members with uncompressed or gzip data. Additional codecs and optional host tool compatibility remain follow-up work. Use the existing collection model for disjoint shards and conflicting paths. Mounts, FUSE and root must not be required by the supported workflow.
+
+The supported workflow uses the native reader on the workspace host. Uncompressed and gzip blocks are supported. Unsupported shards are reported as partial coverage. Release validation covers member identity, extraction cancellation and cleanup, paging and combined descriptions. See [0.5.0 validation](docs/MILESTONE_0.5.0.md).
 
 ## 0.6.0 — Remote SSH and persistent indexing
 

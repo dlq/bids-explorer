@@ -1,8 +1,20 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.4.0` is a local tagged release (`v0.4.0`), without Marketplace or GitHub publication.
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.5.0` is a local tagged release (`v0.5.0`).
 
 ## Unreleased
+
+## [0.5.0] - 2026-11-05
+
+### Added
+
+- **Inspect SquashFS Image** reads the fixed-size SquashFS 4.0 header and reports image information without scanning members.
+- **Browse SquashFS Image** pages through one directory at a time, with revision-checked continuations and on-demand descent.
+- SquashFS shards in an open or registered collection contribute to the same paged BIDS tree. Duplicate logical paths keep their physical source choices, and unavailable shards are reported.
+- Open SquashFS text and metadata previews and hand selected NIfTI members to the configured MRI viewer.
+- Group repeated SquashFS README, JSON and TSV paths. Open a combined dataset description to compare recorded values across shards.
+- Visualize selected SquashFS bval and bvec pairs from the same shard directory.
+- Navigate backward through paged SquashFS listings.
 
 ## [0.4.0] - 2026-11-05
 

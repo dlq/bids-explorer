@@ -1,3 +1,4 @@
+import { mergeSquashfsBranches, squashfsBranch, squashfsSuffix } from './squashfsCollection';
 import { logicalChildren, logicalFolder, layoutHint } from '../core/logicalLayout';
 import { type DirectoryEntry, type DirectorySource, type SourceRevision } from '../core/directory';
 import { ZipDirectorySource } from './zipDirectory';
@@ -72,7 +73,9 @@ export class LogicalDirectorySource implements DirectorySource {
   ): Promise<readonly DirectoryEntry[]> {
     signal.throwIfAborted();
     if (parent.kind !== 'directory') return [];
+    if (parent.metadataVersions) return parent.metadataVersions;
     const candidates: DirectoryEntry[] = [];
+    const shards: ReturnType<typeof squashfsBranch>[] = [];
     const sources = parent.logical?.sources ?? [parent];
     if (sources.length > 10_000)
       throw new Error('Logical branch exceeds 10,000 physical source choices.');
@@ -80,6 +83,13 @@ export class LogicalDirectorySource implements DirectorySource {
     let expandedTar = false;
     for (const source of sources) {
       signal.throwIfAborted();
+      if (
+        source.squashfsRead &&
+        !(parent.logical?.kind === 'subject' && layoutHint(source)?.session)
+      ) {
+        shards.push(squashfsBranch(parent, source));
+        continue;
+      }
       const hint = layoutHint(source);
       if (parent.logical?.kind === 'subject' && hint?.session) {
         // Do not open thousands of archives to discover sessions already recorded in their names.
@@ -97,6 +107,10 @@ export class LogicalDirectorySource implements DirectorySource {
       }
       const children = await this.contents(source, parent, signal);
       for (const child of children) {
+        if (child.kind === 'file' && !child.archive && squashfsSuffix.test(child.name)) {
+          shards.push(squashfsBranch(parent, child));
+          continue;
+        }
         const tar = child.archive?.format === 'tar';
         if (
           child.archive?.memberPath === '' &&
@@ -119,6 +133,8 @@ export class LogicalDirectorySource implements DirectorySource {
       if (candidates.length > 100_000)
         throw new Error('Logical branch exceeds 100,000 navigation entries.');
     }
-    return logicalChildren(parent, candidates, signal);
+    return shards.length
+      ? mergeSquashfsBranches(parent, candidates, shards, signal)
+      : logicalChildren(parent, candidates, signal);
   }
 }

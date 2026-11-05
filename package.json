@@ -2,7 +2,7 @@
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
   "description": "Explore BIDS datasets locally and over SSH.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "bids-explorer-dev",
   "private": true,
   "engines": {
@@ -85,6 +85,14 @@
         "title": "BIDS Explorer: Inspect Tar Archive"
       },
       {
+        "command": "bidsExplorer.inspectSquashfs",
+        "title": "BIDS Explorer: Inspect SquashFS Image"
+      },
+      {
+        "command": "bidsExplorer.browseSquashfs",
+        "title": "BIDS Explorer: Browse SquashFS Image"
+      },
+      {
         "command": "bidsExplorer.clearImageCache",
         "title": "BIDS Explorer: Clear Extracted Image Cache"
       }
@@ -131,6 +139,11 @@
           "command": "bidsExplorer.refresh",
           "when": "view == bidsExplorer.datasets && (viewItem == dataset || viewItem == directory)",
           "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.openFile",
+          "when": "view == bidsExplorer.datasets && viewItem == datasetDescriptionVersions",
+          "group": "inline"
         },
         {
           "command": "bidsExplorer.showDetails",
@@ -212,6 +225,16 @@
         {
           "command": "bidsExplorer.inspectTar",
           "when": "resourceScheme == file && resourceFilename =~ /[.](tar([.]gz)?|tgz)$/i",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.inspectSquashfs",
+          "when": "resourceScheme == file && resourceFilename =~ /[.](squashfs|sqfs|sqsh)$/i",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.browseSquashfs",
+          "when": "resourceScheme == file && resourceFilename =~ /[.](squashfs|sqfs|sqsh)$/i",
           "group": "navigation"
         }
       ]

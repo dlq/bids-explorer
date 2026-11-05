@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for development after the locally tagged `v0.4.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for development after the locally tagged `v0.5.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -52,7 +52,7 @@ The configured CI workflow runs formatting, type checking, linting, unit coverag
 
 ### Dependency audit
 
-On November 5, 2026, the full dependency audit reported 14 findings (13 moderate, 1 low), all in development tooling; none were high or critical. The production-only audit reported zero findings for the new bundled `yauzl`/`pend` ZIP reader. Development packages remain excluded from the VSIX. The earlier 0.2.0 release evidence retains its audit snapshot. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
+On November 5, 2026, the full dependency audit reported 14 findings (13 moderate, 1 low), all in development tooling; none were high or critical. The production-only audit reported zero findings for the bundled `yauzl`/`pend` ZIP reader. Development packages remain excluded from the VSIX. The earlier 0.2.0 release evidence retains its audit snapshot. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
 
 ## Testing expectations
 

@@ -11,6 +11,7 @@ export interface BranchSnapshot {
   readonly children: readonly DirectoryEntry[];
   readonly stale: boolean;
   readonly physicalChildCount?: number;
+  readonly paging?: DirectoryEntry['paging'];
   readonly error?: { readonly code: string; readonly message: string };
 }
 interface Loading {
@@ -58,10 +59,30 @@ export class DatasetBrowser {
     const active = this.loading.get(key);
     if (active) return active.promise;
     const previous = this.snapshot(entry);
-    if (previous.coverage === 'complete' || previous.coverage === 'failed')
+    if (
+      previous.coverage === 'complete' ||
+      previous.coverage === 'partial' ||
+      previous.coverage === 'failed'
+    )
       return Promise.resolve(previous.children);
     const controller = new AbortController();
     const promise = this.load(entry, key, controller, previous);
+    this.loading.set(key, { controller, entry, promise });
+    return promise;
+  }
+
+  nextPage(
+    entry: DirectoryEntry,
+    direction: 'next' | 'previous' = 'next',
+  ): Promise<readonly DirectoryEntry[]> {
+    const key = entryKey(entry);
+    const active = this.loading.get(key);
+    if (active) return active.promise;
+    const previous = this.snapshot(entry);
+    const next = previous.paging?.[direction];
+    if (!next) return Promise.resolve(previous.children);
+    const controller = new AbortController();
+    const promise = this.load(entry, key, controller, previous, next);
     this.loading.set(key, { controller, entry, promise });
     return promise;
   }
@@ -71,20 +92,27 @@ export class DatasetBrowser {
     key: string,
     controller: AbortController,
     previous: BranchSnapshot,
+    next?: (signal: AbortSignal) => Promise<readonly DirectoryEntry[]>,
   ): Promise<readonly DirectoryEntry[]> {
     try {
       await Promise.resolve();
       controller.signal.throwIfAborted();
-      const physical = await this.source.children(entry, controller.signal);
-      const children = await recognizableEntries(physical, controller.signal);
+      const physical = await (next
+        ? next(controller.signal)
+        : this.source.children(entry, controller.signal));
+      const paging = physical.find((row) => row.paging)?.paging;
+      const rows = paging ? physical.filter((row) => !row.paging) : physical;
+      const children = await recognizableEntries(rows, controller.signal);
       if (controller.signal.aborted) return previous.children;
       this.snapshots.set(
         key,
         Object.freeze({
-          coverage: 'complete',
+          coverage:
+            paging && (paging.next || paging.page > 1 || paging.failures) ? 'partial' : 'complete',
           children,
+          paging,
           stale: false,
-          physicalChildCount: physical.length,
+          physicalChildCount: rows.length,
         }),
       );
       return children;

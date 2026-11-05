@@ -1,3 +1,8 @@
+import { gzipSync } from 'node:zlib';
+import { zipFixture } from '../zipFixture';
+import { tarFixture, tarRecord } from '../tarFixture';
+import { squashfsFiles } from '../squashfsFixture';
+import { LogicalDirectorySource } from '../../sources/logicalDirectory';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -115,4 +120,50 @@ suite('Read-only diffusion gradient preview', () => {
       await rm(folder, { recursive: true, force: true });
     }
   });
+});
+
+suite('Archived diffusion gradients', () => {
+  const files = [
+    { name: 'dwi.bval', text: '0 1000' },
+    { name: 'dwi.bvec', text: '0 1\n0 0\n0 0' },
+  ];
+  const tar = tarFixture(...files.map(({ name, text }) => tarRecord(name, Buffer.from(text))));
+  for (const [suffix, bytes] of [
+    ['zip', zipFixture(files)],
+    ['tar', tar],
+    ['tar.gz', gzipSync(tar)],
+    ['sqfs', squashfsFiles(files)],
+  ] as const) {
+    test(`renders both gradient files from ${suffix} through the tree`, async function () {
+      this.timeout(20000);
+      await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+      const folder = await mkdtemp(join(tmpdir(), 'bids-gradient-archive-'));
+      const provider = new DatasetTreeProvider(new DatasetBrowser(new LogicalDirectorySource()));
+      let panel: vscode.WebviewPanel | undefined;
+      try {
+        await writeFile(join(folder, 'sample.' + suffix), bytes);
+        const root = provider.browser.register(
+          await provider.browser.source.root(vscode.Uri.file(folder).toString()),
+        );
+        const entries = await provider.getChildren(provider.element(root));
+        for (const { name } of files) {
+          const row = entries.find((entry) => entry.type === 'entry' && entry.entry.name === name);
+          assert.ok(row);
+          assert.equal(provider.getTreeItem(row).contextValue, 'gradient');
+          panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+            'bidsExplorer.openFile',
+            row,
+          );
+          assert.ok(panel);
+          assert.equal((await rendered(panel, 1)).volumeCount, 2);
+          panel.dispose();
+          panel = undefined;
+        }
+      } finally {
+        panel?.dispose();
+        provider.dispose();
+        await rm(folder, { recursive: true, force: true });
+      }
+    });
+  }
 });

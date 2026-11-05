@@ -1,3 +1,4 @@
+import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
 import { entryArchiveUri, resourcePath } from './core/archiveUri';
 import { ArchiveImageCache } from './sources/imageCache';
 import { readTextSnapshot } from './sources/previewText';
@@ -41,7 +42,7 @@ export function activate(context: vscode.ExtensionContext): {
     },
   });
   context.subscriptions.push(
-    ...['bids-zip', 'bids-tar'].map((scheme) =>
+    ...['bids-zip', 'bids-tar', 'bids-squashfs'].map((scheme) =>
       vscode.workspace.registerTextDocumentContentProvider(scheme, {
         provideTextDocumentContent: async (uri, token) => {
           const controller = new AbortController();
@@ -184,6 +185,12 @@ export function activate(context: vscode.ExtensionContext): {
     ),
     vscode.commands.registerCommand('bidsExplorer.inspectTar', (uri?: vscode.Uri) =>
       archiveInspector.inspect('tar', uri),
+    ),
+    vscode.commands.registerCommand('bidsExplorer.inspectSquashfs', (uri?: vscode.Uri) =>
+      archiveInspector.inspect('SquashFS', uri),
+    ),
+    vscode.commands.registerCommand('bidsExplorer.browseSquashfs', (uri?: vscode.Uri) =>
+      archiveInspector.browseSquashfs(uri),
     ),
     vscode.commands.registerCommand('bidsExplorer.addDataset', async (supplied?: vscode.Uri) => {
       const uri =
@@ -354,12 +361,56 @@ export function activate(context: vscode.ExtensionContext): {
         );
         return undefined;
       }
+      if (element.entry.archive?.format === 'squashfs') {
+        void vscode.window.showInformationMessage(
+          'SquashFS member previews are not available yet.',
+        );
+        return undefined;
+      }
       return inheritance.open(element.entry);
+    }),
+    command('bidsExplorer.nextPage', async (arg) => {
+      const element = selected(arg);
+      if (element?.type === 'entry') await provider.nextPage(element);
+    }),
+    command('bidsExplorer.previousPage', async (arg) => {
+      const element = selected(arg);
+      if (element?.type === 'entry') await provider.nextPage(element, 'previous');
     }),
     command('bidsExplorer.openFile', async (arg) => {
       const element = selected(arg);
-      if (element?.type !== 'entry' || element.entry.kind !== 'file') return;
+      if (element?.type !== 'entry') return;
+      const { metadataVersions, name } = element.entry;
       try {
+        if (metadataVersions && name === 'dataset_description.json') {
+          const controller = new AbortController();
+          archiveWork.add(controller);
+          try {
+            return await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: 'BIDS Explorer: Comparing dataset descriptions',
+                cancellable: true,
+              },
+              async (_, token) => {
+                const cancel = token.onCancellationRequested(() => controller.abort());
+                try {
+                  if (token.isCancellationRequested) controller.abort();
+                  return await openDatasetDescriptionComparison(
+                    metadataVersions,
+                    context.extensionUri,
+                    controller.signal,
+                  );
+                } finally {
+                  cancel.dispose();
+                }
+              },
+            );
+          } finally {
+            archiveWork.delete(controller);
+          }
+        }
+        if (element.entry.kind !== 'file') return;
         await source.revision(element.entry);
         const uri = fileUri(element.entry);
         if (element.entry.archive && /\.nii(\.gz)?$/.test(resourcePath(uri.toString()))) {
@@ -478,9 +529,11 @@ export function activate(context: vscode.ExtensionContext): {
           kind: entry.kind,
           revision,
           revisionScope: entry.archive
-            ? entry.archive.format === 'tar'
-              ? 'Tar container'
-              : 'ZIP container'
+            ? entry.archive.format === 'squashfs'
+              ? 'SquashFS image'
+              : entry.archive.format === 'tar'
+                ? 'Tar container'
+                : 'ZIP container'
             : entry.logical
               ? 'first physical source choice'
               : 'filesystem entry',
@@ -490,7 +543,9 @@ export function activate(context: vscode.ExtensionContext): {
                   immediateChildren: snapshot.coverage,
                   cachedListingIsStale: snapshot.stale,
                   physicalChildCount:
-                    entry.archive || entry.logical ? undefined : snapshot.physicalChildCount,
+                    entry.archive || entry.logical || snapshot.paging
+                      ? undefined
+                      : snapshot.physicalChildCount,
                   logicalNavigationChildCount: entry.logical
                     ? snapshot.physicalChildCount
                     : undefined,
@@ -501,6 +556,11 @@ export function activate(context: vscode.ExtensionContext): {
                     snapshot.physicalChildCount === undefined
                       ? undefined
                       : snapshot.children.length,
+                  page: snapshot.paging && {
+                    number: snapshot.paging.page,
+                    hasNext: Boolean(snapshot.paging.next),
+                    unavailableSources: snapshot.paging.failures,
+                  },
                   descendants: 'unknown',
                   error: snapshot.error,
                 }

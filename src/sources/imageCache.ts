@@ -1,3 +1,4 @@
+import { streamSquashfsMember } from './squashfsMember';
 import { mkdir, lstat, opendir, open, writeFile, rename, rm, chmod } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { basename, join } from 'node:path';
@@ -130,6 +131,8 @@ export class ArchiveImageCache {
           };
           if (ref.format === 'tar')
             await streamTarMember(ref, signal, this.limits.memberBytes, write, start);
+          else if (ref.format === 'squashfs')
+            await streamSquashfsMember(ref, signal, this.limits.memberBytes, write, start);
           else await streamZipMember(uri, signal, this.limits.memberBytes, write, start);
         } finally {
           await handle.close();
