@@ -53,7 +53,7 @@ The S3 object URLs are mutable. Source DOI/version metadata is retained but does
 
 ### Intended testing
 
-Use this sample to check participant/session/modality grouping, task/entity filters, metadata inheritance, 4D file recognition and realistic indexing/opening behavior. It is not a huge-cohort performance benchmark, and it contains no archive wrappers or collection conflicts. Generate synthetic cases for those boundaries and retain the small fixture suite for routine tests. The 0.3.0 ZIP tests use synthetic fixtures and a separate authorized Remote SSH collection. Tar and SquashFS test variants remain planned. [0.3.0 validation](MILESTONE_0.3.0.md)
+Use this sample to check participant/session/modality grouping, task/entity filters, metadata inheritance, 4D file recognition and realistic indexing/opening behavior. It is not a huge-cohort performance benchmark, and it contains no archive wrappers or collection conflicts. Generate synthetic cases for those boundaries and retain the small fixture suite for routine tests. The 0.3.0 ZIP tests use synthetic fixtures and a separate authorized Remote SSH collection. Tar testing uses the verified Connectome Mapper fixture below. SquashFS test variants remain planned. [0.3.0 validation](MILESTONE_0.3.0.md)
 
 ## Using it
 

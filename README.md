@@ -1,8 +1,8 @@
 # BIDS Explorer
 
-A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. Version 0.3.0 supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; a ZIP inventory command is available, ZIP and loose sources in registered directories now share a logical subject/session tree, with archive metadata previews and selected MRI opening through your configured viewer. The development build adds tar inventory, logical browsing, metadata previews and selected MRI opening. SquashFS remains planned.
+A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. Version 0.4.0 supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; a ZIP inventory command is available, ZIP and loose sources in registered directories now share a logical subject/session tree, with archive metadata previews and selected MRI opening through your configured viewer. Version 0.4.0 adds tar inventory, logical browsing, metadata previews and selected MRI opening. SquashFS remains planned.
 
-**Status: `0.3.0` released locally as `v0.3.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
+**Status: `0.4.0` released locally as `v0.4.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
 ## Available today
 
@@ -152,14 +152,14 @@ Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the nativ
 | `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
 | `0.2.0`          | Completed metadata milestone; tagged locally                                            |
 | `0.3.0`          | Completed ZIP browsing and cross-source metadata milestone; tagged locally              |
-| `0.4.0`          | Tar archive browsing and selected member opening                                        |
+| `0.4.0`          | Completed tar browsing, metadata previews and selected MRI opening                      |
 | `0.5.0`          | SquashFS browsing and tool compatibility                                                |
 | `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
 | `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
 | `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-The first three milestones are tagged locally. Versions from `0.4.0` onward are roadmap targets. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The first four milestones are tagged locally. Versions from `0.5.0` onward are roadmap targets. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 
@@ -171,4 +171,4 @@ The first three milestones are tagged locally. Versions from `0.4.0` onward are 
 
 A public issue tracker and private vulnerability-reporting channel will be linked when the GitHub repository is available. Do not share private datasets, credentials or sensitive clinical information in public reports.
 
-In the source checkout, `docs/MILESTONE_0.3.0.md` records the ZIP release scope, checks, and Remote SSH evidence.
+In the source checkout, `docs/MILESTONE_0.4.0.md` records the tar release scope and local test evidence. ZIP and Remote SSH evidence is in `docs/MILESTONE_0.3.0.md`.

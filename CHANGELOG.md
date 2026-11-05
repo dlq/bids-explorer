@@ -1,8 +1,10 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.3.0` is a local tagged release (`v0.3.0`), without Marketplace or GitHub publication.
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.4.0` is a local tagged release (`v0.4.0`), without Marketplace or GitHub publication.
 
 ## Unreleased
+
+## [0.4.0] - 2026-11-05
 
 ### Added
 

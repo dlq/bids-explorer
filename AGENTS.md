@@ -4,7 +4,7 @@ Read `PROJECT.md`, then `RESEARCH.md` and `PLANS.md` before implementing feature
 
 - Display name: BIDS Explorer. Directory/extension name: `bids-explorer`. Command/settings namespace: `bidsExplorer`.
 - Record notable user-visible changes in `CHANGELOG.md` under Unreleased as they are implemented. Add version/date headings only for actual releases.
-- The extension development scaffold is in place. Read-only directory browsing, selected-file JSON inheritance/DWI companion reports and bounded participant/session/scan table previews and source-backed metadata tree descriptions are implemented. Version 0.3.0 adds logical ZIP browsing, selected ZIP member previews and MRI opening, and cross-source metadata inspection. Broader relationships, persistent indexing, tar and SquashFS remain future work.
+- The extension development scaffold is in place. Read-only directory browsing, selected-file JSON inheritance/DWI companion reports and bounded participant/session/scan table previews and source-backed metadata tree descriptions are implemented. Version 0.3.0 adds logical ZIP browsing, selected ZIP member previews and MRI opening, and cross-source metadata inspection. Version 0.4.0 adds equivalent tar browsing, metadata previews and selected MRI opening for POSIX ustar and gzip tarballs. Broader relationships, persistent indexing and SquashFS remain future work.
 - BIDS navigation and dataset context are the initial focus. NiiVue is an optional visualization integration; embedding remains undecided.
 - Use supported viewer integration points. Private Preact/webview probes from the benchmark are not a production API.
 - Keep physical source identity separate from logical BIDS paths. Preserve provenance and duplicate-path source choices.

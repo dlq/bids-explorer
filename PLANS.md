@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is currently `0.3.0`, tagged locally as `v0.3.0`. There is no Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is currently `0.4.0`, tagged locally as `v0.4.0`. There is no Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -113,7 +113,7 @@ Extract only the selected member into private temporary storage, validate it and
 
 ## 0.4.0 — Tar and compressed tarballs
 
-The first slice adds read-only POSIX ustar inventory for `.tar`, `.tar.gz` and `.tgz`. Logical browsing now merges tar members with ZIP and loose sources. Selected-member MRI opening, metadata previews and cross-source inheritance now use the tar reader. See [tar reader notes](docs/TAR.md).
+**Status:** released locally as `v0.4.0`. The release adds read-only POSIX ustar inventory for `.tar`, `.tar.gz` and `.tgz`. Logical browsing now merges tar members with ZIP and loose sources. Selected-member MRI opening, metadata previews and cross-source inheritance now use the tar reader. See [milestone validation](docs/MILESTONE_0.4.0.md) and [tar reader notes](docs/TAR.md).
 
 Extend the established source and collection model with tar and explicitly documented compression variants. Reuse the archive safeguards above. Record sequential-access costs and cache behavior, and distinguish unsupported variants from malformed input.
 

@@ -1,6 +1,6 @@
 # Security
 
-BIDS Explorer 0.3.0 supports read-only exploration of directories and ZIPs. Selected ZIP MRI members are extracted into a bounded private cache outside the dataset. The release evidence covers Remote SSH browsing, image opening and a synthetic cross-source inheritance check. [0.3.0 validation](docs/MILESTONE_0.3.0.md)
+BIDS Explorer 0.4.0 supports read-only exploration of directories, ZIPs and supported tarballs. Selected archive MRI members are extracted into a bounded private cache outside the dataset. The release evidence covers Remote SSH browsing, image opening and a synthetic cross-source inheritance check. [ZIP validation](docs/MILESTONE_0.3.0.md) and [tar limits and validation](docs/TAR.md).
 
 ## Development checks
 
