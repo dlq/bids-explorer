@@ -181,7 +181,7 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   element('filename').textContent = decodeURIComponent(
     new URL(table.snapshot.sourceUri).pathname.split('/').at(-1)!,
   );
-  if (table.snapshot.sourceUri.startsWith('bids-zip:'))
+  if (table.snapshot.archiveSource)
     element('table-note').textContent =
       (element('table-note').textContent ?? '') +
       ' Archive dictionary coverage is limited to the literal same-directory JSON file; inheritance across archive boundaries is not applied.';

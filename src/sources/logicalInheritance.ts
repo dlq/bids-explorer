@@ -51,7 +51,7 @@ export async function loadLogicalInheritance(
         ),
       )
     )
-      incomplete ??= 'Some ZIP sources were deferred by the branch limit.';
+      incomplete ??= 'Some archive sources were deferred or could not be indexed.';
     if (part !== undefined) {
       const next: readonly DirectoryEntry[] = entries.filter((entry) => entry.name === part);
       directory = next.find((entry) => entry.kind === 'directory');
@@ -73,11 +73,12 @@ export async function loadLogicalInheritance(
       if (markers.length) levels.length = 0;
       if (markers.length > 1)
         incomplete ??= 'Multiple dataset descriptions at the same logical level.';
+      const candidates = entries.filter((entry) => /\.(json|bval|bvec)$/.test(entry.name));
       levels.push({
         relativePath: path,
         coverage: incomplete ? 'incomplete' : 'complete',
         error: incomplete,
-        entries: entries.filter((entry) => /\.(json|bval|bvec)$/.test(entry.name)).map(resource),
+        entries: candidates.map(resource),
       });
     }
     if (part !== undefined) path = path ? path + '/' + part : part;

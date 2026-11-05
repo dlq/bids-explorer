@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { basename, dirname } from 'node:path';
-import { resourcePath } from '../core/archiveUri';
+import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { randomBytes } from 'node:crypto';
 import { loadSummaryTable } from '../sources/summaryTables';
 import { summaryTableKind } from '../core/tables';
 
 export function isParticipantsTable(uri: vscode.Uri): boolean {
   return (
-    (uri.scheme === 'file' || uri.scheme === 'bids-zip') &&
+    (uri.scheme === 'file' || isArchiveUri(uri.scheme + ':')) &&
     uri.path.split('/').at(-1) === 'participants.tsv'
   );
 }
@@ -15,7 +15,7 @@ export function isParticipantsTable(uri: vscode.Uri): boolean {
 export function isSummaryTable(uri: vscode.Uri): boolean {
   return (
     (uri.scheme === 'file' && summaryTableKind(uri.path.split('/').at(-1)!) !== undefined) ||
-    (uri.scheme === 'bids-zip' && uri.path.endsWith('.tsv'))
+    (isArchiveUri(uri.scheme + ':') && uri.path.endsWith('.tsv'))
   );
 }
 

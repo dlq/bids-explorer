@@ -3,7 +3,7 @@ import { ArchiveImageCache } from './sources/imageCache';
 import { readTextSnapshot } from './sources/previewText';
 import { loadLogicalInheritance } from './sources/logicalInheritance';
 import { LogicalDirectorySource } from './sources/logicalDirectory';
-import { ZipInspector } from './ui/zipInspector';
+import { ArchiveInspector } from './ui/archiveInspector';
 import * as vscode from 'vscode';
 import { WorkspaceFolderHandoff } from './ui/workspaceFolders';
 import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
@@ -41,25 +41,27 @@ export function activate(context: vscode.ExtensionContext): {
     },
   });
   context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider('bids-zip', {
-      provideTextDocumentContent: async (uri, token) => {
-        const controller = new AbortController();
-        const listener = token.onCancellationRequested(() => controller.abort());
-        archiveWork.add(controller);
-        try {
-          if (token.isCancellationRequested) controller.abort();
-          return (await readTextSnapshot(uri.toString(), controller.signal)).text;
-        } finally {
-          listener.dispose();
-          archiveWork.delete(controller);
-        }
-      },
-    }),
+    ...['bids-zip', 'bids-tar'].map((scheme) =>
+      vscode.workspace.registerTextDocumentContentProvider(scheme, {
+        provideTextDocumentContent: async (uri, token) => {
+          const controller = new AbortController();
+          const listener = token.onCancellationRequested(() => controller.abort());
+          archiveWork.add(controller);
+          try {
+            if (token.isCancellationRequested) controller.abort();
+            return (await readTextSnapshot(uri.toString(), controller.signal)).text;
+          } finally {
+            listener.dispose();
+            archiveWork.delete(controller);
+          }
+        },
+      }),
+    ),
   );
   const fileUri = (entry: import('./core/directory').DirectoryEntry): vscode.Uri =>
     vscode.Uri.parse(entry.archive ? entryArchiveUri(entry) : entry.uri);
-  const zipInspector = new ZipInspector();
-  context.subscriptions.push(zipInspector);
+  const archiveInspector = new ArchiveInspector();
+  context.subscriptions.push(archiveInspector);
   const handoff = new WorkspaceFolderHandoff();
   context.subscriptions.push(handoff);
   const history = new HistoryPreviewManager(context.extensionUri);
@@ -178,7 +180,10 @@ export function activate(context: vscode.ExtensionContext): {
       return true;
     }),
     vscode.commands.registerCommand('bidsExplorer.inspectZip', (uri?: vscode.Uri) =>
-      zipInspector.inspect(uri),
+      archiveInspector.inspect('ZIP', uri),
+    ),
+    vscode.commands.registerCommand('bidsExplorer.inspectTar', (uri?: vscode.Uri) =>
+      archiveInspector.inspect('tar', uri),
     ),
     vscode.commands.registerCommand('bidsExplorer.addDataset', async (supplied?: vscode.Uri) => {
       const uri =
@@ -217,7 +222,7 @@ export function activate(context: vscode.ExtensionContext): {
     }),
     command('bidsExplorer.cancel', () => {
       provider.cancelPending();
-      zipInspector.cancelPending();
+      archiveInspector.cancelPending();
       for (const controller of archiveWork) controller.abort();
       gradients.cancelPending();
       metadata.cancelPending();
@@ -364,7 +369,10 @@ export function activate(context: vscode.ExtensionContext): {
             const extracted = await vscode.window.withProgress(
               {
                 location: vscode.ProgressLocation.Notification,
-                title: 'BIDS Explorer: Preparing selected MRI image',
+                title:
+                  element.entry.archive?.format === 'tar'
+                    ? 'BIDS Explorer: Opening tar MRI (first open scans sequentially)'
+                    : 'BIDS Explorer: Preparing selected MRI image',
                 cancellable: true,
               },
               async (_, token) => {
@@ -470,7 +478,9 @@ export function activate(context: vscode.ExtensionContext): {
           kind: entry.kind,
           revision,
           revisionScope: entry.archive
-            ? 'ZIP container'
+            ? entry.archive.format === 'tar'
+              ? 'Tar container'
+              : 'ZIP container'
             : entry.logical
               ? 'first physical source choice'
               : 'filesystem entry',

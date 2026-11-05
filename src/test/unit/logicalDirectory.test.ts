@@ -13,6 +13,8 @@ import { indexZip } from '../../sources/zipIndex';
 import { DatasetBrowser } from '../../core/browser';
 import { entryKey, type DirectoryEntry } from '../../core/directory';
 import { layoutHint, logicalFolder, logicalChildren } from '../../core/logicalLayout';
+import { gzipSync } from 'node:zlib';
+import { tarFixture, tarRecord } from '../tarFixture';
 import { zipFixture } from '../zipFixture';
 const signal = (): AbortSignal => new AbortController().signal;
 async function fixture(run: (folder: string) => Promise<void>): Promise<void> {
@@ -355,7 +357,9 @@ void test('logical inspection refuses changed inventories and reports unreadable
     await writeFile(join(folder, 'T1w.json'), '{"Root":1}');
     const source = new LogicalDirectorySource();
     const root = await source.root(pathToFileURL(folder).href);
-    const [subject] = await source.children(root, signal());
+    const subject = (await source.children(root, signal())).find(
+      (entry) => entry.name === 'sub-01',
+    )!;
     const [image] = await source.children(subject, signal());
     const revision = source.revision.bind(source);
     let seen = false;
@@ -393,5 +397,76 @@ void test('logical inspection refuses changed inventories and reports unreadable
       ),
       /128 ancestor levels/,
     );
+  });
+});
+
+void test('wrapped tar dataset merges with loose and ZIP sources, preserving physical member paths', async () => {
+  await fixture(async (folder) => {
+    const image = 'sub-01/ses-01/anat/sub-01_ses-01_T1w.nii.gz';
+    const sidecar = image.replace('.nii.gz', '.json');
+    const archive = (prefix: string) =>
+      tarFixture(
+        tarRecord(prefix + 'dataset_description.json', Buffer.from('{}')),
+        tarRecord(prefix + 'README'),
+        tarRecord(prefix + 'code/config.json'),
+        tarRecord(prefix + image),
+        tarRecord(prefix + sidecar, Buffer.from('{"EchoTime":0.1}')),
+      );
+    await writeFile(join(folder, 'a-broken.tgz'), 'invalid gzip');
+    await writeFile(join(folder, 'b-wrapped.tar.gz'), gzipSync(archive('wrapper/')));
+    await writeFile(join(folder, 'c-unwrapped.tar'), archive(''));
+    await writeFile(join(folder, 'z.zip'), zipFixture([{ name: image }]));
+    await mkdir(join(folder, 'sub-01/ses-01/anat'), { recursive: true });
+    const loose = image.replace('T1w', 'T2w');
+    await writeFile(join(folder, loose), '');
+    const source = new LogicalDirectorySource();
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).href));
+    const first = await browser.children(root);
+    const broken = first.find((entry) => entry.name === 'a-broken.tgz')!;
+    assert.ok(broken, 'unreadable tar should remain expandable');
+    await assert.rejects(source.children(broken, signal()), /header check/);
+    await rm(join(folder, 'a-broken.tgz'));
+    browser.refresh(root);
+    const entries = await browser.children(root);
+    assert.deepEqual(
+      entries.map((entry) => entry.name),
+      ['dataset_description.json', 'README', 'c-unwrapped.tar', 'sub-01'],
+    );
+    const deferred = entries.find((entry) => entry.name === 'c-unwrapped.tar')!;
+    assert.ok((await browser.children(deferred)).some((entry) => entry.name === 'sub-01'));
+    const [session] = await browser.children(entries.find((entry) => entry.name === 'sub-01')!);
+    const [anat] = await browser.children(session);
+    const files = await browser.children(anat);
+    const tar = files.find(
+      (entry) => entry.archive?.format === 'tar' && entry.name.endsWith('.nii.gz'),
+    )!;
+    assert.equal(tar.relativePath, image);
+    assert.equal(tar.archive!.memberPath, 'wrapper/' + image);
+    assert.ok(tar.logical?.conflict);
+    assert.equal(files.filter((entry) => entry.relativePath === image).length, 2);
+    await rm(join(folder, 'c-unwrapped.tar'));
+    const result = await loadLogicalInheritance(source, tar, signal());
+    assert.equal(result.coverage, 'complete');
+    assert.equal(result.fields.find((field) => field.key === 'EchoTime')?.value.valueText, '0.1');
+    assert.match(result.sources[0].entry.uri, /^bids-tar:/);
+  });
+});
+
+void test('session tar shards use the same logical placement as named ZIPs', async () => {
+  await fixture(async (folder) => {
+    const path = 'sub-02_ses-3/anat/sub-02_ses-3_T1w.nii';
+    await writeFile(join(folder, 'sub-02_ses-3.tgz'), gzipSync(tarFixture(tarRecord(path))));
+    const source = new LogicalDirectorySource();
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).href));
+    const [subject] = await browser.children(root);
+    assert.equal(subject.name, 'sub-02');
+    const [session] = await browser.children(subject);
+    assert.equal(session.name, 'ses-3');
+    const [anat] = await browser.children(session);
+    const [image] = await browser.children(anat);
+    assert.equal(image.archive?.memberPath, path);
+    assert.equal(image.relativePath, 'sub-02/ses-3/anat/sub-02_ses-3_T1w.nii');
   });
 });

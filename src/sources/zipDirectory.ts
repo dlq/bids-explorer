@@ -1,4 +1,4 @@
-import type { ArchiveIndex } from '../core/archive';
+import { tarSuffix, type ArchiveInventory } from '../core/archive';
 import { archiveTree } from '../core/archiveTree';
 import {
   orderEntries,
@@ -7,14 +7,15 @@ import {
   type SourceRevision,
 } from '../core/directory';
 import { LocalDirectorySource } from './localDirectory';
+import { indexTar } from './tarIndex';
 import { indexZip } from './zipIndex';
 
 interface CachedArchive {
   readonly container: DirectoryEntry;
-  readonly index: ArchiveIndex;
+  readonly index: ArchiveInventory;
   readonly branches: ReadonlyMap<string, readonly DirectoryEntry[]>;
 }
-/** ZIPs remain separate physical branches. Only expanded archives are indexed, on the data host. */
+/** Archives remain separate physical branches. Only expanded archives are indexed, on the data host. */
 export class ZipDirectorySource implements DirectorySource {
   private readonly cache = new Map<string, CachedArchive>();
   constructor(
@@ -49,11 +50,12 @@ export class ZipDirectorySource implements DirectorySource {
       const physical = await this.directories.children(parent, signal);
       return orderEntries(
         physical.map((entry) =>
-          entry.kind === 'file' && /\.zip$/i.test(entry.name)
+          entry.kind === 'file' && (/\.zip$/i.test(entry.name) || tarSuffix.test(entry.name))
             ? Object.freeze({
                 ...entry,
                 kind: 'directory' as const,
                 archive: Object.freeze({
+                  ...(tarSuffix.test(entry.name) ? { format: 'tar' as const } : {}),
                   sourceUri: entry.uri,
                   containerPath: entry.relativePath,
                   memberPath: '',
@@ -75,12 +77,15 @@ export class ZipDirectorySource implements DirectorySource {
         revision.modifiedAt !== cached.index.revision.modifiedAt
       ) {
         this.cache.delete(key);
-        throw new Error('ZIP changed since indexing. Refresh the archive branch.');
+        throw new Error('Archive changed since indexing. Refresh the archive branch.');
       }
       this.cache.delete(key);
       this.cache.set(key, cached);
     } else {
-      const index = await this.readIndex(sourceUri, signal);
+      const index = await (parent.archive.format === 'tar' ? indexTar : this.readIndex)(
+        sourceUri,
+        signal,
+      );
       const container: DirectoryEntry = { ...parent, relativePath: parent.archive.containerPath };
       const branches = await archiveTree(container, index, signal);
       signal.throwIfAborted();

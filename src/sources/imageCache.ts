@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArchiveUri } from '../core/archiveUri';
+import { streamTarMember } from './tarIndex';
 import { streamZipMember } from './zipMember';
 
 export interface ImageCacheLimits {
@@ -109,32 +110,27 @@ export class ArchiveImageCache {
         const handle = await open(target, 'wx', 0o600);
         let provenance = '';
         try {
-          await streamZipMember(
-            uri,
-            signal,
-            this.limits.memberBytes,
-            (chunk) => handle.writeFile(chunk),
-            (header) => {
-              provenance = JSON.stringify(
-                {
-                  source: ref,
-                  memberBytes: header.bytes,
-                  crc32: header.crc32,
-                  capturedAt: new Date().toISOString(),
-                },
-                null,
-                2,
+          const write = (chunk: Buffer) => handle.writeFile(chunk);
+          const start = (header: { bytes: number; crc32?: number }) => {
+            provenance = JSON.stringify(
+              {
+                source: ref,
+                memberBytes: header.bytes,
+                crc32: header.crc32,
+                capturedAt: new Date().toISOString(),
+              },
+              null,
+              2,
+            );
+            if (inventory.bytes + header.bytes + Buffer.byteLength(provenance) > this.limits.bytes)
+              throw new Error(
+                'Image cache byte budget reached. Close editor tabs and clear the extracted image cache.',
               );
-              if (
-                inventory.bytes + header.bytes + Buffer.byteLength(provenance) >
-                this.limits.bytes
-              )
-                throw new Error(
-                  'Image cache byte budget reached. Close editor tabs and clear the extracted image cache.',
-                );
-              return Promise.resolve();
-            },
-          );
+            return Promise.resolve();
+          };
+          if (ref.format === 'tar')
+            await streamTarMember(ref, signal, this.limits.memberBytes, write, start);
+          else await streamZipMember(uri, signal, this.limits.memberBytes, write, start);
         } finally {
           await handle.close();
         }

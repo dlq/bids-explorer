@@ -17,6 +17,7 @@ import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory'
 const directoryIcons: Readonly<Record<string, string>> = {
   Dataset: 'database',
   'ZIP archive': 'file-zip',
+  'Tar archive': 'file-zip',
   Participant: 'person',
   'Participant / session (combined)': 'person',
   Session: 'calendar',
@@ -134,20 +135,22 @@ export class DatasetTreeProvider
     } else
       item.command = { command: 'bidsExplorer.openFile', title: 'Open file', arguments: [element] };
     if (entry.archive) {
+      const tar = entry.archive.format === 'tar';
+      const label = tar ? 'Tar' : 'ZIP';
       if (entry.kind === 'file') {
         item.description =
           entry.archive.conflict || entry.logical?.conflict
             ? 'Archived file · source conflict'
             : /\.nii(\.gz)?$/.test(entry.name)
-              ? 'MRI · ZIP source'
-              : 'Metadata · ZIP source';
+              ? `MRI · ${label} source`
+              : `Metadata · ${label} source`;
         item.iconPath = new vscode.ThemeIcon('file');
       } else if (entry.archive.memberPath === '')
-        item.description = 'ZIP · expand to index contents';
+        item.description = `${label} · expand to index contents`;
       item.tooltip = new vscode.MarkdownString('', false);
       item.tooltip.appendText(
         entry.name +
-          '\n\nZIP member: ' +
+          `\n\n${label} member: ` +
           (entry.archive.memberPath || '(index not expanded)') +
           '\n\nSource: ' +
           entry.archive.sourceUri +

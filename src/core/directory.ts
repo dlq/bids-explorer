@@ -20,6 +20,8 @@ export interface DirectoryEntry {
     readonly session?: string;
   };
   readonly archive?: {
+    readonly format?: 'tar';
+    readonly datasetWrapper?: boolean;
     readonly sourceUri: string;
     readonly containerPath: string;
     readonly memberPath: string;
@@ -57,7 +59,8 @@ export function entryKey(entry: DirectoryEntry): string {
 export function describeEntry(entry: DirectoryEntry): string {
   if (entry.logical?.kind === 'subject') return 'Participant';
   if (entry.logical?.kind === 'session') return 'Session';
-  if (entry.archive?.memberPath === '') return 'ZIP archive';
+  if (entry.archive?.memberPath === '')
+    return entry.archive.format === 'tar' ? 'Tar archive' : 'ZIP archive';
   if (entry.kind !== 'directory') return entry.kind;
   if (entry.relativePath === '') return 'Dataset';
   if (entry.relativePath.startsWith('derivatives/') && entry.relativePath.split('/').length === 2)
@@ -84,10 +87,11 @@ export function describeEntry(entry: DirectoryEntry): string {
 export async function orderEntries(
   entries: readonly DirectoryEntry[],
   signal: AbortSignal,
+  filesFirst = false,
 ): Promise<readonly DirectoryEntry[]> {
   const collator = new Intl.Collator('en', { numeric: true });
   const compare = (a: DirectoryEntry, b: DirectoryEntry): number =>
-    Number(b.kind === 'directory') - Number(a.kind === 'directory') ||
+    (Number(b.kind === 'directory') - Number(a.kind === 'directory')) * (filesFirst ? -1 : 1) ||
     collator.compare(a.name, b.name);
   let runs: DirectoryEntry[][] = [];
   for (let i = 0; i < entries.length; i += 256) {

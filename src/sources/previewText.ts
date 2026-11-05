@@ -1,4 +1,5 @@
-import { parseArchiveUri } from '../core/archiveUri';
+import { isArchiveUri, parseArchiveUri } from '../core/archiveUri';
+import { streamTarMember } from './tarIndex';
 import { readZipMember } from './zipMember';
 import { lstat, open, type FileHandle } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -19,9 +20,24 @@ export async function readTextSnapshot(
   io: PreviewReadIO = nativeIO,
 ): Promise<TextSnapshot> {
   signal.throwIfAborted();
-  if (uri.startsWith('bids-zip:')) {
+  if (isArchiveUri(uri)) {
     const ref = parseArchiveUri(uri);
-    const bytes = await readZipMember(uri, signal, MAX_PREVIEW_BYTES);
+    const chunks: Buffer[] = [];
+    if (ref.format === 'tar')
+      await streamTarMember(
+        ref,
+        signal,
+        MAX_PREVIEW_BYTES,
+        (chunk) => {
+          chunks.push(Buffer.from(chunk));
+          return Promise.resolve();
+        },
+        () => Promise.resolve(),
+      );
+    const bytes =
+      ref.format === 'tar'
+        ? Buffer.concat(chunks)
+        : await readZipMember(uri, signal, MAX_PREVIEW_BYTES);
     return Object.freeze({
       sourceUri: uri,
       archiveSource: ref,

@@ -3,7 +3,12 @@ import { assertArchivePath } from './archive';
 import type { DirectoryEntry } from './directory';
 import type { SourceRevision } from './sourceRevision';
 
+export function isArchiveUri(uri: string): boolean {
+  return /^bids-(zip|tar):/.test(uri);
+}
+
 export interface ArchiveRef {
+  readonly format?: 'tar';
   readonly sourceUri: string;
   readonly memberPath: string;
   readonly memberIndex: number;
@@ -11,7 +16,7 @@ export interface ArchiveRef {
 }
 export function archiveResourceUri(ref: ArchiveRef): string {
   assertArchivePath(ref.memberPath);
-  const uri = new URL('bids-zip://member/');
+  const uri = new URL(ref.format === 'tar' ? 'bids-tar://member/' : 'bids-zip://member/');
   uri.pathname = '/' + ref.memberPath.split('/').map(encodeURIComponent).join('/');
   // One URL-safe token survives VS Code's escaping of query separators.
   uri.search = Buffer.from(
@@ -23,7 +28,7 @@ export function parseArchiveUri(value: string): ArchiveRef {
   if (value.length > 32768) throw new Error('Archive resource URI is too long.');
   const uri = new URL(value);
   if (
-    uri.protocol !== 'bids-zip:' ||
+    !isArchiveUri(uri.protocol) ||
     uri.host !== 'member' ||
     uri.username ||
     uri.password ||
@@ -57,6 +62,7 @@ export function parseArchiveUri(value: string): ArchiveRef {
   )
     throw new Error('Invalid archive ordinal or source revision.');
   return Object.freeze({
+    ...(uri.protocol === 'bids-tar:' ? { format: 'tar' as const } : {}),
     sourceUri,
     memberPath,
     memberIndex,
@@ -70,12 +76,12 @@ export function entryArchiveUri(entry: DirectoryEntry): string {
   return archiveResourceUri({ ...ref, memberIndex: ref.memberIndex, revision: ref.revision });
 }
 export function resourcePath(uri: string): string {
-  return uri.startsWith('bids-zip:') ? parseArchiveUri(uri).memberPath : fileURLToPath(uri);
+  return isArchiveUri(uri) ? parseArchiveUri(uri).memberPath : fileURLToPath(uri);
 }
 
 /** Human-readable provenance only; resource identity remains the structured URI. */
 export function resourceLabel(uri: string): string {
-  if (!uri.startsWith('bids-zip:')) return uri;
+  if (!isArchiveUri(uri)) return uri;
   const ref = parseArchiveUri(uri);
   return `${ref.sourceUri} :: ${ref.memberPath} (member ${ref.memberIndex})`;
 }

@@ -4,6 +4,18 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+### Added
+
+- **Inspect Tar Archive** scans bounded POSIX ustar inventories from plain tar and gzip tarballs on the workspace host, with cancellation and source revisions.
+- Logical BIDS browsing for tar and gzip tarballs, including dataset wrappers, named subject/session shards, mixed-source trees and original member details.
+- Tar-backed metadata and gradient previews, cross-source inheritance, and selected MRI opening through the private image cache.
+
+### Changed
+
+- Explain the sequential scan when opening an uncached tar MRI.
+
+- Show dataset-level files above participant and other folders in the logical tree, keeping root metadata visible when a participant is expanded.
+
 ## [0.3.0] - 2026-11-05
 
 ### Added

@@ -13,16 +13,19 @@ export interface ArchiveMember {
   readonly compressionMethod: number;
   readonly encrypted: boolean;
 }
-export interface ArchiveIndex {
+export interface ArchiveInventory {
   readonly sourceUri: string;
   readonly revision: SourceRevision;
   readonly capturedAt: string;
-  /** Complete central-directory inventory, not payload integrity or BIDS validation. */
+  /** Complete member inventory, not BIDS validation. */
   readonly coverage: 'complete';
+  readonly members: readonly Pick<ArchiveMember, 'resource' | 'kind' | 'bytes'>[];
+}
+export interface ArchiveIndex extends ArchiveInventory {
   readonly members: readonly ArchiveMember[];
 }
 export interface ArchivePlacement {
-  readonly index: ArchiveIndex;
+  readonly index: ArchiveInventory;
   /** Explicit member-directory prefix to remove; empty preserves the member root. */
   readonly memberRoot: string;
   /** Explicit dataset-relative directory under which members are mounted. */
@@ -34,6 +37,8 @@ export interface ArchiveLogicalEntry {
   readonly sources: readonly ArchiveMember['resource'][];
   readonly conflict: boolean;
 }
+
+export const tarSuffix = /\.(?:tar(?:\.gz)?|tgz)$/i;
 
 /** Reject unsafe/ambiguous spellings; never repair member identity by normalization. */
 export function assertArchivePath(path: string, allowRoot = false): void {
@@ -78,7 +83,7 @@ export async function mergeArchivePlacements(
     assertArchivePath(memberRoot, true);
     assertArchivePath(logicalRoot, true);
     if (sources.has(index.sourceUri))
-      throw new Error('Declare each physical ZIP source only once.');
+      throw new Error('Declare each physical archive source only once.');
     sources.add(index.sourceUri);
     let matched = !memberRoot;
     for (const member of index.members) {
@@ -101,7 +106,7 @@ export async function mergeArchivePlacements(
       const parts = path.split('/');
       for (let i = 1; i < parts.length; i++) add(parts.slice(0, i).join('/'), 'directory');
     }
-    if (!matched) throw new Error('Declared member root is absent from the ZIP index.');
+    if (!matched) throw new Error('Declared member root is absent from the archive index.');
   }
   signal.throwIfAborted();
   const result: ArchiveLogicalEntry[] = [];

@@ -1,3 +1,4 @@
+import { tarSuffix } from './archive';
 import { setImmediate } from 'node:timers/promises';
 import { combinedFolder } from './entities';
 import { isRecognizedBidsEntry, orderEntries, type DirectoryEntry } from './directory';
@@ -7,7 +8,10 @@ export function layoutHint(
   entry: DirectoryEntry,
 ): { subject?: string; session?: string } | undefined {
   if (entry.kind !== 'directory') return undefined;
-  const name = entry.archive?.memberPath === '' ? entry.name.replace(/\.zip$/i, '') : entry.name;
+  const name =
+    entry.archive?.memberPath === ''
+      ? entry.name.replace(entry.archive.format === 'tar' ? tarSuffix : /\.zip$/i, '')
+      : entry.name;
   const combined = combinedFolder(name);
   if (combined) return combined;
   const match = /^(sub|ses)-([a-zA-Z0-9+]+)$/.exec(name);
@@ -149,5 +153,5 @@ export async function logicalChildren(
       }),
     );
   }
-  return orderEntries(marked, signal);
+  return orderEntries(marked, signal, parent.relativePath === '');
 }

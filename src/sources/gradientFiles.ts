@@ -1,4 +1,4 @@
-import { resourcePath } from '../core/archiveUri';
+import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { archiveSiblings } from './archiveMetadata';
 import type { InheritanceResult } from '../core/inheritance';
 import type { DirectoryEntry } from '../core/directory';
@@ -43,7 +43,7 @@ export async function loadGradientPair(
   uri: string,
   signal: AbortSignal,
 ): Promise<GradientPreviewData> {
-  if (uri.startsWith('bids-zip:')) {
+  if (isArchiveUri(uri)) {
     const stem = resourcePath(uri).replace(/\.(bval|bvec)$/, '');
     const pair = await archiveSiblings(uri, [stem + '.bval', stem + '.bvec'], signal);
     return loadExplicitGradientPair(pair[0], pair[1], signal);

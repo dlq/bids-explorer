@@ -1,3 +1,4 @@
+import { isArchiveUri } from '../core/archiveUri';
 import * as vscode from 'vscode';
 import { parseHistory } from '../core/history';
 import { readTextSnapshot } from '../sources/previewText';
@@ -5,7 +6,8 @@ import { DocumentPreviewManager } from './documentPreview';
 
 export function isHistoryFile(uri: vscode.Uri): boolean {
   return (
-    (uri.scheme === 'file' || uri.scheme === 'bids-zip') && uri.path.split('/').at(-1) === 'CHANGES'
+    (uri.scheme === 'file' || isArchiveUri(uri.scheme + ':')) &&
+    uri.path.split('/').at(-1) === 'CHANGES'
   );
 }
 export class HistoryPreviewManager implements vscode.Disposable {

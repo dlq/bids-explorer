@@ -25,7 +25,10 @@ export class LogicalDirectorySource implements DirectorySource {
     if (!source.archive || source.archive.memberPath !== '') return children;
     const subject = context.logical?.subject;
     const session = context.logical?.session;
-    if (!subject) return children;
+    if (!subject) {
+      const wrapper = children.find((child) => child.archive?.datasetWrapper);
+      return wrapper ? this.physical.children(wrapper, signal) : children;
+    }
     const combined = session ? `sub-${subject}_ses-${session}` : undefined;
     const wrapper = children.find(
       (child) =>
@@ -39,7 +42,7 @@ export class LogicalDirectorySource implements DirectorySource {
         })
       )
         throw new Error(
-          'Archive member subjects disagree with its provisional filename placement. Inspect the ZIP source; no subjects were silently reassigned.',
+          'Archive member subjects disagree with its provisional filename placement. Inspect the archive source; no subjects were silently reassigned.',
         );
       return children;
     }
@@ -50,7 +53,7 @@ export class LogicalDirectorySource implements DirectorySource {
       );
       if (!sessionFolder)
         throw new Error(
-          'Archive does not contain the session indicated by its filename. Inspect the ZIP source.',
+          'Archive does not contain the session indicated by its filename. Inspect the archive source.',
         );
       result = await this.physical.children(sessionFolder, signal);
     }
@@ -65,7 +68,7 @@ export class LogicalDirectorySource implements DirectorySource {
   async children(
     parent: DirectoryEntry,
     signal: AbortSignal,
-    beforeUnnamedZip?: (entry: DirectoryEntry) => Promise<void>,
+    beforeUnnamedArchive?: (entry: DirectoryEntry) => Promise<void>,
   ): Promise<readonly DirectoryEntry[]> {
     signal.throwIfAborted();
     if (parent.kind !== 'directory') return [];
@@ -74,6 +77,7 @@ export class LogicalDirectorySource implements DirectorySource {
     if (sources.length > 10_000)
       throw new Error('Logical branch exceeds 10,000 physical source choices.');
     let expanded = 0;
+    let expandedTar = false;
     for (const source of sources) {
       signal.throwIfAborted();
       const hint = layoutHint(source);
@@ -93,10 +97,23 @@ export class LogicalDirectorySource implements DirectorySource {
       }
       const children = await this.contents(source, parent, signal);
       for (const child of children) {
-        if (child.archive?.memberPath === '' && !layoutHint(child) && expanded < 32) {
-          expanded++;
-          await beforeUnnamedZip?.(child);
-          candidates.push(...(await this.physical.children(child, signal)));
+        const tar = child.archive?.format === 'tar';
+        if (
+          child.archive?.memberPath === '' &&
+          !layoutHint(child) &&
+          (tar ? !expandedTar : expanded < 32)
+        ) {
+          if (tar) expandedTar = true;
+          else expanded++;
+          await beforeUnnamedArchive?.(child);
+          try {
+            candidates.push(...(await this.contents(child, parent, signal)));
+          } catch (error) {
+            signal.throwIfAborted();
+            if (!tar) throw error;
+            // Keep an unreadable tar expandable so its error can be inspected independently.
+            candidates.push(child);
+          }
         } else candidates.push(child);
       }
       if (candidates.length > 100_000)

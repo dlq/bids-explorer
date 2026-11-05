@@ -1,11 +1,11 @@
 import { setImmediate } from 'node:timers/promises';
-import { mergeArchivePlacements, type ArchiveIndex } from './archive';
+import { mergeArchivePlacements, type ArchiveInventory } from './archive';
 import { isRecognizedBidsEntry, orderEntries, type DirectoryEntry } from './directory';
 
 /** Build a bounded physical archive tree; no filename-derived dataset joins or reparenting. */
 export async function archiveTree(
   container: DirectoryEntry,
-  index: ArchiveIndex,
+  index: ArchiveInventory,
   signal: AbortSignal,
 ): Promise<ReadonlyMap<string, readonly DirectoryEntry[]>> {
   const logical = await mergeArchivePlacements(
@@ -13,6 +13,23 @@ export async function archiveTree(
     signal,
   );
   const visible = new Set<string>();
+  let wrapper: string | undefined;
+  if (container.archive?.format === 'tar') {
+    const roots = logical.filter((entry) => !entry.relativePath.includes('/'));
+    if (roots.length === 1 && roots[0].kinds.length === 1 && roots[0].kinds[0] === 'directory') {
+      const prefix = roots[0].relativePath;
+      if (
+        logical.some(
+          (entry) =>
+            entry.relativePath === prefix + '/dataset_description.json' &&
+            entry.kinds.length === 1 &&
+            entry.kinds[0] === 'file' &&
+            entry.sources.length === 1,
+        )
+      )
+        wrapper = prefix;
+    }
+  }
   for (let i = 0; i < logical.length; i++) {
     if (i % 256 === 0) {
       await setImmediate();
@@ -24,14 +41,17 @@ export async function archiveTree(
     const name = parts.at(-1)!;
     // Derivative processing folders are navigable only where indexed scientific files back them.
     const scientific = /\.(nii(?:\.gz)?|json|tsv(?:\.gz)?|bval|bvec|trk|tck|gii)$/.test(name);
+    const relativePath = wrapper
+      ? entry.relativePath.slice(wrapper.length + 1)
+      : entry.relativePath;
     const recognized = isRecognizedBidsEntry({
       datasetUri: container.datasetUri,
       uri: container.uri,
-      relativePath: entry.relativePath,
+      relativePath,
       name,
       kind: entry.kinds.includes('directory') ? 'directory' : 'file',
     });
-    if (!scientific && !recognized) continue;
+    if (!recognized && (!scientific || container.archive?.format === 'tar')) continue;
     for (let j = 1; j <= parts.length; j++) visible.add(parts.slice(0, j).join('/'));
   }
   const members = new Map(index.members.map((member) => [member.resource.memberIndex, member]));
@@ -63,12 +83,14 @@ export async function archiveTree(
             name: parts.at(-1)!,
             kind: kind === 'special' ? 'other' : kind,
             archive: Object.freeze({
+              ...(container.archive?.format && { format: container.archive.format }),
               sourceUri: index.sourceUri,
               containerPath: container.relativePath,
               memberPath: choice?.memberPath ?? entry.relativePath,
               memberIndex: choice?.memberIndex,
               choices: Object.freeze(choice ? [choice] : choices),
               revision: index.revision,
+              ...(entry.relativePath === wrapper ? { datasetWrapper: true } : {}),
               conflict: entry.conflict,
               visible: visible.has(entry.relativePath),
             }),

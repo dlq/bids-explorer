@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { entryKey } from '../core/directory';
-import { entryArchiveUri, resourceLabel } from '../core/archiveUri';
+import { isArchiveUri, entryArchiveUri, resourceLabel } from '../core/archiveUri';
 import type { DirectoryEntry } from '../core/directory';
 import type { InheritanceResult } from '../core/inheritance';
 import { loadInheritedMetadata } from '../sources/inheritedMetadata';
@@ -44,7 +44,7 @@ export class InheritanceInspector implements vscode.Disposable {
             ]).entries(),
           ].map(([uri, label]) => ({
             uri,
-            label: uri.startsWith('bids-zip:') ? resourceLabel(uri) : label,
+            label: isArchiveUri(uri) ? resourceLabel(uri) : label,
           }));
           return {
             title: 'Metadata and related files',

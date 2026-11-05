@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { indexTar } from '../sources/tarIndex';
 import { indexZip } from '../sources/zipIndex';
 
 /** An explicit inventory command; does not yet register or merge a dataset. */
-export class ZipInspector implements vscode.Disposable {
+export class ArchiveInspector implements vscode.Disposable {
   private readonly pending = new Set<AbortController>();
   cancelPending(): void {
     for (const controller of this.pending) controller.abort();
@@ -10,7 +11,11 @@ export class ZipInspector implements vscode.Disposable {
   dispose(): void {
     this.cancelPending();
   }
-  async inspect(supplied?: vscode.Uri): Promise<vscode.TextDocument | undefined> {
+  async inspect(
+    format: 'ZIP' | 'tar',
+    supplied?: vscode.Uri,
+  ): Promise<vscode.TextDocument | undefined> {
+    const zip = format === 'ZIP';
     const uri =
       supplied ??
       (
@@ -18,14 +23,14 @@ export class ZipInspector implements vscode.Disposable {
           canSelectFiles: true,
           canSelectFolders: false,
           canSelectMany: false,
-          filters: { 'ZIP archives': ['zip'] },
-          openLabel: 'Inspect ZIP index (read-only)',
+          filters: { [format + ' archives']: zip ? ['zip'] : ['tar', 'gz', 'tgz'] },
+          openLabel: `Inspect ${format} index (read-only)`,
         })
       )?.[0];
     if (!uri) return undefined;
     if (uri.scheme !== 'file') {
       void vscode.window.showErrorMessage(
-        'Inspect ZIP on its workspace host using a local file URI.',
+        `Inspect ${format} on its workspace host using a local file URI.`,
       );
       return undefined;
     }
@@ -33,7 +38,9 @@ export class ZipInspector implements vscode.Disposable {
       const index = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'BIDS Explorer: Indexing ZIP central directory',
+          title: zip
+            ? 'BIDS Explorer: Indexing ZIP central directory'
+            : 'BIDS Explorer: Scanning tar sequentially',
           cancellable: true,
         },
         async (_, token) => {
@@ -42,7 +49,7 @@ export class ZipInspector implements vscode.Disposable {
           const listener = token.onCancellationRequested(() => controller.abort());
           try {
             if (token.isCancellationRequested) controller.abort();
-            return await indexZip(uri.toString(), controller.signal);
+            return await (zip ? indexZip : indexTar)(uri.toString(), controller.signal);
           } finally {
             listener.dispose();
             this.pending.delete(controller);
@@ -53,7 +60,10 @@ export class ZipInspector implements vscode.Disposable {
         language: 'json',
         content: JSON.stringify(
           {
-            note: 'Central-directory inventory only. Member payloads have not been decompressed or verified. No extraction, dataset registration or logical placement has been performed.',
+            note: zip
+              ? 'Central-directory inventory only. Member payloads have not been decompressed or verified. No extraction, dataset registration or logical placement has been performed.'
+              : 'Sequential tar inventory. A gzip tarball must be decompressed through the end to list every member. No member files were extracted or registered.',
+            format: 'format' in index ? index.format : undefined,
             sourceUri: index.sourceUri,
             revision: index.revision,
             capturedAt: index.capturedAt,
@@ -72,7 +82,9 @@ export class ZipInspector implements vscode.Disposable {
       return document;
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError'))
-        void vscode.window.showErrorMessage(`BIDS Explorer could not index ZIP: ${String(error)}`);
+        void vscode.window.showErrorMessage(
+          `BIDS Explorer could not index ${format}: ${String(error)}`,
+        );
       return undefined;
     }
   }

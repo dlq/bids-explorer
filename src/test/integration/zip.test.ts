@@ -1,3 +1,4 @@
+import { archiveRendered } from './archiveRendered';
 import { niftiFixture } from '../niftiFixture';
 import { entryArchiveUri, parseArchiveUri, archiveResourceUri } from '../../core/archiveUri';
 import { WorkspaceFolderHandoff } from '../../ui/workspaceFolders';
@@ -100,11 +101,13 @@ suite('ZIP-backed dataset tree', () => {
         1,
         'Archive-backed subject must appear directly in the logical tree',
       );
-      assert.equal(roots[0].type, 'entry');
-      const item = api.provider.getTreeItem(roots[0]);
+      const [sidecar, subject] = roots;
+      assert.ok(sidecar?.type === 'entry' && sidecar.entry.name === 'dwi.json');
+      assert.ok(subject?.type === 'entry' && subject.entry.name === 'sub-01');
+      const item = api.provider.getTreeItem(subject);
       assert.equal(item.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
       assert.equal((item.iconPath as vscode.ThemeIcon).id, 'person');
-      const sessions = await api.provider.getChildren(roots[0]);
+      const sessions = await api.provider.getChildren(subject);
       assert.equal(sessions.length, 1);
       assert.equal(api.provider.getTreeItem(sessions[0]).label, 'ses-2');
       assert.equal(
@@ -219,33 +222,6 @@ suite('Declared descriptorless collections', () => {
   });
 });
 
-async function archiveRendered(
-  panel: vscode.WebviewPanel,
-  accepts: (message: Record<string, unknown>) => boolean,
-): Promise<Record<string, unknown>> {
-  let received: Record<string, unknown> | undefined;
-  const listener = panel.webview.onDidReceiveMessage((message: unknown) => {
-    if (
-      message &&
-      typeof message === 'object' &&
-      'type' in message &&
-      message.type === 'rendered' &&
-      accepts(message)
-    )
-      received = message;
-  });
-  try {
-    const deadline = Date.now() + 12000;
-    while (!received) {
-      assert.ok(Date.now() < deadline, 'Archive preview should render');
-      await panel.webview.postMessage({ type: 'inspect' });
-      await new Promise((resolve) => setTimeout(resolve, 30));
-    }
-    return received;
-  } finally {
-    listener.dispose();
-  }
-}
 suite('Archive metadata viewing', () => {
   test('tree JSON, table and gradient entry points render from original archive URIs; raw text is read-only', async function () {
     this.timeout(30000);

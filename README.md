@@ -1,6 +1,6 @@
 # BIDS Explorer
 
-A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. Version 0.3.0 supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; a ZIP inventory command is available, ZIP and loose sources in registered directories now share a logical subject/session tree, with archive metadata previews and selected MRI opening through your configured viewer. Tarballs and SquashFS remain planned.
+A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. Version 0.3.0 supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; a ZIP inventory command is available, ZIP and loose sources in registered directories now share a logical subject/session tree, with archive metadata previews and selected MRI opening through your configured viewer. The development build adds tar inventory, logical browsing, metadata previews and selected MRI opening. SquashFS remains planned.
 
 **Status: `0.3.0` released locally as `v0.3.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
@@ -141,6 +141,10 @@ Opening other files or using the preview’s Open as text buttons hands them to 
 
 See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observations, cache behavior and performance limits. Listings are cached in memory on the workspace host; image transfer/display uses VS Code and the selected editor. Selected ZIP images use a bounded workspace-host extraction cache. Persistent remote metadata indexing remains planned.
 
+## Inspecting a tar archive
+
+Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the native Explorer context menu to list a `.tar`, `.tar.gz` or `.tgz` file on the workspace host. The command scans sequentially and reports the first 200 members and the total count. Gzip tarballs must be decompressed through the end for a complete inventory. The scan is cancellable and supports POSIX ustar headers. For logical browsing, use **Add Dataset** on the directory containing the tarball. The tree can show the archive’s subjects, sessions, modalities and files alongside loose and ZIP sources. Select a tar file row for its metadata preview or to open the selected MRI in your configured viewer. **Show Source Details** displays the original member path. Tar reads scan the archive sequentially and can take longer than ZIP reads.
+
 ## Planned capabilities
 
 | Proposed version | Planned capability                                                                      |
@@ -148,7 +152,8 @@ See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observatio
 | `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
 | `0.2.0`          | Completed metadata milestone; tagged locally                                            |
 | `0.3.0`          | Completed ZIP browsing and cross-source metadata milestone; tagged locally              |
-| `0.4.0`–`0.5.0`  | Tarball and SquashFS browsing                                                           |
+| `0.4.0`          | Tar archive browsing and selected member opening                                        |
+| `0.5.0`          | SquashFS browsing and tool compatibility                                                |
 | `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
 | `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |

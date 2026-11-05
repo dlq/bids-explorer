@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 import { basename, dirname } from 'node:path';
-import { resourcePath } from '../core/archiveUri';
+import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { randomBytes } from 'node:crypto';
 import { loadJsonMetadata } from '../sources/datasetDescription';
 
 export function isDatasetDescription(uri: vscode.Uri): boolean {
   return (
-    (uri.scheme === 'file' || uri.scheme === 'bids-zip') &&
+    (uri.scheme === 'file' || isArchiveUri(uri.scheme + ':')) &&
     uri.path.split('/').at(-1) === 'dataset_description.json'
   );
 }
 
 export function isJsonMetadata(uri: vscode.Uri): boolean {
-  return (uri.scheme === 'file' || uri.scheme === 'bids-zip') && uri.path.endsWith('.json');
+  return (uri.scheme === 'file' || isArchiveUri(uri.scheme + ':')) && uri.path.endsWith('.json');
 }
 
 /** One read-only panel per physical JSON source, independent of any image viewer. */

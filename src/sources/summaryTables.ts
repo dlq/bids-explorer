@@ -1,3 +1,4 @@
+import { isArchiveUri } from '../core/archiveUri';
 import { loadArchiveTable } from './archiveMetadata';
 import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +14,7 @@ export async function loadSummaryTable(
   signal: AbortSignal,
   datasetUri?: string,
 ): Promise<SummaryTablePreview> {
-  if (uri.startsWith('bids-zip:')) return loadArchiveTable(uri, signal);
+  if (isArchiveUri(uri)) return loadArchiveTable(uri, signal);
   const kind = summaryTableKind(basename(fileURLToPath(uri)));
   if (!kind)
     throw new Error(

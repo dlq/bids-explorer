@@ -81,6 +81,10 @@
         "title": "BIDS Explorer: Inspect ZIP Archive"
       },
       {
+        "command": "bidsExplorer.inspectTar",
+        "title": "BIDS Explorer: Inspect Tar Archive"
+      },
+      {
         "command": "bidsExplorer.clearImageCache",
         "title": "BIDS Explorer: Clear Extracted Image Cache"
       }
@@ -203,6 +207,11 @@
         {
           "command": "bidsExplorer.inspectZip",
           "when": "resourceScheme == file && resourceExtname == .zip",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.inspectTar",
+          "when": "resourceScheme == file && resourceFilename =~ /[.](tar([.]gz)?|tgz)$/i",
           "group": "navigation"
         }
       ]

@@ -1,5 +1,6 @@
 import { basename, posix } from 'node:path';
 import { archiveResourceUri, parseArchiveUri, resourcePath } from '../core/archiveUri';
+import { indexTar } from './tarIndex';
 import { indexZip } from './zipIndex';
 import { readTextSnapshot } from './previewText';
 import { parseJsonMetadata } from '../core/metadata';
@@ -15,7 +16,7 @@ export async function archiveSiblings(
 ): Promise<readonly string[]> {
   const ref = parseArchiveUri(uri);
   if (paths.length > 128) throw new Error('Too many archive companion paths.');
-  const index = await indexZip(ref.sourceUri, signal);
+  const index = await (ref.format === 'tar' ? indexTar : indexZip)(ref.sourceUri, signal);
   if (
     index.revision.size !== ref.revision.size ||
     index.revision.modifiedAt !== ref.revision.modifiedAt
@@ -34,7 +35,7 @@ export async function archiveSiblings(
         { code: matches.length ? 'AMBIGUOUS' : 'ENOENT' },
       );
     return archiveResourceUri({
-      sourceUri: ref.sourceUri,
+      ...ref,
       memberPath: path,
       memberIndex: matches[0].resource.memberIndex,
       revision: index.revision,

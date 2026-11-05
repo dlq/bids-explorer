@@ -3,7 +3,7 @@ import { entryKey } from '../core/directory';
 import type { DirectoryEntry } from '../core/directory';
 import { randomBytes } from 'node:crypto';
 import { basename } from 'node:path';
-import { resourcePath, resourceLabel } from '../core/archiveUri';
+import { isArchiveUri, resourcePath, resourceLabel } from '../core/archiveUri';
 import {
   gradientPair,
   loadGradientPair,
@@ -12,7 +12,9 @@ import {
 } from '../sources/gradientFiles';
 
 export function isGradientFile(uri: vscode.Uri): boolean {
-  return (uri.scheme === 'file' || uri.scheme === 'bids-zip') && /\.(bval|bvec)$/.test(uri.path);
+  return (
+    (uri.scheme === 'file' || isArchiveUri(uri.scheme + ':')) && /\.(bval|bvec)$/.test(uri.path)
+  );
 }
 
 export class GradientPreviewManager implements vscode.Disposable {
@@ -24,7 +26,7 @@ export class GradientPreviewManager implements vscode.Disposable {
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   open(uri: vscode.Uri): Promise<vscode.WebviewPanel> {
-    if (uri.scheme === 'bids-zip')
+    if (isArchiveUri(uri.scheme + ':'))
       return this.openWith(uri.toString(), (signal) => loadGradientPair(uri.toString(), signal));
     const pair = gradientPair(uri.toString());
     const key = pair.bvalUri;
