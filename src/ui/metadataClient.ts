@@ -137,7 +137,7 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     typeof summary.name === 'string'
       ? summary.name.slice(0, 200)
       : 'documentKind' in message &&
-          message.documentKind === 'json-sidecar' &&
+          (message.documentKind === 'json-sidecar' || message.documentKind === 'json-array') &&
           'fileName' in message &&
           typeof message.fileName === 'string'
         ? message.fileName.slice(0, 200)
@@ -146,13 +146,17 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     'fileName' in message && typeof message.fileName === 'string'
       ? message.fileName
       : 'dataset_description.json';
-  const labels = [`${fields.length} recorded fields`];
+  const labels = [
+    `${fields.length} recorded ${'documentKind' in message && message.documentKind === 'json-array' ? 'array items' : 'fields'}`,
+  ];
   if (typeof summary.bidsVersion === 'string')
     labels.push('BIDS specification: ' + summary.bidsVersion.slice(0, 200));
   if (typeof summary.datasetType === 'string')
     labels.push('Recorded dataset type: ' + summary.datasetType.slice(0, 200));
   element('summary').textContent = labels.join(' · ');
-  element('source').textContent = sourceUri;
+  element('source').textContent = source.archiveSource
+    ? `${source.archiveSource.sourceUri} :: ${source.archiveSource.memberPath} (member ${source.archiveSource.memberIndex})`
+    : sourceUri;
   element('revision').textContent =
     `Read-only snapshot · ${source.capturedAt}. Reload explicitly after source changes.`;
   element('duplicates').hidden = duplicateCount === 0;

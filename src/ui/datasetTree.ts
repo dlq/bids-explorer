@@ -1,3 +1,4 @@
+import { entryArchiveUri } from '../core/archiveUri';
 import * as vscode from 'vscode';
 import type { TreeDescription } from '../core/treeDescriptions';
 import { isHistoryFile } from './historyPreview';
@@ -15,6 +16,7 @@ import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory'
 // Use the same semantic labels as the tree description, with theme-aware built-in icons.
 const directoryIcons: Readonly<Record<string, string>> = {
   Dataset: 'database',
+  'ZIP archive': 'file-zip',
   Participant: 'person',
   'Participant / session (combined)': 'person',
   Session: 'calendar',
@@ -55,6 +57,11 @@ export class DatasetTreeProvider
     readonly browser: DatasetBrowser,
     loadDescription?: DescriptionLoader,
     private readonly acceptsDescription: (entry: DirectoryEntry) => boolean = () => true,
+    private readonly extensionUri: vscode.Uri = vscode.Uri.joinPath(
+      vscode.Uri.file(__dirname),
+      '..',
+      '..',
+    ),
   ) {
     if (loadDescription)
       this.descriptions = new DescriptionQueue(loadDescription, (entry) => {
@@ -103,7 +110,9 @@ export class DatasetTreeProvider
         : vscode.TreeItemCollapsibleState.None,
     );
     item.id = entryKey(entry);
-    item.resourceUri = vscode.Uri.parse(entry.uri);
+    item.resourceUri = vscode.Uri.parse(
+      entry.archive && entry.kind === 'file' ? entryArchiveUri(entry) : entry.uri,
+    );
     item.contextValue =
       entry.relativePath === '' ? 'dataset' : isDirectory ? 'directory' : entry.kind;
     if (entry.kind === 'file' && isGradientFile(item.resourceUri)) item.contextValue = 'gradient';
@@ -113,6 +122,8 @@ export class DatasetTreeProvider
     if (entry.kind === 'file' && isParticipantsTable(item.resourceUri))
       item.contextValue = 'participants';
     if (entry.kind === 'file' && isHistoryFile(item.resourceUri)) item.contextValue = 'history';
+    if (entry.archive && entry.kind === 'file' && /\.nii(\.gz)?$/.test(entry.name))
+      item.contextValue = 'archiveImage';
     item.description = describeEntry(entry);
     item.tooltip = readableTooltip(entry);
     if (isDirectory)
@@ -122,7 +133,46 @@ export class DatasetTreeProvider
       item.description = `${entry.kind} · not followed`;
     } else
       item.command = { command: 'bidsExplorer.openFile', title: 'Open file', arguments: [element] };
-    if (this.acceptsDescription(entry)) {
+    if (entry.archive) {
+      if (entry.kind === 'file') {
+        item.description =
+          entry.archive.conflict || entry.logical?.conflict
+            ? 'Archived file · source conflict'
+            : /\.nii(\.gz)?$/.test(entry.name)
+              ? 'MRI · ZIP source'
+              : 'Metadata · ZIP source';
+        item.iconPath = new vscode.ThemeIcon('file');
+      } else if (entry.archive.memberPath === '')
+        item.description = 'ZIP · expand to index contents';
+      item.tooltip = new vscode.MarkdownString('', false);
+      item.tooltip.appendText(
+        entry.name +
+          '\n\nZIP member: ' +
+          (entry.archive.memberPath || '(index not expanded)') +
+          '\n\nSource: ' +
+          entry.archive.sourceUri +
+          '\n\nRead-only archive source. Selected MRI images use a checked private cache; text previews read bounded members.',
+      );
+    }
+    if (entry.kind === 'file' && /\.nii(\.gz)?$/.test(entry.name))
+      item.iconPath = {
+        light: vscode.Uri.joinPath(this.extensionUri, 'media', 'icons', 'brain-light.svg'),
+        dark: vscode.Uri.joinPath(this.extensionUri, 'media', 'icons', 'brain-dark.svg'),
+      };
+    if (entry.logical && entry.logical.kind !== 'resource') {
+      item.description =
+        describeEntry(entry) + (entry.logical.conflict ? ' · source conflict' : '');
+      item.tooltip = new vscode.MarkdownString('', false);
+      item.tooltip.appendText(
+        entry.name +
+          '\n\nLogical navigation over ' +
+          entry.logical.sources.length +
+          ' physical source choice(s). Archive names provide provisional placement; contents are indexed on expansion. Show Source Details for original paths and coverage.',
+      );
+    }
+    if (!entry.archive && entry.logical?.conflict && entry.kind !== 'directory')
+      item.description = 'File · source conflict';
+    if (!entry.archive && this.acceptsDescription(entry)) {
       const metadata = this.descriptions?.request(entry);
       if (metadata?.description) {
         item.description = `${describeEntry(entry)} · ${metadata.description.text}`;

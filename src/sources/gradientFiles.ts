@@ -1,3 +1,6 @@
+import { resourcePath } from '../core/archiveUri';
+import { archiveSiblings } from './archiveMetadata';
+import type { InheritanceResult } from '../core/inheritance';
 import type { DirectoryEntry } from '../core/directory';
 import { loadInheritedMetadata } from './inheritedMetadata';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -40,6 +43,11 @@ export async function loadGradientPair(
   uri: string,
   signal: AbortSignal,
 ): Promise<GradientPreviewData> {
+  if (uri.startsWith('bids-zip:')) {
+    const stem = resourcePath(uri).replace(/\.(bval|bvec)$/, '');
+    const pair = await archiveSiblings(uri, [stem + '.bval', stem + '.bvec'], signal);
+    return loadExplicitGradientPair(pair[0], pair[1], signal);
+  }
   const pair = gradientPair(uri);
   return loadExplicitGradientPair(pair.bvalUri, pair.bvecUri, signal);
 }
@@ -49,7 +57,7 @@ export async function loadExplicitGradientPair(
   bvecUri: string,
   signal: AbortSignal,
 ): Promise<GradientPreviewData> {
-  if (!fileURLToPath(bvalUri).endsWith('.bval') || !fileURLToPath(bvecUri).endsWith('.bvec'))
+  if (!resourcePath(bvalUri).endsWith('.bval') || !resourcePath(bvecUri).endsWith('.bvec'))
     throw new Error('Choose bval and bvec sources.');
   // Independent revision-checked reads, not an atomic pair or image-volume check.
   const [bval, bvec] = await Promise.all([
@@ -64,8 +72,12 @@ export async function loadExplicitGradientPair(
 export async function loadInheritedGradientPair(
   entry: DirectoryEntry,
   signal: AbortSignal,
+  load: (entry: DirectoryEntry, signal: AbortSignal) => Promise<InheritanceResult> = (
+    target,
+    abort,
+  ) => loadInheritedMetadata(target.datasetUri, target.uri, abort),
 ): Promise<GradientPreviewData> {
-  const result = await loadInheritedMetadata(entry.datasetUri, entry.uri, signal);
+  const result = await load(entry, signal);
   const bval = result.related.find((item) => item.extension === '.bval'),
     bvec = result.related.find((item) => item.extension === '.bvec');
   if (bval?.status !== 'resolved' || bvec?.status !== 'resolved')
@@ -73,5 +85,5 @@ export async function loadInheritedGradientPair(
       'Both inherited gradient sources must resolve unambiguously. Inspect metadata for coverage and source choices.',
     );
   const data = await loadExplicitGradientPair(bval.selected!.uri, bvec.selected!.uri, signal);
-  return { ...data, imageUri: entry.uri };
+  return { ...data, imageUri: result.target.uri };
 }

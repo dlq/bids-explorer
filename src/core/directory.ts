@@ -1,3 +1,4 @@
+import type { PhysicalResource } from './resources';
 import { combinedFolder } from './entities';
 import type { SourceRevision } from './sourceRevision';
 export type { SourceRevision } from './sourceRevision';
@@ -10,19 +11,53 @@ export interface DirectoryEntry {
   readonly relativePath: string;
   readonly name: string;
   readonly kind: EntryKind;
+  readonly logical?: {
+    readonly kind: 'subject' | 'session' | 'overlay' | 'resource';
+    readonly conflict?: boolean;
+    readonly visible?: boolean;
+    readonly sources: readonly DirectoryEntry[];
+    readonly subject?: string;
+    readonly session?: string;
+  };
+  readonly archive?: {
+    readonly sourceUri: string;
+    readonly containerPath: string;
+    readonly memberPath: string;
+    readonly memberIndex?: number;
+    readonly choices?: readonly PhysicalResource[];
+    readonly revision?: SourceRevision;
+    readonly conflict?: boolean;
+    readonly visible?: boolean;
+  };
 }
 export interface DirectorySource {
   root(uri: string): Promise<DirectoryEntry>;
   children(parent: DirectoryEntry, signal: AbortSignal): Promise<readonly DirectoryEntry[]>;
   revision(entry: DirectoryEntry): Promise<SourceRevision>;
+  refresh?(scope?: DirectoryEntry): void;
 }
 
 export function entryKey(entry: DirectoryEntry): string {
-  return JSON.stringify([entry.datasetUri, entry.relativePath]);
+  if (entry.logical && entry.logical.kind !== 'resource')
+    return JSON.stringify([entry.datasetUri, entry.relativePath, 'logical', entry.logical.kind]);
+  return entry.archive
+    ? JSON.stringify([
+        entry.datasetUri,
+        entry.relativePath,
+        entry.archive.sourceUri,
+        entry.archive.memberPath,
+        entry.archive.memberIndex ?? null,
+      ])
+    : entry.logical
+      ? JSON.stringify([entry.datasetUri, entry.relativePath, entry.uri])
+      : JSON.stringify([entry.datasetUri, entry.relativePath]);
 }
 
 /** Folder labels, including explicitly marked combined names. No path normalization or validation. */
 export function describeEntry(entry: DirectoryEntry): string {
+  if (entry.logical?.kind === 'subject') return 'Participant';
+  if (entry.logical?.kind === 'session') return 'Session';
+  if (entry.archive?.memberPath === '') return 'ZIP archive';
   if (entry.kind !== 'directory') return entry.kind;
   if (entry.relativePath === '') return 'Dataset';
   if (entry.relativePath.startsWith('derivatives/') && entry.relativePath.split('/').length === 2)
@@ -130,6 +165,11 @@ function bidsDirectoryRole(relativePath: string): string | undefined {
 
 export function isRecognizedBidsEntry(entry: DirectoryEntry): boolean {
   const parts = entry.relativePath.split('/');
+  if (entry.logical?.visible && !parts.some((part) => part.startsWith('.'))) return true;
+  if (entry.logical?.kind !== undefined && entry.logical.kind !== 'resource')
+    return entry.logical.sources.some((source) => isRecognizedBidsEntry(source));
+  if (entry.archive)
+    return entry.archive.visible !== false && !parts.some((part) => part.startsWith('.'));
   if (parts.some((part) => part.startsWith('.'))) return false;
   if (entry.kind === 'directory') return bidsDirectoryRole(entry.relativePath) !== undefined;
   if (entry.kind === 'symlink')

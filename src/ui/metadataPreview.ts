@@ -1,15 +1,18 @@
 import * as vscode from 'vscode';
 import { basename, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resourcePath } from '../core/archiveUri';
 import { randomBytes } from 'node:crypto';
 import { loadJsonMetadata } from '../sources/datasetDescription';
 
 export function isDatasetDescription(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && uri.path.split('/').at(-1) === 'dataset_description.json';
+  return (
+    (uri.scheme === 'file' || uri.scheme === 'bids-zip') &&
+    uri.path.split('/').at(-1) === 'dataset_description.json'
+  );
 }
 
 export function isJsonMetadata(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && uri.path.endsWith('.json');
+  return (uri.scheme === 'file' || uri.scheme === 'bids-zip') && uri.path.endsWith('.json');
 }
 
 /** One read-only panel per physical JSON source, independent of any image viewer. */
@@ -50,8 +53,8 @@ export class MetadataPreviewManager implements vscode.Disposable {
     const panel = vscode.window.createWebviewPanel(
       'bidsExplorer.metadata',
       isDatasetDescription(uri)
-        ? 'Metadata · ' + (basename(dirname(fileURLToPath(uri.toString()))) || 'Dataset')
-        : 'JSON · ' + basename(fileURLToPath(uri.toString())),
+        ? 'Metadata · ' + (basename(dirname(resourcePath(uri.toString()))) || 'Dataset')
+        : 'JSON · ' + basename(resourcePath(uri.toString())),
       vscode.ViewColumn.Active,
       {
         enableScripts: true,
@@ -68,13 +71,14 @@ export class MetadataPreviewManager implements vscode.Disposable {
     const publish = () => {
       const source = {
         sourceUri: data.snapshot.sourceUri,
+        archiveSource: data.snapshot.archiveSource,
         revision: data.snapshot.revision,
         capturedAt: data.snapshot.capturedAt,
       };
       return panel.webview.postMessage({
         type: 'snapshot',
         documentKind: data.kind,
-        fileName: basename(fileURLToPath(uri.toString())),
+        fileName: basename(resourcePath(uri.toString())),
         source,
         fields: data.fields,
         summary: data.summary,

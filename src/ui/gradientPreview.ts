@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { entryKey } from '../core/directory';
 import type { DirectoryEntry } from '../core/directory';
 import { randomBytes } from 'node:crypto';
 import { basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resourcePath, resourceLabel } from '../core/archiveUri';
 import {
   gradientPair,
   loadGradientPair,
@@ -11,7 +12,7 @@ import {
 } from '../sources/gradientFiles';
 
 export function isGradientFile(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && /\.(bval|bvec)$/.test(uri.path);
+  return (uri.scheme === 'file' || uri.scheme === 'bids-zip') && /\.(bval|bvec)$/.test(uri.path);
 }
 
 export class GradientPreviewManager implements vscode.Disposable {
@@ -23,13 +24,18 @@ export class GradientPreviewManager implements vscode.Disposable {
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   open(uri: vscode.Uri): Promise<vscode.WebviewPanel> {
+    if (uri.scheme === 'bids-zip')
+      return this.openWith(uri.toString(), (signal) => loadGradientPair(uri.toString(), signal));
     const pair = gradientPair(uri.toString());
     const key = pair.bvalUri;
     return this.openWith(key, (signal) => loadGradientPair(uri.toString(), signal));
   }
-  openResolved(entry: DirectoryEntry): Promise<vscode.WebviewPanel> {
-    return this.openWith(JSON.stringify([entry.datasetUri, entry.uri]), (signal) =>
-      loadInheritedGradientPair(entry, signal),
+  openResolved(
+    entry: DirectoryEntry,
+    load?: Parameters<typeof loadInheritedGradientPair>[2],
+  ): Promise<vscode.WebviewPanel> {
+    return this.openWith(entryKey(entry), (signal) =>
+      loadInheritedGradientPair(entry, signal, load),
     );
   }
   private openWith(
@@ -69,7 +75,7 @@ export class GradientPreviewManager implements vscode.Disposable {
     if (this.disposed) throw new Error('Gradient preview has been closed.');
     const panel = vscode.window.createWebviewPanel(
       'bidsExplorer.gradients',
-      `Gradients · ${basename(fileURLToPath(data.bvalUri)).replace(/\.bval$/, '')}`,
+      `Gradients · ${basename(resourcePath(data.bvalUri)).replace(/\.bval$/, '')}`,
       vscode.ViewColumn.Active,
       {
         enableScripts: true,
@@ -91,8 +97,9 @@ export class GradientPreviewManager implements vscode.Disposable {
         bvecText: data.bvecText,
         bvalUri: data.bvalUri,
         bvecUri: data.bvecUri,
+        sourceLabels: [resourceLabel(data.bvalUri), resourceLabel(data.bvecUri)],
         capturedAt,
-        imageUri: data.imageUri,
+        imageUri: data.imageUri && resourceLabel(data.imageUri),
       });
     const messages = panel.webview.onDidReceiveMessage(async (message: unknown) => {
       if (!message || typeof message !== 'object' || !('type' in message)) return;

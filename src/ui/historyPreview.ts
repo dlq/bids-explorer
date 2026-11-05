@@ -4,7 +4,9 @@ import { readTextSnapshot } from '../sources/previewText';
 import { DocumentPreviewManager } from './documentPreview';
 
 export function isHistoryFile(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && uri.path.split('/').at(-1) === 'CHANGES';
+  return (
+    (uri.scheme === 'file' || uri.scheme === 'bids-zip') && uri.path.split('/').at(-1) === 'CHANGES'
+  );
 }
 export class HistoryPreviewManager implements vscode.Disposable {
   private readonly previews: DocumentPreviewManager;

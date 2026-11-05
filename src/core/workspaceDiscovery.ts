@@ -75,3 +75,12 @@ export class WorkspaceDiscovery {
     this.generation++;
   }
 }
+
+/** Explicit workspace declarations are distinct from heuristic recognition and manual registrations. */
+export function isDeclaredCollection(uri: string, configured: unknown): boolean {
+  return (
+    Array.isArray(configured) &&
+    configured.length <= 1000 &&
+    configured.some((root: unknown) => typeof root === 'string' && root === uri)
+  );
+}

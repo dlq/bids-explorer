@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-05",
+  "scope": "Synthetic Remote SSH host API smoke",
+  "coverage": "complete",
+  "status": "resolved",
+  "effectiveFields": 2,
+  "overrideHistorySchemes": [
+    "file:",
+    "bids-zip:"
+  ],
+  "archiveOriginalSourceReopened": true,
+  "gradientVolumes": 2,
+  "gradientSourceSchemes": [
+    "file:",
+    "bids-zip:"
+  ],
+  "fixtureBytesAndRevisionsUnchanged": true,
+  "hostResolutionMs": 9.26
+}

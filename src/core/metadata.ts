@@ -54,6 +54,7 @@ function valueType(text: string): MetadataValueType {
 export async function parseJsonMetadata(
   input: TextSnapshot,
   signal: AbortSignal,
+  allowArrayRoot = false,
 ): Promise<JsonMetadata> {
   signal.throwIfAborted();
   const snapshot = Object.freeze({ ...input, revision: Object.freeze({ ...input.revision }) });
@@ -63,10 +64,11 @@ export async function parseJsonMetadata(
   signal.throwIfAborted();
   // Validate syntax only. Fields are then scanned losslessly instead of using the coerced object.
   const parsed: unknown = JSON.parse(snapshot.text);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+  const arrayRoot = Array.isArray(parsed);
+  if (!parsed || typeof parsed !== 'object' || (arrayRoot && !allowArrayRoot))
     throw new Error('Metadata preview requires a JSON object. Open the original as text.');
   const text = snapshot.text;
-  let i = text.indexOf('{') + 1;
+  let i = text.indexOf(arrayRoot ? '[' : '{') + 1;
   const fields: RecordedMetadataField[] = [],
     counts = new Map<string, number>();
   const whitespace = (): void => {
@@ -74,15 +76,19 @@ export async function parseJsonMetadata(
   };
   while (true) {
     whitespace();
-    if (text[i] === '}') break;
+    if (text[i] === (arrayRoot ? ']' : '}')) break;
     if (fields.length === MAX_METADATA_FIELDS)
       throw new Error('Metadata preview is limited to 1,000 fields. Open the original as text.');
-    const endKey = await stringEnd(text, i, signal);
-    const key = JSON.parse(text.slice(i, endKey)) as string;
-    i = endKey;
-    whitespace();
-    i++;
-    whitespace();
+    let key: string;
+    if (arrayRoot) key = String(fields.length);
+    else {
+      const endKey = await stringEnd(text, i, signal);
+      key = JSON.parse(text.slice(i, endKey)) as string;
+      i = endKey;
+      whitespace();
+      i++;
+      whitespace();
+    }
     const end = await valueEnd(text, i, signal);
     const valueText = text.slice(i, end).trimEnd();
     const occurrence = (counts.get(key) ?? 0) + 1;

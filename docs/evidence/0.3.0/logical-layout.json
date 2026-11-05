@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05",
+  "physicalSourceChoices": 5617,
+  "selectedSubjectSessions": 1,
+  "indexesBeforeExpansion": 0,
+  "indexesAfterExpansion": 1,
+  "rootListingMs": 69.221249,
+  "selectedSessionExpansionMs": 45.207189,
+  "processingFolders": 23,
+  "firstProcessingEntries": 3,
+  "memberStreamsOpened": false,
+  "payloadsDecompressed": false,
+  "scope": "Registered collection logical root + sessions + one expanded session; host API only, cache state uncontrolled",
+  "uiVerification": {
+    "vscode": "1.145.0",
+    "verified": "Fresh explicitly declared remote workspace showed subject > session > processing folder > three NIfTI member entries; original ZIP and combined wrapper layers absent from the logical path."
+  },
+  "subjectCandidates": 5617,
+  "coverage": "Subject/session placement from source names; member coverage partial, one session archive indexed. Counts are navigation candidates, not validated cohort counts.",
+  "validation": {
+    "unitTests": 103,
+    "integrationTestsPerVersion": 28,
+    "vscodeVersions": [
+      "1.96.0",
+      "1.144.1"
+    ],
+    "semgrepFindings": 0,
+    "developmentVsixContentsVerified": true
+  }
+}

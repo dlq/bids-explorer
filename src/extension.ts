@@ -1,3 +1,9 @@
+import { entryArchiveUri, resourcePath } from './core/archiveUri';
+import { ArchiveImageCache } from './sources/imageCache';
+import { readTextSnapshot } from './sources/previewText';
+import { loadLogicalInheritance } from './sources/logicalInheritance';
+import { LogicalDirectorySource } from './sources/logicalDirectory';
+import { ZipInspector } from './ui/zipInspector';
 import * as vscode from 'vscode';
 import { WorkspaceFolderHandoff } from './ui/workspaceFolders';
 import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
@@ -8,13 +14,9 @@ import { InheritanceInspector } from './ui/inheritanceInspector';
 import { interpretEntry } from './core/entities';
 import { DatasetBrowser } from './core/browser';
 import { DatasetRegistrations } from './core/registrations';
-import { WorkspaceDiscovery } from './core/workspaceDiscovery';
+import { WorkspaceDiscovery, isDeclaredCollection } from './core/workspaceDiscovery';
 import { describeEntry, folderEntities } from './core/directory';
-import {
-  LocalDirectorySource,
-  directoryRoot,
-  recognizeLocalDataset,
-} from './sources/localDirectory';
+import { directoryRoot, recognizeLocalDataset } from './sources/localDirectory';
 import { DatasetTreeProvider, type TreeElement } from './ui/datasetTree';
 
 import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
@@ -28,6 +30,36 @@ export function activate(context: vscode.ExtensionContext): {
   provider: DatasetTreeProvider;
   ready: Promise<void>;
 } {
+  const imageCache = new ArchiveImageCache(
+    vscode.Uri.joinPath(context.storageUri ?? context.globalStorageUri, 'extracted-images-v1')
+      .fsPath,
+  );
+  const archiveWork = new Set<AbortController>();
+  context.subscriptions.push({
+    dispose: () => {
+      for (const controller of archiveWork) controller.abort();
+    },
+  });
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider('bids-zip', {
+      provideTextDocumentContent: async (uri, token) => {
+        const controller = new AbortController();
+        const listener = token.onCancellationRequested(() => controller.abort());
+        archiveWork.add(controller);
+        try {
+          if (token.isCancellationRequested) controller.abort();
+          return (await readTextSnapshot(uri.toString(), controller.signal)).text;
+        } finally {
+          listener.dispose();
+          archiveWork.delete(controller);
+        }
+      },
+    }),
+  );
+  const fileUri = (entry: import('./core/directory').DirectoryEntry): vscode.Uri =>
+    vscode.Uri.parse(entry.archive ? entryArchiveUri(entry) : entry.uri);
+  const zipInspector = new ZipInspector();
+  context.subscriptions.push(zipInspector);
   const handoff = new WorkspaceFolderHandoff();
   context.subscriptions.push(handoff);
   const history = new HistoryPreviewManager(context.extensionUri);
@@ -38,7 +70,10 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(metadata);
   const gradients = new GradientPreviewManager(context.extensionUri);
   context.subscriptions.push(gradients);
-  const inheritance = new InheritanceInspector(context.extensionUri, gradients);
+  const source = new LogicalDirectorySource();
+  const inheritance = new InheritanceInspector(context.extensionUri, gradients, (entry, signal) =>
+    loadLogicalInheritance(source, entry, signal),
+  );
   context.subscriptions.push(inheritance);
   const preview = async (uri: vscode.Uri): Promise<vscode.WebviewPanel | undefined> => {
     try {
@@ -50,7 +85,6 @@ export function activate(context: vscode.ExtensionContext): {
       return undefined;
     }
   };
-  const source = new LocalDirectorySource();
   const browser = new DatasetBrowser(source);
   const descriptionOptions = (
     entry: import('./core/directory').DirectoryEntry,
@@ -68,14 +102,23 @@ export function activate(context: vscode.ExtensionContext): {
       sessionColumn: column('sessionLabelColumn'),
     };
   };
+  const descriptionEligible = (entry: import('./core/directory').DirectoryEntry): boolean =>
+    !entry.archive &&
+    (!entry.logical ||
+      (entry.logical.sources.length === 1 &&
+        entry.logical.sources[0].relativePath === entry.relativePath &&
+        !entry.logical.sources[0].archive)) &&
+    descriptionPlan(entry, descriptionOptions(entry)) !== undefined;
   const provider = new DatasetTreeProvider(
     browser,
     (entry, signal) => loadTreeDescription(entry, descriptionOptions(entry), signal),
-    (entry) => descriptionPlan(entry, descriptionOptions(entry)) !== undefined,
+    descriptionEligible,
+    context.extensionUri,
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('bidsExplorer')) provider.refreshDescriptions();
+      if (event.affectsConfiguration('bidsExplorer.collectionRoots')) void discover();
     }),
   );
   const tree = vscode.window.createTreeView('bidsExplorer.datasets', {
@@ -95,7 +138,13 @@ export function activate(context: vscode.ExtensionContext): {
   const discovery = new WorkspaceDiscovery(
     browser,
     registrations,
-    recognizeLocalDataset,
+    (uri) =>
+      isDeclaredCollection(
+        uri,
+        vscode.workspace.getConfiguration('bidsExplorer').get<unknown>('collectionRoots', []),
+      )
+        ? source.root(uri)
+        : recognizeLocalDataset(uri),
     () => provider.registrationChanged(),
     (uri, error) =>
       output.appendLine(`Workspace recognition could not inspect ${uri}: ${String(error)}`),
@@ -118,6 +167,19 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(
     provider,
     tree,
+    vscode.commands.registerCommand('bidsExplorer.clearImageCache', async () => {
+      if (archiveWork.size || vscode.window.tabGroups.all.some((group) => group.tabs.length)) {
+        void vscode.window.showInformationMessage(
+          'Close all editor/viewer tabs and finish pending archive reads before clearing extracted images.',
+        );
+        return false;
+      }
+      await imageCache.clear();
+      return true;
+    }),
+    vscode.commands.registerCommand('bidsExplorer.inspectZip', (uri?: vscode.Uri) =>
+      zipInspector.inspect(uri),
+    ),
     vscode.commands.registerCommand('bidsExplorer.addDataset', async (supplied?: vscode.Uri) => {
       const uri =
         supplied ??
@@ -155,6 +217,8 @@ export function activate(context: vscode.ExtensionContext): {
     }),
     command('bidsExplorer.cancel', () => {
       provider.cancelPending();
+      zipInspector.cancelPending();
+      for (const controller of archiveWork) controller.abort();
       gradients.cancelPending();
       metadata.cancelPending();
       history.cancelPending();
@@ -177,7 +241,7 @@ export function activate(context: vscode.ExtensionContext): {
         const uri =
           target ??
           (element?.type === 'entry' && element.entry.kind === 'file'
-            ? vscode.Uri.parse(element.entry.uri)
+            ? fileUri(element.entry)
             : vscode.window.activeTextEditor?.document.uri);
         if (!uri || !isGradientFile(uri)) {
           void vscode.window.showInformationMessage('Select a .bval or .bvec file to preview.');
@@ -197,7 +261,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isJsonMetadata(active)
               ? active
               : element?.type === 'entry' && element.entry.kind === 'file'
-                ? vscode.Uri.parse(element.entry.uri)
+                ? fileUri(element.entry)
                 : vscode.window.activeTextEditor?.document.uri;
         if (!uri || !isJsonMetadata(uri)) {
           void vscode.window.showInformationMessage('Select a JSON metadata file to preview.');
@@ -224,7 +288,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isSummaryTable(active)
               ? active
               : element?.type === 'entry' && element.entry.kind === 'file'
-                ? vscode.Uri.parse(element.entry.uri)
+                ? fileUri(element.entry)
                 : active;
         if (!uri || !isSummaryTable(uri)) {
           void vscode.window.showInformationMessage(
@@ -262,7 +326,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isHistoryFile(active)
               ? active
               : element?.type === 'entry'
-                ? vscode.Uri.parse(element.entry.uri)
+                ? fileUri(element.entry)
                 : active;
         if (!uri || !isHistoryFile(uri)) {
           void vscode.window.showInformationMessage('Select a CHANGES file to preview.');
@@ -292,7 +356,34 @@ export function activate(context: vscode.ExtensionContext): {
       if (element?.type !== 'entry' || element.entry.kind !== 'file') return;
       try {
         await source.revision(element.entry);
-        const uri = vscode.Uri.parse(element.entry.uri);
+        const uri = fileUri(element.entry);
+        if (element.entry.archive && /\.nii(\.gz)?$/.test(resourcePath(uri.toString()))) {
+          const controller = new AbortController();
+          archiveWork.add(controller);
+          try {
+            const extracted = await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: 'BIDS Explorer: Preparing selected MRI image',
+                cancellable: true,
+              },
+              async (_, token) => {
+                const listener = token.onCancellationRequested(() => controller.abort());
+                try {
+                  if (token.isCancellationRequested) controller.abort();
+                  return await imageCache.materialize(uri.toString(), controller.signal);
+                } finally {
+                  listener.dispose();
+                }
+              },
+            );
+            controller.signal.throwIfAborted();
+            await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(extracted));
+            return extracted;
+          } finally {
+            archiveWork.delete(controller);
+          }
+        }
         if (isGradientFile(uri)) return preview(uri);
         if (isHistoryFile(uri)) {
           try {
@@ -332,7 +423,9 @@ export function activate(context: vscode.ExtensionContext): {
         }
         await vscode.commands.executeCommand('vscode.open', uri);
       } catch (error) {
-        await vscode.window.showErrorMessage(
+        if (error instanceof Error && error.name === 'AbortError') return undefined;
+        output.appendLine(`Could not open selected source: ${String(error)}`);
+        void vscode.window.showErrorMessage(
           `BIDS Explorer could not open the file: ${String(error)}`,
         );
       }
@@ -351,14 +444,24 @@ export function activate(context: vscode.ExtensionContext): {
       const content = JSON.stringify(
         {
           sourceUri: entry.uri,
+          archive: entry.archive,
+          logical: entry.logical,
+          physicalSourceNote: entry.logical
+            ? 'Logical display paths are navigation only. logical.sources retains every original physical entry; archive names are provisional placement evidence until member inspection.'
+            : undefined,
           datasetUri: entry.datasetUri,
-          originalRelativePath: entry.relativePath,
+          originalRelativePath: entry.logical
+            ? entry.logical.sources.length === 1
+              ? entry.logical.sources[0].relativePath
+              : undefined
+            : entry.relativePath,
+          logicalRelativePath: entry.logical ? entry.relativePath : undefined,
           interpretation: describeEntry(entry),
           canonicalFolderEntities: folderEntities(entry),
           entityInterpretation: interpretEntry(entry),
           treeDescription: {
             ...provider.descriptionSnapshot(entry),
-            eligible: descriptionPlan(entry, descriptionOptions(entry)) !== undefined,
+            eligible: descriptionEligible(entry),
           },
           treeDescriptionNote:
             'Descriptions are bounded background snapshots, not a recursive metadata index. Up to 2 jobs run at once, 32 wait and 512 results/states are retained. Unloaded entries have no attached metadata description. Refresh the relevant branch to reread sources; global Refresh also retries unloaded descriptions.',
@@ -366,12 +469,24 @@ export function activate(context: vscode.ExtensionContext): {
             'Entity interpretation records lexical folder/filename evidence only. Conflicts and duplicate filename entities remain unresolved; index strings are not normalized. Inherited metadata descriptions are reported separately in treeDescription. No BIDS conformance validation or source changes.',
           kind: entry.kind,
           revision,
+          revisionScope: entry.archive
+            ? 'ZIP container'
+            : entry.logical
+              ? 'first physical source choice'
+              : 'filesystem entry',
           coverage:
             entry.kind === 'directory'
               ? {
                   immediateChildren: snapshot.coverage,
                   cachedListingIsStale: snapshot.stale,
-                  physicalChildCount: snapshot.physicalChildCount,
+                  physicalChildCount:
+                    entry.archive || entry.logical ? undefined : snapshot.physicalChildCount,
+                  logicalNavigationChildCount: entry.logical
+                    ? snapshot.physicalChildCount
+                    : undefined,
+                  archiveNavigationChildCount: entry.archive
+                    ? snapshot.physicalChildCount
+                    : undefined,
                   recognizedChildCount:
                     snapshot.physicalChildCount === undefined
                       ? undefined

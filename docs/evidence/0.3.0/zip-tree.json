@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-05",
+  "rootArchiveBranches": 5617,
+  "indexesReadBeforeExpansion": 0,
+  "indexesReadAfterBrowsing": 1,
+  "rootListingMs": 43.041351,
+  "firstExpansionMs": 59.98875699999999,
+  "processingFolders": 23,
+  "firstProcessingBranchEntries": 3,
+  "memberStreamsOpened": false,
+  "payloadsDecompressed": false,
+  "scope": "Registered root + one expanded ZIP; host-side API probe, not cohort indexing or UI latency",
+  "remoteUiVerification": {
+    "vscode": "1.145.0",
+    "verified": "Existing registered collection restored after reload; expanded a ZIP, combined subject/session and processing folder to display three NIfTI member entries. No extraction or member opening."
+  }
+}

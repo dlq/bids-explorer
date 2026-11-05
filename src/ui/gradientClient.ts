@@ -343,7 +343,12 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
           : 'Same-directory, same-basename pair. No image association or inherited applicability is inferred.';
       const sources = element('sources');
       sources.replaceChildren();
-      for (const uri of [message.bvalUri, message.bvecUri]) {
+      for (const uri of 'sourceLabels' in message &&
+      Array.isArray(message.sourceLabels) &&
+      message.sourceLabels.length === 2 &&
+      message.sourceLabels.every((value: unknown) => typeof value === 'string')
+        ? message.sourceLabels
+        : [message.bvalUri, message.bvecUri]) {
         const p = document.createElement('p');
         p.textContent = uri;
         sources.append(p);

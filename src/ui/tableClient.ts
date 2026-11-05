@@ -171,15 +171,26 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
         ? 'Scans'
         : 'kind' in message && message.kind === 'events'
           ? 'Events'
-          : 'Participants';
+          : 'kind' in message && message.kind === 'table'
+            ? 'Table'
+            : 'Participants';
   table = message.table as TableSnapshot;
   if ('kind' in message && message.kind === 'events')
     element('table-note').textContent =
       'Recorded events in source order. Onsets, durations and trial values remain literal; repeated onsets are allowed. No timeline, image/run association or time-unit conversion is inferred. n/a, empty and absent cells remain distinct.';
-  element('filename').textContent = table.snapshot.sourceUri.split('/').at(-1)!;
+  element('filename').textContent = decodeURIComponent(
+    new URL(table.snapshot.sourceUri).pathname.split('/').at(-1)!,
+  );
+  if (table.snapshot.sourceUri.startsWith('bids-zip:'))
+    element('table-note').textContent =
+      (element('table-note').textContent ?? '') +
+      ' Archive dictionary coverage is limited to the literal same-directory JSON file; inheritance across archive boundaries is not applied.';
   dictionary = message.dictionary as SummaryTablePreview['dictionary'];
   columnPage = Math.min(columnPage, Math.max(0, Math.ceil(table.columns.length / 12) - 1));
-  element('source').textContent = table.snapshot.sourceUri;
+  const origin = table.snapshot.archiveSource;
+  element('source').textContent = origin
+    ? `${origin.sourceUri} :: ${origin.memberPath} (member ${origin.memberIndex})`
+    : table.snapshot.sourceUri;
   element('revision').textContent =
     `Table snapshot: ${table.snapshot.capturedAt} · ${table.snapshot.revision.size} bytes. Dictionary: ${dictionary.sourceUri}${dictionary.metadata ? ' · snapshot ' + dictionary.metadata.snapshot.capturedAt : ''}. Snapshots are separate explicit reads, not an atomic dataset snapshot.`;
   const sources = dictionary.sources ?? (dictionary.metadata ? [dictionary.metadata.snapshot] : []);

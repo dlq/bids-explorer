@@ -1,16 +1,22 @@
 import * as vscode from 'vscode';
 import { basename, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resourcePath } from '../core/archiveUri';
 import { randomBytes } from 'node:crypto';
 import { loadSummaryTable } from '../sources/summaryTables';
 import { summaryTableKind } from '../core/tables';
 
 export function isParticipantsTable(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && uri.path.split('/').at(-1) === 'participants.tsv';
+  return (
+    (uri.scheme === 'file' || uri.scheme === 'bids-zip') &&
+    uri.path.split('/').at(-1) === 'participants.tsv'
+  );
 }
 
 export function isSummaryTable(uri: vscode.Uri): boolean {
-  return uri.scheme === 'file' && summaryTableKind(uri.path.split('/').at(-1)!) !== undefined;
+  return (
+    (uri.scheme === 'file' && summaryTableKind(uri.path.split('/').at(-1)!) !== undefined) ||
+    (uri.scheme === 'bids-zip' && uri.path.endsWith('.tsv'))
+  );
 }
 
 /** One read-only panel per physical table, independent of any image viewer. */
@@ -60,9 +66,11 @@ export class TablePreviewManager implements vscode.Disposable {
           ? 'Scans'
           : data.kind === 'events'
             ? 'Events'
-            : 'Participants') +
+            : data.kind === 'table'
+              ? 'Table'
+              : 'Participants') +
         ' · ' +
-        (basename(dirname(fileURLToPath(uri.toString()))) || 'Dataset'),
+        (basename(dirname(resourcePath(uri.toString()))) || 'Dataset'),
       vscode.ViewColumn.Active,
       {
         enableScripts: true,

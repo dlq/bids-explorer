@@ -70,7 +70,9 @@ void test('task/dictionary JSON previews are literal, preserve duplicates and nu
       /JSON metadata/,
     );
     await writeFile(path, '[]');
-    await assert.rejects(loadJsonMetadata(uri, new AbortController().signal), /JSON object/);
+    const array = await loadJsonMetadata(uri, new AbortController().signal);
+    assert.equal(array.kind, 'json-array');
+    assert.deepEqual(array.fields, []);
   } finally {
     await rm(folder, { recursive: true, force: true });
   }

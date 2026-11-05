@@ -18,7 +18,7 @@ export interface TableSnapshot {
   readonly unevenRows: number;
 }
 export interface SummaryTablePreview {
-  readonly kind?: 'participants' | 'sessions' | 'scans' | 'events';
+  readonly kind?: 'participants' | 'sessions' | 'scans' | 'events' | 'table';
   readonly table: TableSnapshot;
   readonly dictionary: Readonly<{
     sourceUri: string;

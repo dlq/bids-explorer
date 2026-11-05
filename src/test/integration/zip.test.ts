@@ -1,0 +1,358 @@
+import { niftiFixture } from '../niftiFixture';
+import { entryArchiveUri, parseArchiveUri, archiveResourceUri } from '../../core/archiveUri';
+import { WorkspaceFolderHandoff } from '../../ui/workspaceFolders';
+import { strict as assert } from 'node:assert';
+import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import * as vscode from 'vscode';
+import { zipFixture } from '../zipFixture';
+
+suite('Archive URI platform boundary', () => {
+  test('VS Code URI serialization preserves member source/revision fields', () => {
+    const original = archiveResourceUri({
+      sourceUri: 'file:///tmp/archive%20name.zip',
+      memberPath: 'folder/a +%.json',
+      memberIndex: 2,
+      revision: { size: 123, modifiedAt: 1.25 },
+    });
+    assert.deepEqual(
+      parseArchiveUri(vscode.Uri.parse(original).toString()),
+      parseArchiveUri(original),
+    );
+  });
+});
+
+suite('ZIP index entry point', () => {
+  test('explicit command inspects a ZIP at a deeper physical path, bounds its report and preserves source bytes', async function () {
+    this.timeout(15000);
+    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-zip-command-'));
+    try {
+      const nested = join(folder, 'sub-01', 'ses-02');
+      await mkdir(nested, { recursive: true });
+      const uri = vscode.Uri.file(join(nested, 'anat.zip'));
+      const bytes = zipFixture(
+        Array.from({ length: 205 }, (_, i) => ({
+          name: `sub-01_run-${i}_T1w.nii`,
+          text: 'fixture',
+        })),
+      );
+      await writeFile(uri.fsPath, bytes);
+      const document = await vscode.commands.executeCommand<vscode.TextDocument>(
+        'bidsExplorer.inspectZip',
+        uri,
+      );
+      assert.ok(document);
+      assert.equal(document.languageId, 'json');
+      const report = JSON.parse(document.getText()) as {
+        totalMembers: number;
+        displayedMembers: number;
+        sourceUri: string;
+        coverage: string;
+        note: string;
+        members: { resource: { memberPath: string } }[];
+      };
+      assert.equal(report.sourceUri, uri.toString());
+      assert.equal(report.coverage, 'complete');
+      assert.equal(report.totalMembers, 205);
+      assert.equal(report.displayedMembers, 200);
+      assert.equal(report.members.length, 200);
+      assert.match(report.note, /have not been decompressed or verified/);
+      assert.equal(report.members[0].resource.memberPath, 'sub-01_run-0_T1w.nii');
+      assert.deepEqual(await readFile(uri.fsPath), bytes);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    } finally {
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
+
+suite('ZIP-backed dataset tree', () => {
+  test('Add Dataset browses ZIP subject/session branches and hands off the selected MRI', async function () {
+    this.timeout(15000);
+    const extension = vscode.extensions.getExtension<{
+      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+    }>('bids-explorer-dev.bids-explorer')!;
+    const api = await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-zip-navigation-'));
+    let root: import('../../core/directory').DirectoryEntry | undefined;
+    try {
+      const zip = join(folder, 'sub-01_ses-2.zip');
+      const bytes = zipFixture([
+        {
+          name: 'sub-01_ses-2/Resample_B0/sub-01_ses-2_desc-b0_dwi.nii.gz',
+          bytes: niftiFixture(),
+          method: 8,
+        },
+        { name: 'sub-01_ses-2/.datalad/config' },
+      ]);
+      await writeFile(zip, bytes);
+      await writeFile(join(folder, 'dwi.json'), '{"CrossSourceField":42}');
+      root = await vscode.commands.executeCommand(
+        'bidsExplorer.addDataset',
+        vscode.Uri.file(folder),
+      );
+      assert.ok(root);
+      const roots = await api.provider.getChildren(api.provider.element(root));
+      assert.equal(
+        roots.filter((entry) => entry.type === 'entry' && entry.entry.kind === 'directory').length,
+        1,
+        'Archive-backed subject must appear directly in the logical tree',
+      );
+      assert.equal(roots[0].type, 'entry');
+      const item = api.provider.getTreeItem(roots[0]);
+      assert.equal(item.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+      assert.equal((item.iconPath as vscode.ThemeIcon).id, 'person');
+      const sessions = await api.provider.getChildren(roots[0]);
+      assert.equal(sessions.length, 1);
+      assert.equal(api.provider.getTreeItem(sessions[0]).label, 'ses-2');
+      assert.equal(
+        (api.provider.getTreeItem(sessions[0]).iconPath as vscode.ThemeIcon).id,
+        'calendar',
+      );
+      const processing = await api.provider.getChildren(sessions[0]);
+      assert.equal(processing.length, 1);
+      const images = await api.provider.getChildren(processing[0]);
+      assert.equal(images.length, 1);
+      const imageItem = api.provider.getTreeItem(images[0]);
+      assert.equal(imageItem.contextValue, 'archiveImage');
+      assert.match(String(imageItem.description), /MRI/);
+      assert.equal(images[0].type, 'entry');
+      if (images[0].type !== 'entry') throw new Error('Expected archive member');
+      assert.equal(
+        images[0].entry.archive!.memberPath,
+        'sub-01_ses-2/Resample_B0/sub-01_ses-2_desc-b0_dwi.nii.gz',
+      );
+      const inspector = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+        'bidsExplorer.inspectMetadata',
+        images[0],
+      );
+      assert.ok(inspector);
+      inspector.dispose();
+      await vscode.commands.executeCommand('bidsExplorer.showDetails', images[0]);
+      const text = vscode.window.activeTextEditor!.document.getText();
+      assert.match(text, /memberPath/);
+      assert.match(text, /ZIP container/);
+      const extracted = await vscode.commands.executeCommand<string>(
+        'bidsExplorer.openFile',
+        images[0],
+      );
+      assert.ok(extracted?.startsWith('file:'));
+      assert.deepEqual(await readFile(vscode.Uri.parse(extracted).fsPath), niftiFixture());
+      assert.deepEqual(await readFile(zip), bytes);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    } finally {
+      if (root)
+        await vscode.commands.executeCommand(
+          'bidsExplorer.removeDataset',
+          api.provider.element(root),
+        );
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
+
+suite('Declared descriptorless collections', () => {
+  test('workspace declarations populate and remove an automatic root without a dataset marker', async function () {
+    this.timeout(15000);
+    const extension = vscode.extensions.getExtension<{
+      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+    }>('bids-explorer-dev.bids-explorer')!;
+    const api = await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-declared-collection-'));
+    const uri = vscode.Uri.file(folder);
+    const handoff = new WorkspaceFolderHandoff();
+    const settings = vscode.workspace.getConfiguration('bidsExplorer');
+    const before = settings.inspect<string[]>('collectionRoots')?.workspaceValue;
+    const waitFor = async (present: boolean): Promise<void> => {
+      const deadline = Date.now() + 5000;
+      while (
+        api.provider.browser.datasets().some((root) => root.uri === uri.toString()) !== present
+      ) {
+        assert.ok(Date.now() < deadline, 'Collection root should follow its declaration');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    };
+    try {
+      await writeFile(
+        join(folder, 'sub-01_ses-2.zip'),
+        zipFixture([{ name: 'sub-01_ses-2/anat/sub-01_T1w.nii' }]),
+      );
+      await handoff.add(uri);
+      await settings.update(
+        'collectionRoots',
+        [uri.toString()],
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await waitFor(true);
+      await settings.update('collectionRoots', before, vscode.ConfigurationTarget.Workspace);
+      await waitFor(false);
+    } finally {
+      await settings.update('collectionRoots', before, vscode.ConfigurationTarget.Workspace);
+      const index =
+        vscode.workspace.workspaceFolders?.findIndex(
+          (folder) => folder.uri.toString() === uri.toString(),
+        ) ?? -1;
+      if (index >= 0)
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(() => {
+            listener.dispose();
+            reject(new Error('Workspace removal confirmation timed out'));
+          }, 5000);
+          const listener = vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+            if (event.removed.some((folder) => folder.uri.toString() === uri.toString())) {
+              clearTimeout(timer);
+              listener.dispose();
+              resolve();
+            }
+          });
+          if (!vscode.workspace.updateWorkspaceFolders(index, 1)) {
+            clearTimeout(timer);
+            listener.dispose();
+            reject(new Error('Workspace removal rejected'));
+          }
+        });
+      handoff.dispose();
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
+
+async function archiveRendered(
+  panel: vscode.WebviewPanel,
+  accepts: (message: Record<string, unknown>) => boolean,
+): Promise<Record<string, unknown>> {
+  let received: Record<string, unknown> | undefined;
+  const listener = panel.webview.onDidReceiveMessage((message: unknown) => {
+    if (
+      message &&
+      typeof message === 'object' &&
+      'type' in message &&
+      message.type === 'rendered' &&
+      accepts(message)
+    )
+      received = message;
+  });
+  try {
+    const deadline = Date.now() + 12000;
+    while (!received) {
+      assert.ok(Date.now() < deadline, 'Archive preview should render');
+      await panel.webview.postMessage({ type: 'inspect' });
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    }
+    return received;
+  } finally {
+    listener.dispose();
+  }
+}
+suite('Archive metadata viewing', () => {
+  test('tree JSON, table and gradient entry points render from original archive URIs; raw text is read-only', async function () {
+    this.timeout(30000);
+    const extension = vscode.extensions.getExtension<{
+      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+    }>('bids-explorer-dev.bids-explorer')!;
+    const api = await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-archive-previews-'));
+    let root: import('../../core/directory').DirectoryEntry | undefined;
+    const panels: vscode.WebviewPanel[] = [];
+    try {
+      const bytes = zipFixture([
+        {
+          name: 'sub-01_ses-2/Read_BIDS/info.json',
+          text: '{"TaskName":"Archived task","Large":9007199254740993}',
+        },
+        { name: 'sub-01_ses-2/Read_BIDS/events.tsv', text: 'onset\tduration\n0\t1\n0\t2' },
+        { name: 'sub-01_ses-2/Read_BIDS/events.json', text: '{"duration":{"Units":"s"}}' },
+        { name: 'sub-01_ses-2/Read_BIDS/dwi.bval', text: '0 1000' },
+        { name: 'sub-01_ses-2/Read_BIDS/dwi.bvec', text: '0 1\n0 0\n0 0' },
+        { name: 'sub-01_ses-2/Read_BIDS/structure.json', text: '[{"N":9007199254740993},"<img>"]' },
+      ]);
+      const path = join(folder, 'sub-01_ses-2.zip');
+      await writeFile(path, bytes);
+      root = await vscode.commands.executeCommand(
+        'bidsExplorer.addDataset',
+        vscode.Uri.file(folder),
+      );
+      assert.ok(root);
+      const subjects = await api.provider.getChildren(api.provider.element(root));
+      const sessions = await api.provider.getChildren(subjects[0]);
+      const processing = await api.provider.getChildren(sessions[0]);
+      const entries = await api.provider.getChildren(processing[0]);
+      const selected = (name: string) => {
+        const found = entries.find((e) => e.type === 'entry' && e.entry.name === name);
+        assert.ok(found && found.type === 'entry');
+        return found;
+      };
+      const jsonEntry = selected('info.json');
+      const jsonPanel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+        'bidsExplorer.openFile',
+        jsonEntry,
+      );
+      panels.push(jsonPanel);
+      const jsonState = await archiveRendered(jsonPanel, (message) => message.fieldCount === 2);
+      assert.ok(String(jsonState.sourceUri).startsWith('bids-zip:'));
+      const arrayPanel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+        'bidsExplorer.openFile',
+        selected('structure.json'),
+      );
+      panels.push(arrayPanel);
+      const arrayState = await archiveRendered(arrayPanel, (message) => message.fieldCount === 2);
+      assert.equal(arrayState.firstKey, '0');
+      assert.equal(arrayState.title, 'structure.json');
+      jsonPanel.reveal();
+
+      const nonce = /nonce="([a-f0-9]+)"/.exec(jsonPanel.webview.html)![1];
+      jsonPanel.webview.html = jsonPanel.webview.html.replace(
+        '</body>',
+        `<script nonce="${nonce}">window.addEventListener('message',event=>{if(event.data?.type==='testControl')document.getElementById(event.data.id)?.click();});</script></body>`,
+      );
+      await archiveRendered(jsonPanel, (message) => message.fieldCount === 2);
+      await jsonPanel.webview.postMessage({ type: 'testControl', id: 'raw' });
+      const deadline = Date.now() + 10000;
+      while (vscode.window.activeTextEditor?.document.uri.scheme !== 'bids-zip') {
+        assert.ok(Date.now() < deadline);
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      }
+      const raw = vscode.window.activeTextEditor.document;
+      assert.match(raw.getText(), /9007199254740993/);
+      await assert.rejects(
+        Promise.resolve(vscode.workspace.fs.writeFile(raw.uri, Buffer.from('must not write'))),
+      );
+      assert.equal(
+        raw.uri.toString(),
+        vscode.Uri.parse(entryArchiveUri(jsonEntry.entry)).toString(),
+      );
+      const tablePanel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+        'bidsExplorer.openFile',
+        selected('events.tsv'),
+      );
+      panels.push(tablePanel);
+      const tableState = await archiveRendered(
+        tablePanel,
+        (message) => message.dictionaryStatus === 'loaded',
+      );
+      assert.equal(tableState.dictionarySourceCount, 1);
+      const gradients = await vscode.commands.executeCommand<vscode.WebviewPanel>(
+        'bidsExplorer.openFile',
+        selected('dwi.bval'),
+      );
+      panels.push(gradients);
+      await archiveRendered(gradients, (message) => message.volumeCount === 2);
+      assert.equal(
+        await vscode.commands.executeCommand('bidsExplorer.clearImageCache'),
+        false,
+        'Open preview/editor tabs must prevent cache clearing',
+      );
+      assert.deepEqual(await readFile(path), bytes);
+    } finally {
+      for (const panel of panels) panel?.dispose();
+      if (root)
+        await vscode.commands.executeCommand(
+          'bidsExplorer.removeDataset',
+          api.provider.element(root),
+        );
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});

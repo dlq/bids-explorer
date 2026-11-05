@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-05",
+  "metadataFields": 1,
+  "metadataMs": 60.253,
+  "imageMemberBytes": 778459,
+  "extractionMs": 95.281,
+  "cacheHitMs": 0.255,
+  "niftiHeaderRecognized": true,
+  "privateCacheMode": 448,
+  "readonlyPayloadMode": 256,
+  "sourceSizeMtimeUnchanged": true,
+  "scope": "One explicitly authorized ZIP JSON member and one MRI member; host API timings, not network/viewer latency. Test cache removed.",
+  "remoteViewer": {
+    "vscode": "1.145.0",
+    "niiVue": "2.9.0",
+    "displayedArchivedDwiTimepoints": 105,
+    "literalJsonArrayPreviewObserved": true
+  },
+  "gradientReferenceCheck": {
+    "scope": "One selected ZIP",
+    "regularMembers": 85,
+    "referencesCompared": 2,
+    "exactMemberPathMatches": 0,
+    "basenameMatches": 0,
+    "separatePipelineGradientOutputsPresent": true,
+    "referencedPathsFollowed": false
+  }
+}

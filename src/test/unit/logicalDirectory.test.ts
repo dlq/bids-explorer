@@ -1,0 +1,397 @@
+import { strict as assert } from 'node:assert';
+import { test } from 'node:test';
+import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { LogicalDirectorySource } from '../../sources/logicalDirectory';
+import { loadLogicalInheritance } from '../../sources/logicalInheritance';
+import { loadInheritedGradientPair } from '../../sources/gradientFiles';
+import { ZipDirectorySource } from '../../sources/zipDirectory';
+import { LocalDirectorySource } from '../../sources/localDirectory';
+import { indexZip } from '../../sources/zipIndex';
+import { DatasetBrowser } from '../../core/browser';
+import { entryKey, type DirectoryEntry } from '../../core/directory';
+import { layoutHint, logicalFolder, logicalChildren } from '../../core/logicalLayout';
+import { zipFixture } from '../zipFixture';
+const signal = (): AbortSignal => new AbortController().signal;
+async function fixture(run: (folder: string) => Promise<void>): Promise<void> {
+  const folder = await mkdtemp(join(tmpdir(), 'bids-logical-'));
+  try {
+    await run(folder);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+}
+void test('ZIP sessions overlay under one subject without indexing the collection; matching member wrappers disappear from navigation only', async () => {
+  await fixture(async (folder) => {
+    for (const session of ['02', '03'])
+      await writeFile(
+        join(folder, `sub-001_ses-${session}.zip`),
+        zipFixture([
+          {
+            name: `sub-001_ses-${session}/Bet_DWI/sub-001_ses-${session}__dwi.nii.gz`,
+            text: 'image',
+          },
+        ]),
+      );
+    let indexes = 0;
+    const physical = new ZipDirectorySource(new LocalDirectorySource(), async (...args) => {
+      indexes++;
+      return indexZip(...args);
+    });
+    const source = new LogicalDirectorySource(physical);
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).toString()));
+    const subjects = await browser.children(root);
+    assert.deepEqual(
+      subjects.map((e) => e.name),
+      ['sub-001'],
+    );
+    assert.equal(indexes, 0);
+    const sessions = await browser.children(subjects[0]);
+    assert.deepEqual(
+      sessions.map((e) => e.name),
+      ['ses-02', 'ses-03'],
+    );
+    assert.equal(indexes, 0);
+    const processing = await browser.children(sessions[0]);
+    assert.deepEqual(
+      processing.map((e) => e.name),
+      ['Bet_DWI'],
+    );
+    assert.equal(indexes, 1);
+    const images = await browser.children(processing[0]);
+    assert.equal(images[0].relativePath, 'sub-001/ses-02/Bet_DWI/sub-001_ses-02__dwi.nii.gz');
+    assert.equal(
+      images[0].archive!.memberPath,
+      'sub-001_ses-02/Bet_DWI/sub-001_ses-02__dwi.nii.gz',
+    );
+    assert.equal(
+      images[0].logical!.sources[0].relativePath,
+      'sub-001_ses-02.zip/sub-001_ses-02/Bet_DWI/sub-001_ses-02__dwi.nii.gz',
+    );
+    assert.equal(indexes, 1);
+    assert.deepEqual(await source.children(images[0], signal()), []);
+    assert.ok((await source.revision(images[0])).size > 0);
+    assert.ok((await source.revision(root)).size >= 0);
+    browser.refresh(sessions[0]);
+    await browser.children(sessions[0]);
+    assert.equal(indexes, 2);
+    source.refresh(root);
+    source.refresh();
+    assert.ok(Object.isFrozen(images[0].logical!.sources));
+    await assert.rejects(source.children(root, AbortSignal.abort()), { name: 'AbortError' });
+  });
+});
+void test('loose and archive directories overlay file-wise, retaining duplicate files and file/directory conflicts', async () => {
+  await fixture(async (folder) => {
+    const loose = join(folder, 'sub-01', 'ses-2', 'anat');
+    await mkdir(loose, { recursive: true });
+    await writeFile(join(loose, 'a.nii'), 'loose');
+    await mkdir(join(loose, 'b.nii'));
+    await writeFile(join(loose, 'b.nii', 'c.nii'), 'nested');
+    await writeFile(
+      join(folder, 'sub-01_ses-2.zip'),
+      zipFixture([
+        { name: 'sub-01_ses-2/anat/a.nii', text: 'archived' },
+        { name: 'sub-01_ses-2/anat/b.nii', text: 'conflict' },
+      ]),
+    );
+    const source = new LogicalDirectorySource();
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).toString()));
+    const subject = (await browser.children(root))[0];
+    assert.equal(subject.logical!.sources.length, 2);
+    const sessions = await browser.children(subject);
+    assert.equal(sessions.length, 1);
+    assert.equal(sessions[0].logical!.sources.length, 2);
+    const anat = (await browser.children(sessions[0]))[0];
+    assert.equal(anat.logical!.sources.length, 2);
+    const files = await browser.children(anat);
+    assert.equal(files.length, 4);
+    assert.ok(files.every((e) => e.logical!.conflict));
+    assert.equal(new Set(files.map(entryKey)).size, 4);
+    assert.equal(await readFile(join(loose, 'a.nii'), 'utf8'), 'loose');
+  });
+});
+void test('combined loose folders, canonical ZIP wrappers, bare shards and subject ZIPs support session grouping', async () => {
+  await fixture(async (folder) => {
+    await mkdir(join(folder, 'sub-01_ses-2', 'anat'), { recursive: true });
+    await writeFile(join(folder, 'sub-01_ses-2', 'anat', 'T1w.nii'), 'loose');
+    await writeFile(
+      join(folder, 'sub-02_ses-3.zip'),
+      zipFixture([{ name: 'sub-02/ses-3/anat/T1w.nii' }]),
+    );
+    await writeFile(join(folder, 'sub-03_ses-4.zip'), zipFixture([{ name: 'anat/T1w.nii' }]));
+    await writeFile(
+      join(folder, 'sub-04.zip'),
+      zipFixture([{ name: 'sub-04/ses-5/anat/T1w.nii' }]),
+    );
+    await writeFile(
+      join(folder, 'sub-05.zip'),
+      zipFixture([{ name: 'sub-05_ses-6/anat/T1w.nii' }]),
+    );
+    const source = new LogicalDirectorySource();
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).toString()));
+    const subjects = await browser.children(root);
+    assert.equal(subjects.length, 5);
+    for (let i = 0; i < subjects.length; i++) {
+      const sessions = await browser.children(subjects[i]);
+      assert.equal(sessions.length, 1);
+      assert.equal(sessions[0].name, `ses-${i + 2}`);
+      const modalities = await browser.children(sessions[0]);
+      assert.equal(modalities[0].name, 'anat');
+      assert.equal((await browser.children(modalities[0]))[0].name, 'T1w.nii');
+    }
+  });
+});
+void test('filename candidates disagreeing with actual subject/session members fail explicitly; wrapper siblings are not dropped', async () => {
+  await fixture(async (folder) => {
+    const source = new LogicalDirectorySource();
+    for (const [name, paths, pattern] of [
+      ['sub-01_ses-2.zip', ['sub-99_ses-2/anat/a.nii'], /disagree/],
+      ['sub-02_ses-3.zip', ['sub-02/ses-9/anat/a.nii'], /session/],
+      ['sub-03_ses-4.zip', ['sub-03_ses-4/anat/a.nii', 'README'], /additional entries/],
+    ] as const) {
+      await writeFile(join(folder, name), zipFixture(paths.map((name) => ({ name }))));
+      const physical = await new ZipDirectorySource().root(pathToFileURL(folder).toString());
+      const archive = (await new ZipDirectorySource().children(physical, signal())).find(
+        (e) => e.name === name,
+      )!;
+      const hint = layoutHint(archive)!;
+      const subject = logicalFolder(
+        physical,
+        'sub-' + hint.subject!,
+        'subject',
+        [archive],
+        hint.subject,
+      );
+      const session = (await source.children(subject, signal()))[0];
+      await assert.rejects(source.children(session, signal()), pattern);
+    }
+  });
+});
+void test('unnamed dataset ZIPs overlay their member subjects without inventing filename membership; pipeline scope remains separate', async () => {
+  await fixture(async (folder) => {
+    await writeFile(
+      join(folder, 'dataset.zip'),
+      zipFixture([
+        { name: 'sub-01/ses-2/anat/a.nii' },
+        { name: 'derivatives/sub-pipeline/sub-01/anat/b.nii' },
+      ]),
+    );
+    const source = new LogicalDirectorySource();
+    const browser = new DatasetBrowser(source);
+    const root = browser.register(await source.root(pathToFileURL(folder).toString()));
+    const roots = await browser.children(root);
+    assert.deepEqual(
+      roots.map((e) => e.name),
+      ['derivatives', 'sub-01'],
+    );
+    const pipelines = await browser.children(roots[0]);
+    assert.equal(pipelines[0].logical!.kind, 'overlay');
+    assert.equal(pipelines[0].logical!.subject, undefined);
+    const derivativeSubjects = await browser.children(pipelines[0]);
+    assert.equal(derivativeSubjects[0].name, 'sub-01');
+    assert.notEqual(entryKey(derivativeSubjects[0]), entryKey(roots[1]));
+  });
+});
+void test('logical layout helpers preserve literal IDs, candidate distinctions, duplicate resources and cancellation/bounds', async () => {
+  const root: DirectoryEntry = {
+    datasetUri: 'file:///root',
+    uri: 'file:///root',
+    relativePath: '',
+    name: 'root',
+    kind: 'directory',
+  };
+  const entry = (name: string, kind: DirectoryEntry['kind'] = 'directory'): DirectoryEntry => ({
+    ...root,
+    name,
+    kind,
+    relativePath: name,
+    uri: 'file:///root/' + name,
+  });
+  assert.deepEqual(layoutHint(entry('ses-002')), { session: '002' });
+  assert.equal(layoutHint(entry('a.nii', 'file')), undefined);
+  assert.equal(layoutHint(entry('random')), undefined);
+  const subject = logicalFolder(root, 'sub-01', 'subject', [entry('sub-01')], '01');
+  const one = logicalFolder(subject, 'ses-2', 'session', [entry('one')], '01', '2');
+  const two = logicalFolder(subject, 'ses-2', 'session', [entry('two')], '01', '2');
+  const grouped = await logicalChildren(
+    subject,
+    [one, two, entry('sub-99_ses-2'), entry('a.nii', 'file')],
+    signal(),
+  );
+  assert.equal(grouped.find((e) => e.name === 'ses-2')!.logical!.sources.length, 2);
+  assert.equal(grouped.find((e) => e.name === 'sub-99_ses-2')!.logical!.kind, 'overlay');
+  const resources = await logicalChildren(
+    root,
+    [entry('a.nii', 'file'), entry('b.nii', 'file')],
+    signal(),
+  );
+  assert.equal(resources[0].logical!.conflict, false);
+  const source = new LogicalDirectorySource();
+  await assert.rejects(
+    source.children(
+      { ...subject, logical: { ...subject.logical!, sources: Array(10001).fill(entry('same')) } },
+      signal(),
+    ),
+    /10,000/,
+  );
+  const fake: import('../../core/directory').DirectorySource = {
+    root: () => Promise.resolve(root),
+    revision: () => Promise.resolve({ size: 0, modifiedAt: 0 }),
+    children: () => Promise.resolve(Array.from({ length: 100001 }, () => entry('a.nii', 'file'))),
+  };
+  await assert.rejects(new LogicalDirectorySource(fake).children(root, signal()), /100,000/);
+  await assert.rejects(
+    logicalChildren(root, Array(300).fill(entry('sub-01')), AbortSignal.abort()),
+    { name: 'AbortError' },
+  );
+  const noRefresh = new LogicalDirectorySource(fake);
+  noRefresh.refresh(root);
+  noRefresh.refresh(subject);
+  noRefresh.refresh();
+});
+
+void test('logical inheritance combines loose and archived ancestors with physical provenance and detects duplicate sidecars', async () => {
+  await fixture(async (folder) => {
+    await mkdir(join(folder, 'sub-01/ses-2/dwi'), { recursive: true });
+    await writeFile(join(folder, 'dwi.json'), '{"Root":1,"Override":1}');
+    await writeFile(join(folder, 'dwi.bval'), '0 1000');
+    const zip = join(folder, 'sub-01_ses-2.zip');
+    await writeFile(
+      zip,
+      zipFixture([
+        { name: 'sub-01_ses-2/sub-01_ses-2_dwi.json', text: '{"Override":2}' },
+        { name: 'sub-01_ses-2/dwi/sub-01_ses-2_dwi.nii', text: 'not opened' },
+        { name: 'sub-01_ses-2/dwi/sub-01_ses-2_dwi.bvec', text: '0 1\n0 0\n0 0' },
+      ]),
+    );
+    const looseImage = join(folder, 'sub-01/ses-2/dwi/sub-01_ses-2_run-2_dwi.nii');
+    await writeFile(looseImage, 'not opened');
+    const source = new LogicalDirectorySource();
+    const root = await source.root(pathToFileURL(folder).href);
+    const find = async (parent: DirectoryEntry, name: string) =>
+      (await source.children(parent, signal())).find((entry) => entry.name === name)!;
+    const dwi = await find(await find(await find(root, 'sub-01'), 'ses-2'), 'dwi');
+    const archived = await find(dwi, 'sub-01_ses-2_dwi.nii');
+    const loose = await find(dwi, 'sub-01_ses-2_run-2_dwi.nii');
+    for (const image of [archived, loose]) {
+      const result = await loadLogicalInheritance(source, image, signal());
+      assert.equal(result.status, 'resolved');
+      const field = result.fields.find(({ key }) => key === 'Override')!;
+      assert.equal(field.value.valueText, '2');
+      assert.deepEqual(
+        field.history.map(({ sourceUri }) => new URL(sourceUri).protocol),
+        ['file:', 'bids-zip:'],
+      );
+      assert.equal(
+        result.sources[1].entry.archive?.memberPath,
+        'sub-01_ses-2/sub-01_ses-2_dwi.json',
+      );
+      const pair = await loadInheritedGradientPair(image, signal(), (entry, abort) =>
+        loadLogicalInheritance(source, entry, abort),
+      );
+      assert.equal(new URL(pair.bvalUri).protocol, 'file:');
+      assert.equal(new URL(pair.bvecUri).protocol, 'bids-zip:');
+    }
+    await writeFile(join(folder, 'sub-01/ses-2/sub-01_ses-2_dwi.json'), '{"Override":3}');
+    const ambiguous = await loadLogicalInheritance(source, archived, signal());
+    assert.equal(ambiguous.status, 'unresolved');
+    assert.equal(ambiguous.fields.length, 0);
+    assert.equal(ambiguous.sources.length, 3);
+    assert.match(ambiguous.issues.join(), /Ambiguous JSON/);
+    await rm(zip);
+    const unavailable = await loadLogicalInheritance(source, archived, signal());
+    assert.equal(unavailable.coverage, 'incomplete');
+    assert.equal(unavailable.related[0].status, 'unknown');
+    await assert.rejects(loadLogicalInheritance(source, loose, AbortSignal.abort()), {
+      name: 'AbortError',
+    });
+  });
+});
+
+void test('logical inheritance respects dataset boundaries and reports deferred ZIP coverage', async () => {
+  await fixture(async (folder) => {
+    const pipeline = join(folder, 'derivatives/pipe');
+    const nested = join(pipeline, 'sub-01');
+    await mkdir(nested, { recursive: true });
+    await writeFile(join(folder, 'T1w.json'), '{"Raw":1}');
+    await writeFile(join(pipeline, 'T1w.json'), '{"Pipeline":1}');
+    await writeFile(join(nested, 'T1w.json'), '{"Nested":1}');
+    await writeFile(join(nested, 'dataset_description.json'), '{}');
+    await writeFile(join(nested, 'sub-01_T1w.nii'), '');
+    const source = new LogicalDirectorySource();
+    const root = await source.root(pathToFileURL(folder).href);
+    const find = async (parent: DirectoryEntry, name: string) =>
+      (await source.children(parent, signal())).find((entry) => entry.name === name)!;
+    const image = await find(
+      await find(await find(await find(root, 'derivatives'), 'pipe'), 'sub-01'),
+      'sub-01_T1w.nii',
+    );
+    assert.deepEqual(
+      (await loadLogicalInheritance(source, image, signal())).fields.map(({ key }) => key),
+      ['Nested'],
+    );
+    for (let i = 0; i < 33; i++)
+      await writeFile(
+        join(folder, 'part-' + i + '.zip'),
+        zipFixture([{ name: 'README', text: '' }]),
+      );
+    const partial = await loadLogicalInheritance(source, image, signal());
+    assert.equal(partial.coverage, 'incomplete');
+    assert.match(partial.issues.join(), /deferred/);
+    assert.deepEqual(partial.fields, []);
+  });
+});
+
+void test('logical inspection refuses changed inventories and reports unreadable branches', async () => {
+  await fixture(async (folder) => {
+    await mkdir(join(folder, 'sub-01'));
+    await writeFile(join(folder, 'sub-01/sub-01_T1w.nii'), '');
+    await writeFile(join(folder, 'T1w.json'), '{"Root":1}');
+    const source = new LogicalDirectorySource();
+    const root = await source.root(pathToFileURL(folder).href);
+    const [subject] = await source.children(root, signal());
+    const [image] = await source.children(subject, signal());
+    const revision = source.revision.bind(source);
+    let seen = false;
+    source.revision = async (entry) => {
+      const current = await revision(entry);
+      if (entry.relativePath !== '') return current;
+      if (seen) return { ...current, modifiedAt: current.modifiedAt + 1 };
+      seen = true;
+      return current;
+    };
+    await assert.rejects(loadLogicalInheritance(source, image, signal()), /Source changed/);
+    source.revision = revision;
+    const children = source.children.bind(source);
+    source.children = async (entry, abort) => {
+      if (entry.name === 'sub-01') throw new Error('Branch unavailable');
+      return children(entry, abort);
+    };
+    const partial = await loadLogicalInheritance(source, image, signal());
+    assert.match(partial.issues.join(), /Branch unavailable/);
+    assert.equal(partial.sources.length, 1);
+    assert.equal(partial.fields.length, 0);
+    source.children = children;
+    await writeFile(join(folder, 'dataset_description.json'), '{}');
+    await writeFile(
+      join(folder, 'whole.zip'),
+      zipFixture([{ name: 'dataset_description.json', text: '{}' }]),
+    );
+    const duplicateBoundary = await loadLogicalInheritance(source, image, signal());
+    assert.match(duplicateBoundary.issues.join(), /Multiple dataset descriptions/);
+    await assert.rejects(
+      loadLogicalInheritance(
+        source,
+        { ...image, relativePath: 'sub-01/' + 'deep/'.repeat(128) + image.name },
+        signal(),
+      ),
+      /128 ancestor levels/,
+    );
+  });
+});

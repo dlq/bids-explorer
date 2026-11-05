@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { DatasetBrowser } from '../../core/browser';
 import { DatasetRegistrations } from '../../core/registrations';
-import { WorkspaceDiscovery } from '../../core/workspaceDiscovery';
+import { WorkspaceDiscovery, isDeclaredCollection } from '../../core/workspaceDiscovery';
 import type { DirectoryEntry } from '../../core/directory';
 
 const root = (uri: string): DirectoryEntry => ({
@@ -223,4 +223,18 @@ void test('superseded workers do not continue queued metadata work after a faile
   assert.equal(calls, 4);
   assert.deepEqual(h.errors, []);
   assert.deepEqual(h.browser.datasets(), []);
+});
+
+void test('explicit collection declarations use exact URI membership and bounded typed lists', () => {
+  assert.equal(isDeclaredCollection('file:///collection', ['file:///collection']), true);
+  for (const configured of [
+    undefined,
+    'file:///collection',
+    {},
+    [null, 42],
+    Array(1001).fill('file:///collection'),
+    ['file:///other'],
+    ['file:///collection-extra'],
+  ])
+    assert.equal(isDeclaredCollection('file:///collection', configured), false);
 });

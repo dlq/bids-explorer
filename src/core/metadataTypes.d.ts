@@ -17,7 +17,7 @@ export interface JsonMetadata {
   readonly duplicateKeys: readonly string[];
 }
 export interface MetadataDocument extends JsonMetadata {
-  readonly kind: 'dataset-description' | 'json-sidecar';
+  readonly kind: 'dataset-description' | 'json-sidecar' | 'json-array';
   readonly summary: Readonly<{ name?: string; bidsVersion?: string; datasetType?: string }>;
   readonly coverage: 'selected-file-only';
 }

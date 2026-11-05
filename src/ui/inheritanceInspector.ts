@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { entryKey } from '../core/directory';
+import { entryArchiveUri, resourceLabel } from '../core/archiveUri';
 import type { DirectoryEntry } from '../core/directory';
 import type { InheritanceResult } from '../core/inheritance';
 import { loadInheritedMetadata } from '../sources/inheritedMetadata';
@@ -10,6 +12,8 @@ export class InheritanceInspector implements vscode.Disposable {
   constructor(
     extensionUri: vscode.Uri,
     private readonly gradients?: GradientPreviewManager,
+    private readonly load = (entry: DirectoryEntry, signal: AbortSignal) =>
+      loadInheritedMetadata(entry.datasetUri, entry.uri, signal),
   ) {
     this.previews = new DocumentPreviewManager(extensionUri);
   }
@@ -23,9 +27,9 @@ export class InheritanceInspector implements vscode.Disposable {
     let result: InheritanceResult;
     try {
       return await this.previews.open(
-        JSON.stringify([entry.datasetUri, entry.uri]),
+        entryKey(entry),
         async (signal) => {
-          result = await loadInheritedMetadata(entry.datasetUri, entry.uri, signal);
+          result = await this.load(entry, signal);
           const resolvedPair =
             result.related.length === 2 &&
             result.related.every((item) => item.status === 'resolved');
@@ -38,10 +42,13 @@ export class InheritanceInspector implements vscode.Disposable {
                 related.candidates.map((entry) => [entry.uri, entry.relativePath] as const),
               ),
             ]).entries(),
-          ].map(([uri, label]) => ({ uri, label }));
+          ].map(([uri, label]) => ({
+            uri,
+            label: uri.startsWith('bids-zip:') ? resourceLabel(uri) : label,
+          }));
           return {
             title: 'Metadata and related files',
-            subtitle: entry.uri,
+            subtitle: resourceLabel(entry.archive ? entryArchiveUri(entry) : entry.uri),
             notice:
               'Read-only metadata snapshot. No image bytes read, volume/orientation checks or BIDS validation. Values are shortened after 16,000 characters; report values after 4,096. Sources are available as original text. Reload explicitly after external changes.',
             records: [
@@ -56,11 +63,11 @@ export class InheritanceInspector implements vscode.Disposable {
                   field.value.valueText.slice(0, 16000) +
                   (field.value.valueText.length > 16000 ? '\n… Shortened' : ''),
                 detail:
-                  `Selected: ${field.value.sourceUri} ${field.value.pointer}\nOverride history (root to leaf):\n` +
+                  `Selected: ${resourceLabel(field.value.sourceUri)} ${field.value.pointer}\nOverride history (root to leaf):\n` +
                   field.history
                     .map(
                       (item) =>
-                        `${item.sourceUri} ${item.pointer} = ${item.valueText.slice(0, 2000)}${item.valueText.length > 2000 ? '… (shortened)' : ''}`,
+                        `${resourceLabel(item.sourceUri)} ${item.pointer} = ${item.valueText.slice(0, 2000)}${item.valueText.length > 2000 ? '… (shortened)' : ''}`,
                     )
                     .join('\n'),
               })),
@@ -69,12 +76,14 @@ export class InheritanceInspector implements vscode.Disposable {
                 text:
                   source.error ??
                   `Snapshot ${source.metadata!.snapshot.capturedAt} · ${source.metadata!.snapshot.revision.size} bytes · mtime ${source.metadata!.snapshot.revision.modifiedAt}`,
-                detail: source.entry.uri,
+                detail: resourceLabel(source.entry.uri),
               })),
               ...result.related.map((item) => ({
                 title: 'Related ' + item.extension,
                 text: item.status,
-                detail: item.selected?.uri ?? item.candidates.map((entry) => entry.uri).join('\n'),
+                detail: (item.selected ? [item.selected] : item.candidates)
+                  .map((entry) => resourceLabel(entry.uri))
+                  .join('\n'),
               })),
             ],
             sources,
@@ -87,7 +96,7 @@ export class InheritanceInspector implements vscode.Disposable {
           };
         },
         async (id) => {
-          if (id === 'gradients') return this.gradients!.openResolved(entry);
+          if (id === 'gradients') return this.gradients!.openResolved(entry, this.load);
           if (id === 'report') return this.report(result);
         },
       );

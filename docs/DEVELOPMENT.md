@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for local `0.2.0` preparation, after the locally tagged `v0.1.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for development toward `0.3.0`, after the locally tagged `v0.2.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -11,7 +11,7 @@ This is contributor documentation for local `0.2.0` preparation, after the local
 
 Display name: **BIDS Explorer**; package/directory: `bids-explorer`; commands/settings namespace: `bidsExplorer`. The namespace is reserved for future settings; none are contributed yet.
 
-The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented; broader relationships, archive readers and persistent indexing are not. Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
+The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented; broader relationships and persistent indexing are not. ZIP/loose sources now share logical subject/session navigation, with original entries retained in `logical.sources`. A preliminary ZIP inventory command and explicit placement model are now implemented; see [ZIP development notes](ZIP.md). Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
 
 ## Prerequisites and setup
 
@@ -46,13 +46,13 @@ To test an existing VS Code installation, set `BIDS_EXPLORER_TEST_VSCODE_PATH` t
 
 The manifest uses `extensionKind: ["workspace"]`. In a Remote SSH window, the extension runs on the remote workspace host. To develop there, open a checkout on the remote host with Remote SSH, install Node/dependencies there, and use the same F5 workflow. The runtime does not initiate SSH connections. Verify the execution location with **Developer: Show Running Extensions**.
 
-The directory adapter and future ZIP, tarball and SquashFS adapters must preserve source URI/member identity separately from logical BIDS paths, report partial coverage, support cancellation and publish bounded background results. The directory source uses asynchronous filesystem IO and cooperative batched ordering on the workspace host. Archive readers and dedicated indexing workers are not implemented. Detect extraction-tool availability on the workspace host when those adapters are added; no Python, tar or unsquashfs dependency is required by the runtime. Keep indexes and image caches in VS Code-provided storage outside the checkout. NiiVue remains optional.
+The directory adapter and future ZIP, tarball and SquashFS adapters must preserve source URI/member identity separately from logical BIDS paths, report partial coverage, support cancellation and publish bounded background results. The directory source uses asynchronous filesystem IO and cooperative batched ordering on the workspace host. ZIP central-directory indexing uses bundled `yauzl` on the workspace host. The ZIP adapter indexes only expanded containers and retains physical source choices beneath the logical tree. Selected MRI extraction uses a private workspace-host cache with bounded streaming and CRC/revision checks; dedicated indexing workers remain future work. Archive text has a readonly `bids-zip` content provider and uses the existing packaged preview clients. See [ZIP development notes](ZIP.md) for supported methods, limits and cache lifetime. Detect extraction-tool availability on the workspace host when those adapters are added; no Python, tar or unsquashfs dependency is required by the runtime. Keep indexes and image caches in VS Code-provided storage outside the checkout. NiiVue remains optional.
 
 The configured CI workflow runs formatting, type checking, linting, unit coverage, extension-host tests, security checks and VSIX packaging on Linux. Hosted CI has not yet been exercised. Before shipping archive support, add local/Remote SSH validation with synthetic containers, duplicate source paths, cancellation and incomplete coverage.
 
 ### Dependency audit
 
-The development toolchain currently has 18 npm audit findings (17 moderate, 1 low), including transitive glob/minimatch dependencies in the VS Code test and packaging tools. These development packages are excluded from the VSIX; the extension has no runtime npm dependencies. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
+On November 5, 2026, the full dependency audit reported 14 findings (13 moderate, 1 low), all in development tooling; none were high or critical. The production-only audit reported zero findings for the new bundled `yauzl`/`pend` ZIP reader. Development packages remain excluded from the VSIX. The earlier 0.2.0 release evidence retains its audit snapshot. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
 
 ## Testing expectations
 
