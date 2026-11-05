@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for development toward `0.3.0`, after the locally tagged `v0.2.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for development after the locally tagged `v0.3.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -9,7 +9,7 @@ This is contributor documentation for development toward `0.3.0`, after the loca
 3. Read [PLANS.md](../PLANS.md) for proposed version milestones and readiness checks.
 4. Consult the [benchmark snapshot](evidence/niivue-vscode/REPORT.md) and its [provenance note](evidence/niivue-vscode/SNAPSHOT.md).
 
-Display name: **BIDS Explorer**; package/directory: `bids-explorer`; commands/settings namespace: `bidsExplorer`. The namespace is reserved for future settings; none are contributed yet.
+Display name: **BIDS Explorer**; package/directory: `bids-explorer`; commands/settings namespace: `bidsExplorer`. Workspace settings include declared collection roots and optional participant/session label columns.
 
 The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented; broader relationships and persistent indexing are not. ZIP/loose sources now share logical subject/session navigation, with original entries retained in `logical.sources`. A preliminary ZIP inventory command and explicit placement model are now implemented; see [ZIP development notes](ZIP.md). Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
 

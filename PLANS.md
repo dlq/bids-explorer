@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is currently `0.2.0`, tagged locally as `v0.2.0`. There is no Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is currently `0.3.0`, tagged locally as `v0.3.0`. There is no Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -95,7 +95,7 @@ Use `0.2.0` to establish the shared metadata/relationship contracts and first sm
 
 ## 0.3.0 — ZIP archives and declared collections
 
-**In progress:** bounded central-directory indexing and an explicit ZIP inventory command are implemented, along with a tested placement/overlay model. See [ZIP development notes](docs/ZIP.md) for limits and the authorized single-ZIP SSH measurement. The default tree now overlays ZIP/loose sources into logical subject/session navigation, including imaging-backed derivative processing folders, directory merging and duplicate file choices. Source paths remain original; archive filename placement is provisional until expansion, with contradictory layouts reported explicitly. CRC/revision-checked selected-member MRI extraction, bounded private storage, viewer lifetime, readonly archive text and JSON/table/gradient/history preview entry points are implemented. Selected-file metadata inspection resolves inheritance across the logical directory/ZIP overlay with physical source provenance and incomplete coverage. Saved custom archive placements move to 0.7.0. Release closeout remains pending.
+**Status:** released locally as `v0.3.0`. Bounded central-directory indexing and an explicit ZIP inventory command are implemented, along with a tested placement/overlay model. See [ZIP development notes](docs/ZIP.md) for limits and the authorized single-ZIP SSH measurement. The default tree now overlays ZIP/loose sources into logical subject/session navigation, including imaging-backed derivative processing folders, directory merging and duplicate file choices. Source paths remain original; archive filename placement is provisional until expansion, with contradictory layouts reported explicitly. CRC/revision-checked selected-member MRI extraction, bounded private storage, viewer lifetime, readonly archive text and JSON/table/gradient/history preview entry points are implemented. Selected-file metadata inspection resolves inheritance across the logical directory/ZIP overlay with physical source provenance and incomplete coverage. Saved custom archive placements move to 0.7.0. See [milestone validation](docs/MILESTONE_0.3.0.md) for checks, evidence, and limits.
 
 Implement one reader at a time: ZIP first, tar/tarball next, then SquashFS. Before each reader, document its host dependencies, supported variants, indexing cost, cancellation behavior and exact-member extraction strategy. Use synthetic archives before real collections.
 
@@ -109,7 +109,7 @@ Allow users to declare that multiple containers belong to one dataset, including
 
 Extract only the selected member into private temporary storage, validate it and publish atomically. Define traversal, symlink/special-file, duplicate-member, encrypted-archive, listing and size limits. Never interpolate member names into shell commands. Ensure cancellation terminates workers/processes and removes partial artifacts.
 
-**Ready when:** ZIPs can be indexed and selected members opened without full extraction; cancellation and malformed-container cases are tested; duplicate source choices remain selectable; progressive collection counts accurately report coverage. Define bounded extraction storage and viewer-resource lifetime here, before enabling extraction; do not defer those safeguards to 0.6.0.
+**Ready when:** ZIPs can be indexed and selected members opened without full extraction; cancellation and malformed-container cases are tested; duplicate source choices remain selectable; branch coverage distinguishes inspected entries from deferred archives. Collection-wide summaries are scheduled for 0.7.0. Define bounded extraction storage and viewer-resource lifetime here, before enabling extraction; do not defer those safeguards to 0.6.0.
 
 ## 0.4.0 — Tar and compressed tarballs
 

@@ -1,8 +1,10 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.2.0` is a local tagged release (`v0.2.0`), without Marketplace or GitHub publication.
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.3.0` is a local tagged release (`v0.3.0`), without Marketplace or GitHub publication.
 
 ## Unreleased
+
+## [0.3.0] - 2026-11-05
 
 ### Added
 
@@ -13,7 +15,7 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 - Archive-backed JSON objects/arrays, TSV, gradient and CHANGES previews with readonly raw-source access, original member provenance, bounded CRC-checked reads and exact same-archive companion lookup. Archive table dictionaries are literal same-directory files.
 - Selected ZIP MRI opening through the configured VS Code viewer: bounded, CRC/revision-checked extraction to a private workspace-host cache, atomic publication, readonly payloads and retained provenance. Completed files survive reloads; cache clearing requires closed editor/viewer tabs.
 - Explicit `bidsExplorer.collectionRoots` workspace declarations for automatically populating descriptorless collections, separate from manual registration and descriptor-based recognition.
-- Tested core model for explicitly placing archive subtrees at any dataset depth and merging member paths while preserving conflicting physical sources. Collection declarations and directory/archive metadata integration remain planned.
+- Tested core model for explicitly placing archive subtrees at any dataset depth and merging member paths while preserving conflicting physical sources. Saved custom archive placements are planned for 0.7.0.
 
 ## [0.2.0] - 2026-11-03
 

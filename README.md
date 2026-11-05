@@ -2,7 +2,7 @@
 
 A VS Code extension for exploring BIDS neuroimaging datasets and their derivatives. The current development build supports **read-only directory browsing, diffusion gradients, dataset-description and participant/session/scan table previews, metadata-based tree descriptions and selected-file metadata inspection**. Directory workflows have been smoke-tested over VS Code Remote SSH; a preliminary ZIP inventory command is available, ZIP and loose sources in registered directories now share a logical subject/session tree, with archive metadata previews and selected MRI opening through your configured viewer. Tarballs and SquashFS remain planned.
 
-**Status: `0.2.0` released locally as `v0.2.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
+**Status: `0.3.0` released locally as `v0.3.0`; not published to the Marketplace or GitHub.** There is no Marketplace release or public installation link.
 
 ## Available today
 
@@ -139,7 +139,7 @@ Explorer reads directory entries, requested filesystem attributes, bounded selec
 
 Opening other files or using the preview’s Open as text buttons hands them to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
 
-See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observations, cache behavior and performance limits. Listings are cached in memory on the workspace host; image transfer/display uses VS Code and the selected editor. No persistent remote index or image-byte cache is implemented.
+See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observations, cache behavior and performance limits. Listings are cached in memory on the workspace host; image transfer/display uses VS Code and the selected editor. Selected ZIP images use a bounded workspace-host extraction cache. Persistent remote metadata indexing remains planned.
 
 ## Planned capabilities
 
@@ -147,13 +147,14 @@ See `docs/MILESTONE_0.1.0.md` for tested environments, Remote SSH/MRI observatio
 | ---------------- | --------------------------------------------------------------------------------------- |
 | `0.1.0`          | Completed directory-browser milestone; local/SSH smoke evidence recorded, not published |
 | `0.2.0`          | Completed metadata milestone; tagged locally                                            |
-| `0.3.0`–`0.5.0`  | ZIP, tarball and SquashFS browsing, including declared archive collections              |
+| `0.3.0`          | Completed ZIP browsing and cross-source metadata milestone; tagged locally              |
+| `0.4.0`–`0.5.0`  | Tarball and SquashFS browsing                                                           |
 | `0.6.0`          | Validated Remote SSH workflows and persistent indexing                                  |
 | `0.7.0`          | Coverage-aware summaries, filters and participant/session availability                  |
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
 | `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-The `0.1.0` and `0.2.0` milestones are implemented; `0.3.0` and later rows are roadmap targets, not current features or scheduled releases. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The first three milestones are tagged locally. Versions from `0.4.0` onward are roadmap targets. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 
@@ -165,4 +166,4 @@ The `0.1.0` and `0.2.0` milestones are implemented; `0.3.0` and later rows are r
 
 A public issue tracker and private vulnerability-reporting channel will be linked when the GitHub repository is available. Do not share private datasets, credentials or sensitive clinical information in public reports.
 
-In the source checkout, `docs/MILESTONE_0.2.0.md` records the completed scope, compatibility checks, public-data/SSH host observations and remaining limits.
+In the source checkout, `docs/MILESTONE_0.3.0.md` records the ZIP release scope, checks, and Remote SSH evidence.

@@ -1,6 +1,6 @@
 # ZIP source development (0.3.0)
 
-This describes the ZIP implementation toward 0.3.0. The manifest remains at the last local release, 0.2.0. Registered directories support logical subject/session overlays across ZIP and loose sources, selected member opening, literal metadata previews, and cross-source inheritance through explicit selected-file inspection. Saved custom archive placements are planned for 0.7.0.
+This describes the ZIP support released locally in 0.3.0. Registered directories support logical subject/session overlays across ZIP and loose sources, selected member opening, literal metadata previews, and cross-source inheritance through explicit selected-file inspection. Saved custom archive placements are planned for 0.7.0.
 
 ## Available now
 
