@@ -1,3 +1,8 @@
+import {
+  isRootParticipant,
+  linkedDerivativeDatasets,
+  participantPipelines,
+} from '../core/participantData';
 import { entryArchiveUri } from '../core/archiveUri';
 import * as vscode from 'vscode';
 import type { TreeDescription } from '../core/treeDescriptions';
@@ -37,6 +42,8 @@ const directoryIcons: Readonly<Record<string, string>> = {
 export interface EntryElement {
   readonly type: 'entry';
   entry: DirectoryEntry;
+  readonly inOverview?: true;
+  readonly groupLabel?: string;
 }
 export interface MessageElement {
   readonly type: 'message';
@@ -44,7 +51,11 @@ export interface MessageElement {
   readonly parent: EntryElement;
   readonly message: string;
 }
-export type TreeElement = EntryElement | MessageElement;
+interface OverviewElement {
+  readonly type: 'overview';
+  readonly parent: EntryElement;
+}
+export type TreeElement = EntryElement | MessageElement | OverviewElement;
 
 export class DatasetTreeProvider
   implements vscode.TreeDataProvider<TreeElement>, vscode.Disposable
@@ -52,6 +63,12 @@ export class DatasetTreeProvider
   private readonly changes = new vscode.EventEmitter<TreeElement | undefined>();
   readonly onDidChangeTreeData = this.changes.event;
   private readonly elements = new Map<string, EntryElement>();
+  // Filtered source choices must not reuse snapshots from the canonical derivatives tree.
+  private readonly overviewBrowser: DatasetBrowser;
+  private readonly overviews = new Map<
+    string,
+    { controller: AbortController; rows: Promise<TreeElement[]> }
+  >();
 
   readonly descriptions?: DescriptionQueue;
   constructor(
@@ -63,7 +80,9 @@ export class DatasetTreeProvider
       '..',
       '..',
     ),
+    private readonly derivativeLinks: () => unknown = () => undefined,
   ) {
+    this.overviewBrowser = new DatasetBrowser(browser.source);
     if (loadDescription)
       this.descriptions = new DescriptionQueue(loadDescription, (entry) => {
         const element = this.elements.get(entryKey(entry));
@@ -78,18 +97,32 @@ export class DatasetTreeProvider
     this.changes.fire(undefined);
   }
 
-  element(entry: DirectoryEntry): EntryElement {
-    const key = entryKey(entry);
+  element(entry: DirectoryEntry, inOverview?: true): EntryElement {
+    const key = this.itemKey(entry, inOverview);
     let element = this.elements.get(key);
     if (!element) {
-      element = { type: 'entry', entry };
+      element = { type: 'entry', entry, inOverview };
       this.elements.set(key, element);
     }
     element.entry = entry;
     return element;
   }
 
+  private itemKey(entry: DirectoryEntry, inOverview?: true): string {
+    return (inOverview ? 'participant:' : '') + entryKey(entry);
+  }
+
   getTreeItem(element: TreeElement): vscode.TreeItem {
+    if (element.type === 'overview') {
+      const item = new vscode.TreeItem(
+        'Participant Data',
+        vscode.TreeItemCollapsibleState.Collapsed,
+      );
+      item.id = 'overview:' + entryKey(element.parent.entry);
+      item.contextValue = 'participantOverview';
+      item.iconPath = new vscode.ThemeIcon('person');
+      return item;
+    }
     if (element.type === 'message') {
       const item = new vscode.TreeItem(element.message);
       item.contextValue = 'message';
@@ -116,12 +149,12 @@ export class DatasetTreeProvider
     const { entry } = element;
     const isDirectory = entry.kind === 'directory';
     const item = new vscode.TreeItem(
-      entry.name,
+      element.groupLabel ?? entry.name,
       isDirectory
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
     );
-    item.id = entryKey(entry);
+    item.id = this.itemKey(entry, element.inOverview);
     if (entry.metadataVersions) {
       const description = entry.name === 'dataset_description.json';
       item.contextValue = description ? 'datasetDescriptionVersions' : 'metadataVersions';
@@ -204,7 +237,13 @@ export class DatasetTreeProvider
     }
     if (!entry.archive && entry.logical?.conflict && entry.kind !== 'directory')
       item.description = 'File · source conflict';
-    if (!entry.archive && this.acceptsDescription(entry)) {
+    if (element.groupLabel) {
+      item.description = entry.name;
+      item.iconPath = new vscode.ThemeIcon(
+        element.groupLabel === 'Raw' ? 'folder' : 'settings-gear',
+      );
+    }
+    if (!element.groupLabel && !entry.archive && this.acceptsDescription(entry)) {
       const metadata = this.descriptions?.request(entry);
       if (metadata?.description) {
         item.description = `${describeEntry(entry)} · ${metadata.description.text}`;
@@ -214,20 +253,36 @@ export class DatasetTreeProvider
     return item;
   }
 
+  getParent(element: TreeElement): TreeElement | undefined {
+    if (element.type !== 'entry' || element.inOverview || !isRootParticipant(element.entry)) return;
+    const root = this.browser
+      .datasets()
+      .find((entry) => entry.datasetUri === element.entry.datasetUri);
+    return root && this.element(root);
+  }
+
   async getChildren(element?: TreeElement): Promise<TreeElement[]> {
     if (!element) return this.browser.datasets().map((entry) => this.element(entry));
+    if (element.type === 'overview') return this.overview(element.parent);
     if (element.type !== 'entry' || element.entry.kind !== 'directory') return [];
     const entry = element.entry;
+    const browser = element.inOverview ? this.overviewBrowser : this.browser;
     const children = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Window,
         title: `BIDS Explorer: ${entry.name}`,
         cancellable: false,
       },
-      () => this.browser.children(entry),
+      () => browser.children(entry),
     );
-    const result: TreeElement[] = children.map((child) => this.element(child));
-    const snapshot = this.browser.snapshot(entry);
+    const result: TreeElement[] = children.map((child) => this.element(child, element.inOverview));
+    const snapshot = browser.snapshot(entry);
+    if (
+      !element.inOverview &&
+      isRootParticipant(entry) &&
+      this.browser.datasets().some((root) => root.datasetUri === entry.datasetUri)
+    )
+      result.push({ type: 'overview', parent: element });
     if (snapshot.error)
       result.push({
         type: 'message',
@@ -281,21 +336,107 @@ export class DatasetTreeProvider
     return result;
   }
 
+  private overview(parent: EntryElement): Promise<TreeElement[]> {
+    const entry = parent.entry;
+    const root = this.browser.datasets().find((dataset) => dataset.datasetUri === entry.datasetUri);
+    if (!root) return Promise.resolve([]);
+    const key = entryKey(entry);
+    const existing = this.overviews.get(key);
+    if (existing) return existing.rows;
+    const controller = new AbortController();
+    const group = (source: DirectoryEntry, groupLabel: string): EntryElement => ({
+      type: 'entry',
+      entry: source,
+      inOverview: true,
+      groupLabel,
+    });
+    const notice = (
+      message: string,
+      action: MessageElement['action'] = 'coverage',
+    ): MessageElement => ({ type: 'message', action, parent, message });
+    const rows = vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Window,
+        title: `BIDS Explorer: Finding pipelines for ${entry.name}`,
+      },
+      async (): Promise<TreeElement[]> => {
+        const raw = group(entry, 'Raw');
+        try {
+          const links = linkedDerivativeDatasets(
+            root,
+            this.browser.datasets(),
+            this.derivativeLinks(),
+          );
+          const result = await participantPipelines(
+            this.browser.source,
+            root,
+            entry,
+            controller.signal,
+            links.roots,
+          );
+          const { pipelines } = result;
+          const issues = [...links.issues, ...result.issues];
+          return [
+            raw,
+            ...pipelines.map(({ name, participant }) => group(participant, `Pipeline: ${name}`)),
+            ...issues.map((issue) => notice(issue)),
+            ...(!pipelines.length && !issues.length
+              ? [notice('No matching participant in the inspected pipelines.')]
+              : []),
+          ];
+        } catch (error) {
+          return [
+            raw,
+            notice(
+              controller.signal.aborted
+                ? 'Pipeline lookup canceled. Click to retry.'
+                : String(error),
+              'retry',
+            ),
+          ];
+        }
+      },
+    );
+    const result = Promise.resolve(rows);
+    this.overviews.set(key, { controller, rows: result });
+    return result;
+  }
+
+  private clearOverviews(): boolean {
+    const changed = this.overviews.size > 0;
+    for (const work of this.overviews.values()) work.controller.abort();
+    this.overviews.clear();
+    return changed;
+  }
+
+  snapshot(element: EntryElement) {
+    return (element.inOverview ? this.overviewBrowser : this.browser).snapshot(element.entry);
+  }
+
   async nextPage(element: EntryElement, direction: 'next' | 'previous' = 'next'): Promise<void> {
-    const previous = this.browser.snapshot(element.entry).children;
-    await this.browser.nextPage(element.entry, direction);
-    const current = this.browser.snapshot(element.entry).children;
+    const browser = element.inOverview ? this.overviewBrowser : this.browser;
+    const previous = browser.snapshot(element.entry).children;
+    await browser.nextPage(element.entry, direction);
+    const current = browser.snapshot(element.entry).children;
     if (current !== previous) {
-      for (const row of previous) this.elements.delete(entryKey(row));
+      for (const row of previous) this.elements.delete(this.itemKey(row, element.inOverview));
     }
     this.changes.fire(element);
   }
 
   refresh(element?: TreeElement): void {
-    const target = element?.type === 'message' ? element.parent : element;
+    const target =
+      element?.type === 'message' || element?.type === 'overview' ? element.parent : element;
     this.descriptions?.clear(target?.entry);
+    if (target?.inOverview) {
+      this.overviewBrowser.refresh(target.entry);
+      this.changes.fire(target);
+      return;
+    }
     this.browser.refresh(target?.entry);
-    this.changes.fire(target);
+    this.overviewBrowser.refresh(target?.entry, false);
+    const overviewChanged = this.clearOverviews();
+    this.changes.fire(overviewChanged ? undefined : target);
   }
 
   registrationChanged(): void {
@@ -306,16 +447,24 @@ export class DatasetTreeProvider
         removed.set(element.entry.datasetUri, element.entry);
         this.elements.delete(key);
       }
-    for (const entry of removed.values()) this.descriptions?.clear({ ...entry, relativePath: '' });
+    for (const entry of removed.values()) {
+      this.descriptions?.clear({ ...entry, relativePath: '' });
+      this.overviewBrowser.remove(entry);
+    }
+    this.clearOverviews();
     this.changes.fire(undefined);
   }
 
   cancelPending(): void {
+    for (const work of this.overviews.values()) work.controller.abort();
+    this.overviewBrowser.cancel();
     this.browser.cancel();
     this.descriptions?.cancel();
   }
 
   dispose(): void {
+    this.clearOverviews();
+    this.overviewBrowser.cancel();
     this.browser.cancel();
     this.descriptions?.clear();
     this.elements.clear();

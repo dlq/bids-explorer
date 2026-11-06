@@ -1,8 +1,18 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.6.0` is a local tagged release (`v0.6.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.7.0` is a local tagged release (`v0.7.0`).
 
 ## Unreleased
+
+## [0.7.0] - 2026-11-06
+
+### Added
+
+- Save ZIP and tar subtree placements in workspace settings. Placed members merge into the logical BIDS tree and retain their original archive references.
+
+- Open a participant × session availability grid from a dataset in BIDS Explorer. Each participant has one row, with modality availability in separate raw and derivative session columns. Build a dataset-wide background index and filter it by participant, required raw sessions and derivative output. Filter across explicitly linked derivative datasets and view confirmed matches 50 at a time. Browse the filtered results by session, modality or pipeline. Reuse completed SquashFS availability indexes across reconnects when shard revisions match. Incomplete checks remain distinct from missing data.
+
+- Expand Participant Data under a dataset participant to browse raw acquisitions and matching derivative pipeline branches together, including explicitly linked registered datasets.
 
 ## [0.6.0] - 2026-11-06
 

@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for development after the locally tagged `v0.6.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for development after the locally tagged `v0.7.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -11,7 +11,7 @@ This is contributor documentation for development after the locally tagged `v0.6
 
 Display name: **BIDS Explorer**; package/directory: `bids-explorer`; commands/settings namespace: `bidsExplorer`. Workspace settings include declared collection roots and optional participant/session label columns.
 
-The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented. ZIP and tar browsing reuse completed inventories across reloads. Broader relationships and persistent dataset indexing remain future work. ZIP/loose sources now share logical subject/session navigation, with original entries retained in `logical.sources`. A preliminary ZIP inventory command and explicit placement model are now implemented; see [ZIP development notes](ZIP.md). Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
+The repository includes a TypeScript workspace extension, a read-only directory browser, gradient and literal dataset-description previews, explicit selected-file JSON inheritance/DWI companion reports, bounded participant/session/scan tables and dictionaries, and build/test tooling. Directory registration and browsing are implemented. ZIP and tar browsing reuse completed inventories across reloads. Participant Data and BIDS Availability support explicit links between registered raw and derivative datasets. SquashFS availability snapshots persist on the workspace host. ZIP/loose sources now share logical subject/session navigation, with original entries retained in `logical.sources`. ZIP inventory inspection and saved ZIP and tar placements are implemented; see [ZIP development notes](ZIP.md). Large samples, processing installations and caches remain in the separate Strata project. Local-only SSH test locations are in ignored `.local/strata-test-context.json`; read them only for an authorized test task.
 
 ## Prerequisites and setup
 
@@ -88,13 +88,13 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `0.1.0`, tagged locally as `v0.1.0` without Marketplace or GitHub publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.1.0.vsix` and release tags such as `v0.1.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `0.7.0`, tagged locally as `v0.7.0` without Marketplace or GitHub publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.7.0.vsix` and release tags such as `v0.7.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 
 See [TEST_DATA.md](TEST_DATA.md) for the downloaded ds000003 anatomical subset and full ds000114 public inventory, provenance, verification and opt-in test boundaries. Both are outside the repository and are not used by ordinary automated tests. The local source adapter has been smoke-tested against both; see [LOCAL_BROWSER_TESTING.md](LOCAL_BROWSER_TESTING.md).
 
-See [0.1.0 milestone validation](MILESTONE_0.1.0.md) for current test results, the authorized Remote SSH/MRI smoke test and measured cache behavior.
+See [0.7.0 release validation](../PLANS.md#070--dataset-overview-and-exploration) for the Rorqual availability and cache measurements.
 
 Tree descriptions use a VS Code-independent bounded work queue and source-backed JSON/table selectors. The extension passes a loader to the tree provider; getTreeItem never awaits metadata. Native tree-change events update individual entries after publication. Participant/session column settings are resource-scoped and default to empty. Source Details includes description snapshots/provenance. New metadata sources must retain ambiguity rules, bounds, cancellation and refresh/generation checks; shared/persistent metadata caching and large/SSH throughput remain future work.
 

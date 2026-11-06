@@ -1,3 +1,7 @@
+import { linkedDerivativeDatasets } from './core/participantData';
+import { AvailabilityCache } from './sources/availabilityCache';
+import { datasetAvailability } from './core/availability';
+import { openAvailabilityView } from './ui/availabilityView';
 import { ArchiveInventoryCache } from './sources/archiveInventoryCache';
 import { ZipDirectorySource } from './sources/zipDirectory';
 import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
@@ -5,7 +9,7 @@ import { entryArchiveUri, resourcePath } from './core/archiveUri';
 import { ArchiveImageCache } from './sources/imageCache';
 import { readTextSnapshot } from './sources/previewText';
 import { loadLogicalInheritance } from './sources/logicalInheritance';
-import { LogicalDirectorySource } from './sources/logicalDirectory';
+import { LogicalDirectorySource, savedArchivePlacements } from './sources/logicalDirectory';
 import { ArchiveInspector } from './ui/archiveInspector';
 import * as vscode from 'vscode';
 import { WorkspaceFolderHandoff } from './ui/workspaceFolders';
@@ -79,8 +83,16 @@ export function activate(context: vscode.ExtensionContext): {
     vscode.Uri.joinPath(context.storageUri ?? context.globalStorageUri, 'archive-inventories-v1')
       .fsPath,
   );
+  const availabilityCache = new AvailabilityCache(
+    vscode.Uri.joinPath(context.globalStorageUri, 'availability-index-v1').fsPath,
+  );
+  const derivativeLinks = () =>
+    vscode.workspace.getConfiguration('bidsExplorer').get<unknown>('derivativeDatasets');
+  const configuredPlacements = () =>
+    vscode.workspace.getConfiguration('bidsExplorer').get<unknown>('archivePlacements');
   const source = new LogicalDirectorySource(
     new ZipDirectorySource(undefined, undefined, inventoryCache),
+    configuredPlacements,
   );
   const inheritance = new InheritanceInspector(context.extensionUri, gradients, (entry, signal) =>
     loadLogicalInheritance(source, entry, signal),
@@ -125,11 +137,15 @@ export function activate(context: vscode.ExtensionContext): {
     (entry, signal) => loadTreeDescription(entry, descriptionOptions(entry), signal),
     descriptionEligible,
     context.extensionUri,
+    derivativeLinks,
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('bidsExplorer')) provider.refreshDescriptions();
       if (event.affectsConfiguration('bidsExplorer.collectionRoots')) void discover();
+      if (event.affectsConfiguration('bidsExplorer.archivePlacements')) provider.refresh();
+      if (event.affectsConfiguration('bidsExplorer.derivativeDatasets'))
+        provider.registrationChanged();
     }),
   );
   const tree = vscode.window.createTreeView('bidsExplorer.datasets', {
@@ -230,6 +246,61 @@ export function activate(context: vscode.ExtensionContext): {
       await registrations.remove(element.entry);
       discovery.dismiss(element.entry.uri);
       provider.registrationChanged();
+    }),
+    command('bidsExplorer.showAvailability', (arg) => {
+      const element = selected(arg);
+      if (element?.type !== 'entry' || element.entry.relativePath !== '') return;
+      const root = browser
+        .datasets()
+        .find((dataset) => dataset.datasetUri === element.entry.datasetUri);
+      if (!root) return;
+      return openAvailabilityView(
+        async (controller, progress, retryIncomplete) => {
+          archiveWork.add(controller);
+          try {
+            if (!browser.datasets().includes(root)) throw new Error('Dataset was removed');
+            const links = linkedDerivativeDatasets(root, browser.datasets(), derivativeLinks());
+            const scan = () =>
+              datasetAvailability(source, root, controller.signal, progress, links);
+            const placements = configuredPlacements();
+            if (
+              links.issues.length ||
+              [root, ...links.roots].some(
+                (entry) => savedArchivePlacements(placements, entry.datasetUri).length,
+              )
+            )
+              return await scan();
+            return await availabilityCache.load(
+              root,
+              controller.signal,
+              scan,
+              retryIncomplete,
+              links.roots,
+            );
+          } finally {
+            archiveWork.delete(controller);
+          }
+        },
+        async (participant) => {
+          const current = browser
+            .snapshot(root)
+            .children.find((row) => row.relativePath === participant.relativePath);
+          if (
+            current &&
+            browser.datasets().some((dataset) => dataset.datasetUri === root.datasetUri)
+          ) {
+            try {
+              await tree.reveal(provider.element(current), { select: true, focus: true });
+              return;
+            } catch {
+              // The page can change while VS Code resolves the tree item.
+            }
+          }
+          void vscode.window.showInformationMessage(
+            'Return to the participant’s page in BIDS Explorer, then try again.',
+          );
+        },
+      );
     }),
     command('bidsExplorer.refresh', async (arg) => {
       if (!arg) await discover();
@@ -507,7 +578,7 @@ export function activate(context: vscode.ExtensionContext): {
       } catch (error) {
         revision = { error: String(error) };
       }
-      const snapshot = browser.snapshot(entry);
+      const snapshot = provider.snapshot(element);
       const content = JSON.stringify(
         {
           sourceUri: entry.uri,

@@ -2,7 +2,7 @@
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
   "description": "Explore BIDS datasets locally and over SSH.",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "bids-explorer-dev",
   "private": true,
   "engines": {
@@ -17,6 +17,11 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "bidsExplorer.showAvailability",
+        "title": "BIDS Explorer: Show Participant Availability",
+        "icon": "$(table)"
+      },
       {
         "command": "bidsExplorer.refresh",
         "title": "BIDS Explorer: Refresh",
@@ -131,6 +136,11 @@
       ],
       "view/item/context": [
         {
+          "command": "bidsExplorer.showAvailability",
+          "when": "view == bidsExplorer.datasets && viewItem == dataset",
+          "group": "inline"
+        },
+        {
           "command": "bidsExplorer.removeDataset",
           "when": "view == bidsExplorer.datasets && viewItem == dataset",
           "group": "inline"
@@ -147,7 +157,7 @@
         },
         {
           "command": "bidsExplorer.showDetails",
-          "when": "view == bidsExplorer.datasets && viewItem != message",
+          "when": "view == bidsExplorer.datasets && viewItem != message && viewItem != participantOverview",
           "group": "navigation"
         },
         {
@@ -255,6 +265,50 @@
           "maxLength": 200,
           "scope": "resource",
           "description": "Exact TSV column to use as the session tree description. Empty disables table-based labels. Identifiers are never replaced; unique source rows and unambiguous columns are required."
+        },
+        "bidsExplorer.derivativeDatasets": {
+          "type": "object",
+          "default": {},
+          "scope": "window",
+          "additionalProperties": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^file:"
+            }
+          },
+          "description": "Explicit Participant Data links. Each key is the registered raw dataset's file URI, and its value lists registered derivative dataset file URIs on the workspace host."
+        },
+        "bidsExplorer.archivePlacements": {
+          "type": "object",
+          "default": {},
+          "scope": "window",
+          "additionalProperties": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "required": [
+                "archivePath",
+                "memberRoot",
+                "logicalRoot"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "archivePath": {
+                  "type": "string"
+                },
+                "memberRoot": {
+                  "type": "string"
+                },
+                "logicalRoot": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "description": "Saved ZIP and tar placements by registered dataset file URI. Paths are relative to the dataset, the archive member root and the logical dataset root respectively."
         },
         "bidsExplorer.collectionRoots": {
           "type": "array",

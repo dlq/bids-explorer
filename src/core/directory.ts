@@ -20,6 +20,7 @@ export interface DirectoryEntry {
     readonly subject?: string;
     readonly session?: string;
   };
+  readonly placedChildren?: readonly DirectoryEntry[];
   readonly metadataVersions?: readonly DirectoryEntry[];
   readonly squashfsRead?: SquashfsPageRead;
   readonly paging?: {
@@ -67,6 +68,22 @@ export function entryKey(entry: DirectoryEntry): string {
       : JSON.stringify([entry.datasetUri, entry.relativePath]);
 }
 
+const modalityLabels = new Map([
+  ['anat', 'Anatomical'],
+  ['func', 'Functional'],
+  ['dwi', 'Diffusion'],
+  ['fmap', 'Field maps'],
+  ['perf', 'Perfusion'],
+  ['eeg', 'EEG'],
+  ['meg', 'MEG'],
+  ['ieeg', 'Intracranial EEG'],
+  ['pet', 'PET'],
+]);
+
+export function isBidsModality(name: string): boolean {
+  return modalityLabels.has(name);
+}
+
 /** Folder labels, including explicitly marked combined names. No path normalization or validation. */
 export function describeEntry(entry: DirectoryEntry): string {
   if (entry.logical?.kind === 'subject') return 'Participant';
@@ -81,18 +98,7 @@ export function describeEntry(entry: DirectoryEntry): string {
   if (/^sub-[a-zA-Z0-9+]+$/.test(entry.name)) return 'Participant';
   if (/^ses-[a-zA-Z0-9+]+$/.test(entry.name)) return 'Session';
   if (entry.name === 'derivatives' && entry.relativePath === 'derivatives') return 'Derivatives';
-  const modalities: Record<string, string> = {
-    anat: 'Anatomical',
-    func: 'Functional',
-    dwi: 'Diffusion',
-    fmap: 'Field maps',
-    perf: 'Perfusion',
-    eeg: 'EEG',
-    meg: 'MEG',
-    ieeg: 'Intracranial EEG',
-    pet: 'PET',
-  };
-  return modalities[entry.name] ?? 'Folder';
+  return modalityLabels.get(entry.name) ?? 'Folder';
 }
 
 /** Bound CPU work between yields even when a single directory has many children. */
@@ -175,13 +181,12 @@ function bidsDirectoryRole(relativePath: string): string | undefined {
     if (parts.length === 2) return 'Session';
     parts = [parts[0], ...parts.slice(2)];
   }
-  const modalities = new Set(['anat', 'func', 'dwi', 'fmap', 'perf', 'eeg', 'meg', 'ieeg', 'pet']);
-  return parts.length === 2 && modalities.has(parts[1]) ? 'Modality' : undefined;
+  return parts.length === 2 && isBidsModality(parts[1]) ? 'Modality' : undefined;
 }
 
 export function isRecognizedBidsEntry(entry: DirectoryEntry): boolean {
   const parts = entry.relativePath.split('/');
-  if (entry.paging || entry.metadataVersions) return true;
+  if (entry.paging || entry.metadataVersions || entry.placedChildren) return true;
   if (
     entry.archive?.format === 'squashfs' ||
     entry.logical?.sources.some((source) => source.archive?.format === 'squashfs')

@@ -107,7 +107,9 @@ suite('ZIP-backed dataset tree', () => {
       const item = api.provider.getTreeItem(subject);
       assert.equal(item.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
       assert.equal((item.iconPath as vscode.ThemeIcon).id, 'person');
-      const sessions = await api.provider.getChildren(subject);
+      const sessions = (await api.provider.getChildren(subject)).filter(
+        (row) => row.type === 'entry',
+      );
       assert.equal(sessions.length, 1);
       assert.equal(api.provider.getTreeItem(sessions[0]).label, 'ses-2');
       assert.equal(
@@ -328,6 +330,59 @@ suite('Archive metadata viewing', () => {
           'bidsExplorer.removeDataset',
           api.provider.element(root),
         );
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
+
+suite('Saved archive placements', () => {
+  test('workspace settings place a ZIP subtree and preserve the member URI', async () => {
+    const extension = vscode.extensions.getExtension<
+      ReturnType<typeof import('../../extension').activate>
+    >('bids-explorer-dev.bids-explorer')!;
+    const { provider } = await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-saved-placement-'));
+    const settings = vscode.workspace.getConfiguration('bidsExplorer');
+    const setting = 'archivePlacements';
+    const previous = settings.inspect(setting)?.workspaceValue;
+    const archive = join(folder, 'sub-99.zip');
+    const memberPath = 'delivery/anat/sub-01_T1w.json';
+    let root: import('../../core/directory').DirectoryEntry | undefined;
+    try {
+      await writeFile(archive, zipFixture([{ name: memberPath, text: '{"fixture":true}' }]));
+      root = await vscode.commands.executeCommand(
+        'bidsExplorer.addDataset',
+        vscode.Uri.file(folder),
+      );
+      assert.ok(root);
+      const dataset = provider.element(root);
+      assert.equal(provider.getTreeItem((await provider.getChildren(dataset))[0]).label, 'sub-99');
+      await settings.update(
+        setting,
+        {
+          [root.datasetUri]: [
+            { archivePath: 'sub-99.zip', memberRoot: 'delivery', logicalRoot: 'sub-01' },
+          ],
+        },
+        vscode.ConfigurationTarget.Workspace,
+      );
+      const [subject] = await provider.getChildren(dataset);
+      assert.equal(provider.getTreeItem(subject).label, 'sub-01');
+      const [anat] = (await provider.getChildren(subject)).filter((row) => row.type === 'entry');
+      const [sidecar] = await provider.getChildren(anat);
+      assert.equal(sidecar.type, 'entry');
+      if (sidecar.type !== 'entry') throw new Error('Expected an archive member.');
+      const ref = parseArchiveUri(entryArchiveUri(sidecar.entry));
+      assert.equal(ref.memberPath, memberPath);
+      assert.equal(vscode.Uri.parse(ref.sourceUri).fsPath, archive);
+      const document = await vscode.workspace.openTextDocument(
+        vscode.Uri.parse(entryArchiveUri(sidecar.entry)),
+      );
+      assert.equal(document.getText(), '{"fixture":true}');
+    } finally {
+      await settings.update(setting, previous, vscode.ConfigurationTarget.Workspace);
+      if (root)
+        await vscode.commands.executeCommand('bidsExplorer.removeDataset', provider.element(root));
       await rm(folder, { recursive: true, force: true });
     }
   });

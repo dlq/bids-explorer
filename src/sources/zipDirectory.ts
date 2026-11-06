@@ -1,5 +1,5 @@
 import { archiveFingerprint, type ArchiveInventoryCache } from './archiveInventoryCache';
-import { tarSuffix, type ArchiveInventory } from '../core/archive';
+import { tarSuffix, type ArchiveInventory, type ArchivePlacement } from '../core/archive';
 import { archiveTree } from '../core/archiveTree';
 import {
   orderEntries,
@@ -70,8 +70,26 @@ export class ZipDirectorySource implements DirectorySource {
       );
     }
     if (parent.kind !== 'directory') return [];
-    const { sourceUri, memberPath } = parent.archive;
-    const key = JSON.stringify([parent.datasetUri, sourceUri, parent.archive.containerPath]);
+    const cached = await this.inventory(parent, signal);
+    return cached.branches.get(parent.archive.memberPath.replace(/\/$/, '')) ?? [];
+  }
+
+  async placeArchive(
+    container: DirectoryEntry,
+    placement: Omit<ArchivePlacement, 'index'>,
+    budget: { remaining: number },
+    signal: AbortSignal,
+  ): Promise<readonly DirectoryEntry[]> {
+    const cached = await this.inventory(container, signal);
+    budget.remaining -= cached.index.members.length;
+    if (budget.remaining < 0)
+      throw new Error('Saved placements exceed 100,000 archive member records.');
+    return (await archiveTree(container, cached.index, signal, placement)).get('') ?? [];
+  }
+
+  private async inventory(parent: DirectoryEntry, signal: AbortSignal): Promise<CachedArchive> {
+    const { sourceUri, containerPath } = parent.archive!;
+    const key = JSON.stringify([parent.datasetUri, sourceUri, containerPath]);
     const fingerprint = this.persistent && (await archiveFingerprint(sourceUri));
     let cached = this.cache.get(key);
     if (cached) {
@@ -90,8 +108,8 @@ export class ZipDirectorySource implements DirectorySource {
       const saved = fingerprint && (await this.persistent?.read(fingerprint, signal));
       const index =
         saved ??
-        (await (parent.archive.format === 'tar' ? indexTar : this.readIndex)(sourceUri, signal));
-      const container: DirectoryEntry = { ...parent, relativePath: parent.archive.containerPath };
+        (await (parent.archive!.format === 'tar' ? indexTar : this.readIndex)(sourceUri, signal));
+      const container: DirectoryEntry = { ...parent, relativePath: containerPath };
       const branches = await archiveTree(container, index, signal);
       if (fingerprint && (await archiveFingerprint(sourceUri)).stamp !== fingerprint.stamp)
         throw new Error('Archive changed since indexing. Refresh the archive branch.');
@@ -110,6 +128,6 @@ export class ZipDirectorySource implements DirectorySource {
       this.cache.set(key, cached);
     }
     signal.throwIfAborted();
-    return cached.branches.get(memberPath.replace(/\/$/, '')) ?? [];
+    return cached;
   }
 }

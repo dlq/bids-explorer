@@ -142,8 +142,8 @@ export class DatasetBrowser {
     }
   }
 
-  refresh(scope?: DirectoryEntry): void {
-    this.source.refresh?.(scope);
+  refresh(scope?: DirectoryEntry, refreshSource = true): void {
+    if (refreshSource) this.source.refresh?.(scope);
     const within = (datasetUri: string, relativePath: string): boolean =>
       !scope ||
       (datasetUri === scope.datasetUri &&

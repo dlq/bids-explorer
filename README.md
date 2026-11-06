@@ -6,7 +6,21 @@ Version 0.5.0 adds SquashFS inspection, paging in both directions in the logical
 
 Version 0.6.0 reuses completed ZIP and tar inventories across reloads and Remote SSH reconnects. Inventories are stored on the workspace host and checked against the archive before use.
 
-**Status: `0.6.0` is a local release tagged `v0.6.0`.**
+**Status: `0.7.0` is a local release tagged `v0.7.0`.**
+
+Expand **Participant Data** under a participant in BIDS Explorer. It shows **Raw** and matching pipelines from the same dataset’s `derivatives/` folder. Uninspected branches are reported, and the original tree remains available for browsing by pipeline.
+
+To include a separately registered derivative dataset in **Participant Data** and **BIDS Availability**, set `bidsExplorer.derivativeDatasets` in the workspace settings. Use the registered raw dataset’s file URI as the key and list the derivative dataset file URIs on the workspace host.
+
+```json
+{
+  "bidsExplorer.derivativeDatasets": {
+    "file:///data/raw": ["file:///data/fmriprep"]
+  }
+}
+```
+
+Choose **Show Participant Availability** on a dataset to open a read-only grid for the registered dataset. Each participant has one row. Each session gets a Raw column and, when pipelines are present, a Derivatives column listing modalities by pipeline. Select the raw sessions you require and optionally require derivative output from a particular pipeline, session or modality. Choose **Apply filters** to find confirmed matches across the indexed raw dataset and its linked derivatives. Linked pipelines display their dataset URI. Results show 50 participants per page. Choose **By modality** to browse matches with confirmed data for one modality, or **By pipeline** to browse one pipeline’s outputs by session. Both views apply the current participant filters. The initial scan follows source pages in the background. You can cancel or refresh it from the grid. For SquashFS collections, completed indexes are cached on the workspace host and reused after reconnecting while the shard files have the same revisions. Linked indexes are cached when every linked source is a SquashFS collection. If a scan encounters read failures, the cached results keep their partial coverage warning. Use **Refresh snapshot** to retry those reads. Partial coverage means additional participants may match. The grid marks incomplete checks separately from missing data. Select a participant in the grid to locate them in BIDS Explorer.
 
 ## Available today
 
@@ -32,7 +46,7 @@ Recognition uses at most two shallow filesystem attribute checks per workspace f
 
 The header Refresh action reruns root recognition and refreshes all displayed datasets. The context-menu Refresh action affects its selected branch. Filesystem changes are not watched automatically; refresh after external changes. Use **BIDS Explorer: Cancel Pending Work** (the stop button) to cancel pending listings, gradient reads, table reads and metadata operations. Cancellation prevents publication and stops cooperative processing; an already-issued OS directory read may finish first. Completed listings remain cached in memory.
 
-Right-click a dataset root and choose **Show Dataset in File Explorer** for its complete physical tree in the normal EXPLORER file section. This explicitly changes the workspace folder list; VS Code may reload when converting a single-folder window to a workspace. The native Explorer follows your usual file-exclusion settings. BIDS Explorer keeps original names but omits entries outside its current recognition vocabulary; this does not mean they are invalid or absent. Source Details reports coverage for immediate children only. Unexpanded descendants remain unknown even when their parent has been enumerated. No recursive dataset counts are presented yet.
+Right-click a dataset root and choose **Show Dataset in File Explorer** for its complete physical tree in the normal EXPLORER file section. This explicitly changes the workspace folder list; VS Code may reload when converting a single-folder window to a workspace. The native Explorer follows your usual file-exclusion settings. BIDS Explorer keeps original names but omits entries outside its current recognition vocabulary; this does not mean they are invalid or absent. Source Details reports coverage for immediate children only. Unexpanded descendants remain unknown even when their parent has been enumerated. Use BIDS Availability for participant counts from the indexed dataset snapshot.
 
 ## Entity interpretation
 
@@ -125,7 +139,25 @@ Original values are available in the numeric table and **Open .bval/.bvec as tex
 
 Run **BIDS Explorer: Inspect ZIP Archive** from the Command Palette, or right-click a ZIP in the native Explorer. This command reads the selected ZIP's central directory and shows a JSON report with its source revision, total entry count and first 200 members. ZIPs can be selected at any directory depth; they do not need their own dataset descriptor. Cancel through the progress notification or **Cancel Pending Work**.
 
-The inventory is limited to 100,000 entries and 16 MiB of directory metadata. It opens no member streams and performs no decompression, extraction or BIDS validation. BIDS Explorer overlays ZIP and ordinary directory sources into **dataset → subject → session → modality/processing folder** navigation. Sessions for a subject appear together; matching directories merge file-wise and conflicting files remain separate source choices. Known subject/session archive names supply provisional placement without indexing the whole collection. Expanding a session indexes only its contributing archives and checks matching member wrappers; contradictory layouts produce an explicit placement error. Original archive/member paths remain in Source Details. Use **Add Dataset** for a ZIP collection without a root descriptor; registration is remembered for that workspace. Alternatively, declare its workspace-host `file:` URI in `bidsExplorer.collectionRoots` to populate it automatically when that workspace opens. Click archived JSON, TSV, gradient or CHANGES files for a preview. Literal JSON object fields and array items are supported; dataset descriptions, dictionaries and inheritance still require object-shaped metadata. Raw text opens readonly, retaining the original ZIP/member identity. Archive table dictionaries use only an unambiguous same-directory JSON member; gradient previews require unambiguous same-basename companions in that ZIP. Use **Inspect Metadata** on a NIfTI or TSV row to resolve applicable sidecars across its logical ancestors, including loose files and ZIP members. The report identifies the original sources and withholds effective values when coverage is incomplete or multiple JSON sidecars apply at the same level. Saved custom archive placements remain planned. No external unzip tool is required.
+The inventory is limited to 100,000 entries and 16 MiB of directory metadata. It opens no member streams and performs no decompression, extraction or BIDS validation. BIDS Explorer overlays ZIP and ordinary directory sources into **dataset → subject → session → modality/processing folder** navigation. Sessions for a subject appear together; matching directories merge file-wise and conflicting files remain separate source choices. Known subject/session archive names supply provisional placement without indexing the whole collection. Expanding a session indexes only its contributing archives and checks matching member wrappers; contradictory layouts produce an explicit placement error. Original archive/member paths remain in Source Details. Use **Add Dataset** for a ZIP collection without a root descriptor; registration is remembered for that workspace. Alternatively, declare its workspace-host `file:` URI in `bidsExplorer.collectionRoots` to populate it automatically when that workspace opens. Click archived JSON, TSV, gradient or CHANGES files for a preview. Literal JSON object fields and array items are supported; dataset descriptions, dictionaries and inheritance still require object-shaped metadata. Raw text opens readonly, retaining the original ZIP/member identity. Archive table dictionaries use only an unambiguous same-directory JSON member; gradient previews require unambiguous same-basename companions in that ZIP. Use **Inspect Metadata** on a NIfTI or TSV row to resolve applicable sidecars across its logical ancestors, including loose files and ZIP members. The report identifies the original sources and withholds effective values when coverage is incomplete or multiple JSON sidecars apply at the same level. No external unzip tool is required.
+
+To save a custom ZIP or tar placement, add an entry to `bidsExplorer.archivePlacements` in workspace settings. Key the entry by the registered dataset’s file URI on the workspace host. Set `archivePath` relative to the dataset, `memberRoot` to the directory inside the archive, and `logicalRoot` to its destination in the BIDS tree. Use an empty string for the archive root or the logical dataset root.
+
+```json
+{
+  "bidsExplorer.archivePlacements": {
+    "file:///data/study": [
+      {
+        "archivePath": "imports/session.zip",
+        "memberRoot": "delivery/visit",
+        "logicalRoot": "sub-01/ses-02"
+      }
+    ]
+  }
+}
+```
+
+A saved placement controls where that archive appears in BIDS Explorer. The source archive stays in its original location, and conflicting files retain their individual source choices. Settings changes refresh the tree. After replacing an archive on disk, refresh the dataset root.
 
 ## MRI files inside ZIPs
 
@@ -139,7 +171,7 @@ ZIP member reading supports unencrypted stored/Deflate members and rejects links
 
 Use desktop **VS Code 1.96 or newer** with a trusted, non-virtual workspace. The directory adapter accepts `file:` URIs on the workspace host. Remote SSH window tests covered directory and ZIP browsing and MRI viewing. A separate synthetic Rorqual host test covered cross-source metadata inheritance. Broader remote UI/latency, reconnect and persistent-index behavior remain unvalidated; browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported. No Python, archive tools or NiiVue installation is required by the runtime.
 
-Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. There is no persistent metadata index or telemetry implementation. Completed selected ZIP images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. No separate SSH transport or dataset download is initiated by the extension.
+Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. SquashFS availability snapshots persist in private extension storage on the workspace host. Completed selected ZIP images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. No separate SSH transport or dataset download is initiated by the extension.
 
 Opening other files or using the preview’s Open as text buttons hands them to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
 
@@ -163,7 +195,7 @@ Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the nativ
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
 | `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-The first six milestones are tagged locally. Roadmap targets begin at `0.7.0`. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The first seven milestones are tagged locally. Roadmap targets begin at `0.8.0`. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 

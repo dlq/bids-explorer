@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { LogicalDirectorySource } from '../../sources/logicalDirectory';
+import { LogicalDirectorySource, savedArchivePlacements } from '../../sources/logicalDirectory';
 import { loadLogicalInheritance } from '../../sources/logicalInheritance';
 import { loadInheritedGradientPair } from '../../sources/gradientFiles';
 import { ZipDirectorySource } from '../../sources/zipDirectory';
@@ -469,4 +469,84 @@ void test('session tar shards use the same logical placement as named ZIPs', asy
     assert.equal(image.archive?.memberPath, path);
     assert.equal(image.relativePath, 'sub-02/ses-3/anat/sub-02_ses-3_T1w.nii');
   });
+});
+
+void test('saved ZIP and tar placements overlay selected subtrees while keeping physical member identity', async () => {
+  await fixture(async (folder) => {
+    await mkdir(join(folder, 'storage'));
+    await mkdir(join(folder, 'sub-01', 'anat'), { recursive: true });
+    await writeFile(join(folder, 'sub-01/anat/sub-01_T1w.nii'), 'loose');
+    const archivePath = 'storage/sub-99.zip';
+    await writeFile(
+      join(folder, archivePath),
+      zipFixture([
+        { name: 'wrapper/anat/sub-01_T1w.nii', text: 'zip' },
+        { name: 'ignored/sub-02/anat/sub-02_T1w.nii', text: 'excluded' },
+      ]),
+    );
+    await writeFile(
+      join(folder, 'other.tar.gz'),
+      gzipSync(tarFixture(tarRecord('anat/sub-01_T2w.nii', Buffer.from('tar')))),
+    );
+    const uri = pathToFileURL(folder).href;
+    const placements = [
+      { archivePath, memberRoot: 'wrapper', logicalRoot: 'sub-01' },
+      { archivePath: 'other.tar.gz', memberRoot: '', logicalRoot: 'sub-01/ses-02' },
+    ];
+    const createSource = () => new LogicalDirectorySource(undefined, () => ({ [uri]: placements }));
+    for (const source of [createSource(), createSource()]) {
+      const root = await source.root(uri);
+      const browser = new DatasetBrowser(source);
+      const roots = await browser.children(root);
+      assert.deepEqual(
+        roots.map((entry) => entry.name),
+        ['sub-01'],
+      );
+      const children = await browser.children(roots[0]);
+      const anatomy = children.find((entry) => entry.name === 'anat')!;
+      const files = await browser.children(anatomy);
+      assert.equal(files.length, 2);
+      assert(files.every((entry) => entry.logical?.conflict));
+      const zip = files.find((entry) => entry.archive)!;
+      assert.equal(zip.archive!.containerPath, archivePath);
+      assert.equal(zip.archive!.memberPath, 'wrapper/anat/sub-01_T1w.nii');
+      assert.equal(zip.relativePath, 'sub-01/anat/sub-01_T1w.nii');
+      assert.equal(
+        zip.logical?.sources[0].relativePath,
+        archivePath + '/wrapper/anat/sub-01_T1w.nii',
+      );
+      assert(!JSON.stringify(roots[0]).includes('placedChildren'));
+      const session = children.find((entry) => entry.name === 'ses-02')!;
+      const [tarAnatomy] = await browser.children(session);
+      const [tar] = await browser.children(tarAnatomy);
+      assert.equal(tar.archive?.format, 'tar');
+      assert.equal(tar.archive?.memberPath, 'anat/sub-01_T2w.nii');
+      assert.equal(tar.relativePath, 'sub-01/ses-02/anat/sub-01_T2w.nii');
+    }
+    const source = createSource();
+    const root = await source.root(uri);
+    placements[0] = { ...placements[0], memberRoot: 'absent' };
+    await assert.rejects(source.children(root, signal()), /absent from the archive index/);
+    placements[0] = { ...placements[0], archivePath: 'absent/archive.zip' };
+    await assert.rejects(source.children(root, signal()), /path was not found/);
+    placements[0] = { ...placements[0], archivePath: 'storage/absent.zip' };
+    await assert.rejects(source.children(root, signal()), /needs a ZIP or tar/);
+  });
+});
+
+void test('saved placement declarations reject unsafe, duplicate and incomplete paths', () => {
+  const uri = 'file:///dataset';
+  const valid = { archivePath: 'a.zip', memberRoot: '', logicalRoot: '' };
+  for (const configured of [null, false, {}])
+    assert.deepEqual(savedArchivePlacements(configured, uri), []);
+  assert.throws(() => savedArchivePlacements({ [uri]: {} }, uri), /up to 32/);
+  assert.throws(() => savedArchivePlacements({ [uri]: Array(33).fill(valid) }, uri), /up to 32/);
+  assert.throws(() => savedArchivePlacements({ [uri]: [null] }, uri), /Invalid/);
+  assert.throws(() => savedArchivePlacements({ [uri]: [{}] }, uri), /require/);
+  for (const key of ['archivePath', 'memberRoot', 'logicalRoot'])
+    assert.throws(
+      () => savedArchivePlacements({ [uri]: [{ ...valid, [key]: '../escape' }] }, uri),
+      /Unsafe/,
+    );
+  assert.throws(() => savedArchivePlacements({ [uri]: [valid, valid] }, uri), /only once/);
 });
