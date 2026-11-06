@@ -1,7 +1,7 @@
 import { isArchiveUri } from '../core/archiveUri';
 import * as vscode from 'vscode';
 import { parseHistory } from '../core/history';
-import { readTextSnapshot } from '../sources/previewText';
+import { readTextSnapshot } from '../sources/textSnapshotReader';
 import { DocumentPreviewManager } from './documentPreview';
 
 export function isHistoryFile(uri: vscode.Uri): boolean {
@@ -21,17 +21,20 @@ export class HistoryPreviewManager implements vscode.Disposable {
       const history = await parseHistory(await readTextSnapshot(uri.toString(), signal), signal);
       return {
         title: 'Dataset history',
-        subtitle: history.snapshot.sourceUri,
-        notice: `Recorded order and text; release headers are interpreted tolerantly. Dates and version labels are not corrected, validated or sorted. Unrecognized text is retained. Sections are shortened after 16,000 characters; open the original for complete text. Snapshot ${history.snapshot.capturedAt} · ${history.snapshot.revision.size} bytes.`,
-        records: history.entries.map((entry) => ({
-          title: entry.heading ?? 'Unparsed source text',
-          text:
-            entry.text.slice(0, 16000) +
-            (entry.text.length > 16000
-              ? '\n… Section shortened; open original for full text.'
-              : ''),
-          detail: 'Source line ' + entry.line,
-        })),
+        subtitle: 'CHANGES',
+        notice: `Entries are shown in file order with their recorded versions and dates.`,
+        records: history.entries.map((entry) => {
+          const text = entry.heading
+            ? entry.text.slice(entry.heading.length).replace(/^\r?\n/, '')
+            : entry.text;
+          return {
+            title: entry.heading ?? 'Unparsed source text',
+            text:
+              text.slice(0, 16000) +
+              (text.length > 16000 ? '\n… Section shortened; open original for full text.' : ''),
+            detail: 'Source line ' + entry.line,
+          };
+        }),
         sources: [{ uri: uri.toString(), label: 'Open CHANGES as text' }],
         actions: [],
       };

@@ -6,10 +6,14 @@ import { loadInheritedMetadata } from './inheritedMetadata';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { setImmediate } from 'node:timers/promises';
-import { readTextSnapshot, MAX_PREVIEW_BYTES, type PreviewReadIO } from './previewText';
+import {
+  readTextSnapshot,
+  MAX_TEXT_SNAPSHOT_BYTES,
+  type TextSnapshotReadIO,
+} from './textSnapshotReader';
 import { parseGradients, type GradientTable } from '../core/gradients';
 
-export const MAX_GRADIENT_BYTES = MAX_PREVIEW_BYTES;
+export const MAX_GRADIENT_BYTES = MAX_TEXT_SNAPSHOT_BYTES;
 export interface GradientPreviewData {
   readonly imageUri?: string;
   readonly bvalUri: string;
@@ -29,12 +33,12 @@ export function gradientPair(uri: string): { bvalUri: string; bvecUri: string } 
   };
 }
 
-export type { PreviewReadIO as GradientReadIO } from './previewText';
+export type { TextSnapshotReadIO as GradientReadIO } from './textSnapshotReader';
 
 export async function readGradientText(
   uri: string,
   signal: AbortSignal,
-  io?: PreviewReadIO,
+  io?: TextSnapshotReadIO,
 ): Promise<string> {
   return (await readTextSnapshot(uri, signal, io)).text;
 }

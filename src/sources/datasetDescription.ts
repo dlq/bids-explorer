@@ -6,7 +6,7 @@ import {
   type DatasetDescription,
 } from '../core/metadata';
 import type { MetadataDocument } from '../core/metadataTypes';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 
 export async function loadDatasetDescription(
   uri: string,

@@ -1,3 +1,4 @@
+import { sameFileRevision } from './fileRevision';
 import { constants } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
@@ -129,15 +130,9 @@ async function scanTar(
   if (!before.size || before.size > limits.scanBytes)
     throw new Error('Tar source is empty or exceeds the scan limit.');
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-  const matches = (stat: typeof before): boolean =>
-    stat.isFile() &&
-    stat.dev === before.dev &&
-    stat.ino === before.ino &&
-    stat.size === before.size &&
-    stat.mtimeMs === before.mtimeMs &&
-    stat.ctimeMs === before.ctimeMs;
   try {
-    if (!matches(await handle.stat())) throw new Error('Tar source changed while opening.');
+    if (!sameFileRevision(before, await handle.stat()))
+      throw new Error('Tar source changed while opening.');
     signal.throwIfAborted();
     const input = handle.createReadStream({ autoClose: false, end: before.size - 1 });
     const members: TarMember[] = [];
@@ -219,7 +214,10 @@ async function scanTar(
       signal.throwIfAborted();
       throw scanFailure ?? error;
     }
-    if (!matches(await handle.stat()) || !matches(await lstat(path)))
+    if (
+      !sameFileRevision(before, await handle.stat()) ||
+      !sameFileRevision(before, await lstat(path))
+    )
       throw new Error('Tar source changed while indexing.');
     signal.throwIfAborted();
     return {

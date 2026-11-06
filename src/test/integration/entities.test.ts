@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
-import { DatasetTreeProvider, type EntryElement } from '../../ui/datasetTree';
+import { DatasetTreeProvider, type EntryElement } from '../../ui/datasetTreeProvider';
 import type { EntryInterpretation } from '../../core/entities';
 
 async function details(element: EntryElement): Promise<EntryInterpretation> {
@@ -15,7 +15,7 @@ async function details(element: EntryElement): Promise<EntryInterpretation> {
   return doc.entityInterpretation as EntryInterpretation;
 }
 function named(
-  rows: readonly import('../../ui/datasetTree').TreeElement[],
+  rows: readonly import('../../ui/datasetTreeProvider').TreeElement[],
   name: string,
 ): EntryElement {
   const item = rows.find((row) => row.type === 'entry' && row.entry.name === name);

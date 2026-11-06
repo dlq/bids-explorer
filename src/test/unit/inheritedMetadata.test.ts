@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadInheritedMetadata } from '../../sources/inheritedMetadata';
-import { readTextSnapshot } from '../../sources/previewText';
+import { readTextSnapshot } from '../../sources/textSnapshotReader';
 
 const native = { lstat, opendir, readTextSnapshot };
 void test('ancestor inspection isolates derivative and nested datasets without reading images or altering files', async () => {

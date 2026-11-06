@@ -36,7 +36,7 @@ suite('SquashFS inspection', () => {
 suite('SquashFS logical tree', () => {
   test('the next-page tree action replaces rows and retains unavailable source coverage', async () => {
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-collection-'));
@@ -92,7 +92,7 @@ suite('SquashFS logical tree', () => {
 suite('SquashFS member opening', () => {
   test('the grouped dataset description shows shared fields and shard-specific values', async () => {
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-comparison-'));
@@ -136,7 +136,7 @@ suite('SquashFS member opening', () => {
 
   test('tree clicks preview selected JSON and hand selected NIfTI bytes to VS Code', async () => {
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-open-'));

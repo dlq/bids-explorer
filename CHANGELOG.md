@@ -1,8 +1,20 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.8.0` is a local tagged release (`v0.8.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.9.0` is a local tagged release (`v0.9.0`).
 
 ## Unreleased
+
+## [0.9.0] - 2026-11-06
+
+- Make dataset metadata, participant and events tables, and dataset history easier to read. Show event time units, explain recorded column definitions, and keep source details and original files available.
+
+- Make participant availability easier to find and keep scan status in sync with the displayed results.
+
+- Open loose and archived NIfTI images in the built-in viewer by default when clicked in BIDS Explorer. Use **Open Image With** to select another editor. The tree and viewer tab use the same imaging icon.
+
+- Allow clearing the extracted-image cache when it is already over its entry limit.
+
+- Detect archive or text source changes during reads, including rewrites that preserve the file size and modification time.
 
 ## [0.8.0] - 2026-11-06
 

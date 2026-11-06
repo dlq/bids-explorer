@@ -1,6 +1,6 @@
 # Development guide
 
-This is contributor documentation for development after the locally tagged `v0.7.0` milestone. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
+This is contributor documentation for BIDS Explorer. The root [README.md](../README.md) describes what users can actually do today. Commands below run from the repository root.
 
 ## Project context
 
@@ -29,20 +29,27 @@ npm run test:integration  # Downloads VS Code 1.96 and runs extension-host tests
 npm run package           # Creates dist/bids-explorer-<version>.vsix
 ```
 
+Packaging rebuilds `out/` from scratch and includes the NiiVue ESM bundle used by the viewer. Source files, alternate NiiVue builds, test output and local release artifacts stay out of the VSIX.
+
 The integration runner needs network access on its first run and a graphical session (CI uses Xvfb). If VS Code stable is already running and prevents CLI tests, close it or launch tests from VS Code's Extension Test Runner. Install the VSIX using **Extensions: Install from VSIX**. The `bids-explorer-dev` publisher is a development placeholder, not a Marketplace registration. No publication is configured. Packaging skips the license check for this private development preview; choose a license and real publisher before distribution.
 
-The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model and metadata message types are shared without a bundler or runtime dependencies. Type-only metadata/snapshot/revision contracts are `.d.ts` modules, keeping Node IO/parsing out of browser imports. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/webview/`, with styles in `media/`. The metadata entry is `out/webview/ui/metadataClient.js` and the table entry is `out/webview/ui/tableClient.js`; parsing runs on the host, using the shared bounded text reader and a lossless field scanner. Selected-file syntax/resource checks do not invoke a BIDS validator.
+The host and browser builds use `tsconfig.json` and `tsconfig.webview.json`. The portable gradient model and metadata message types are shared without a bundler or runtime dependencies. Type-only metadata/snapshot/revision contracts are `.d.ts` modules, keeping Node IO/parsing out of browser imports. `npm run build` and `npm run typecheck` cover both; F5 starts `watch:host` and `watch:webview`. The packaged preview loads its ESM entry and model from `out/browser/`, with styles in `media/`. The metadata entry is `out/browser/webview/metadataClient.js` and the table entry is `out/browser/webview/tableClient.js`; parsing runs on the host, using the shared bounded text reader and a lossless field scanner. Selected-file syntax/resource checks do not invoke a BIDS validator.
 
 To test an existing VS Code installation, set `BIDS_EXPLORER_TEST_VSCODE_PATH` to its absolute executable path before running `npm run test:integration`. This was used for current macOS VS Code, whose executable is named `Code` rather than the test downloader’s assumed `Electron`. The default still tests 1.96.0.
 
 ## Architecture and remote development
 
-- `src/core/`: VS Code-independent resource identity and dataset contracts.
-- `src/ui/`: VS Code tree and read-only gradient webview presentation; no filesystem scanning during rendering.
 - `src/extension.ts`: activation, commands and disposable ownership.
+- `src/core/`: VS Code-independent dataset models, parsers and resource identity.
+- `src/sources/`: workspace-host readers, archive adapters and caches.
+- `src/ui/`: extension-host tree providers, commands' presentation helpers and webview panel lifecycle.
+- `src/webview/`: browser-side preview scripts. The browser build emits these and their shared modules into `out/browser/`.
+- `media/`: packaged styles and icons.
 - `src/test/unit/`: fast tests independent of VS Code.
 - `src/test/integration/`: tests inside a real VS Code extension host.
 - `test/fixtures/`: tiny synthetic metadata only; no private or real imaging data.
+
+Use lower camel case for TypeScript module filenames and variables, PascalCase for classes and types, and `*.test.ts` for test suites. Name host modules for the role they own, such as `datasetTreeProvider.ts`, and browser entry points for the preview they render, such as `metadataClient.ts`. Use `bidsExplorer.<action>` for command IDs and keep registered IDs aligned with the manifest.
 
 The manifest uses `extensionKind: ["workspace"]`. In a Remote SSH window, the extension runs on the remote workspace host. To develop there, open a checkout on the remote host with Remote SSH, install Node/dependencies there, and use the same F5 workflow. The runtime does not initiate SSH connections. Verify the execution location with **Developer: Show Running Extensions**.
 
@@ -98,4 +105,4 @@ See [0.7.0 release validation](../PLANS.md#070--dataset-overview-and-exploration
 
 Tree descriptions use a VS Code-independent bounded work queue and source-backed JSON/table selectors. The extension passes a loader to the tree provider; getTreeItem never awaits metadata. Native tree-change events update individual entries after publication. Participant/session column settings are resource-scoped and default to empty. Source Details includes description snapshots/provenance. New metadata sources must retain ambiguity rules, bounds, cancellation and refresh/generation checks; shared/persistent metadata caching and large/SSH throughput remain future work.
 
-History and the inherited-metadata inspector use `DocumentPreviewManager` with `out/webview/ui/documentClient.js`. The host supplies bounded records and captured source/action choices; the browser only renders text and dispatches fixed actions. The history parser and inherited-gradient source resolver remain VS Code-independent and unit-tested. Reload failures retain prior snapshots. Release observations and limitations live in [MILESTONE_0.2.0.md](MILESTONE_0.2.0.md).
+History and the inherited-metadata inspector use `DocumentPreviewManager` with `out/browser/webview/documentClient.js`. The host supplies bounded records and captured source/action choices; the browser only renders text and dispatches fixed actions. The history parser and inherited-gradient source resolver remain VS Code-independent and unit-tested. Reload failures retain prior snapshots. Release observations and limitations live in [MILESTONE_0.2.0.md](MILESTONE_0.2.0.md).

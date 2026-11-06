@@ -29,12 +29,12 @@ import {
   type ArchiveRef,
 } from '../../core/archiveUri';
 import { memberCrc32, readZipMember, streamZipMember } from '../../sources/zipMember';
-import { ArchiveImageCache } from '../../sources/imageCache';
+import { ArchiveImageCache } from '../../sources/archiveImageCache';
 import { archiveSiblings } from '../../sources/archiveMetadata';
 import { loadSummaryTable } from '../../sources/summaryTables';
 import { loadJsonMetadata } from '../../sources/datasetDescription';
 import { loadGradientPair } from '../../sources/gradientFiles';
-import { readTextSnapshot } from '../../sources/previewText';
+import { readTextSnapshot } from '../../sources/textSnapshotReader';
 import { zipFixture, type ZipFixtureEntry } from '../zipFixture';
 
 const signal = (): AbortSignal => new AbortController().signal;
@@ -431,7 +431,15 @@ void test('MRI cache budgets, unsafe storage, failures and cancellation leave no
     });
     await cache.materialize(a, signal());
     await assert.rejects(cache.materialize(b, signal()), /full/);
-    await cache.clear();
+    const larger = new ArchiveImageCache(cache.root, {
+      bytes: 10000,
+      entries: 2,
+      memberBytes: 100,
+    });
+    await larger.materialize(b, signal());
+    await assert.rejects(cache.materialize(b, signal()), /entry budget exceeded/);
+    assert.equal(await cache.clear(), true);
+    assert.deepEqual(await readdir(cache.root), []);
     const small = new ArchiveImageCache(cache.root, { bytes: 1, entries: 1, memberBytes: 100 });
     await assert.rejects(small.materialize(a, signal()), /budget/);
     assert.deepEqual(await readdir(cache.root), []);

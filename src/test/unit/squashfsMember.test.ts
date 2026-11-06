@@ -7,9 +7,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { archiveResourceUri, entryArchiveUri, parseArchiveUri } from '../../core/archiveUri';
 import { entryKey, isRecognizedBidsEntry } from '../../core/directory';
 import { archiveSiblings } from '../../sources/archiveMetadata';
-import { ArchiveImageCache } from '../../sources/imageCache';
+import { ArchiveImageCache } from '../../sources/archiveImageCache';
 import { LogicalDirectorySource } from '../../sources/logicalDirectory';
-import { readTextSnapshot } from '../../sources/previewText';
+import { readTextSnapshot } from '../../sources/textSnapshotReader';
 import { streamSquashfsMember } from '../../sources/squashfsMember';
 import { squashfsFile } from '../squashfsFixture';
 

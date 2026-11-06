@@ -2,7 +2,7 @@ import { basename, posix } from 'node:path';
 import { archiveResourceUri, parseArchiveUri, resourcePath } from '../core/archiveUri';
 import { indexTar } from './tarIndex';
 import { indexZip } from './zipIndex';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 import { parseJsonMetadata } from '../core/metadata';
 import { parseTable, summaryTableKind } from '../core/tables';
 import type { SummaryTablePreview } from '../core/tableTypes';

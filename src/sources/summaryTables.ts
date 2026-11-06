@@ -6,7 +6,7 @@ import { parseTable, summaryTableKind } from '../core/tables';
 import type { SummaryTablePreview } from '../core/tableTypes';
 import { loadParticipants } from './participants';
 import { loadInheritedMetadata } from './inheritedMetadata';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 
 /** Session/scan/event dictionaries use the same bounded, source-scoped inheritance resolver as images. */
 export async function loadSummaryTable(

@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import type * as vscode from 'vscode';
 
-export async function archiveRendered(
+export async function waitForArchivePreview(
   panel: vscode.WebviewPanel,
   accepts: (message: Record<string, unknown>) => boolean,
 ): Promise<Record<string, unknown>> {

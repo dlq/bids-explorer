@@ -48,3 +48,32 @@ button,
 input {
   margin: 4px;
 }
+input[type='search'] {
+  box-sizing: border-box;
+  width: min(240px, 100%);
+}
+th.source-line {
+  width: 1%;
+  min-width: 0;
+  white-space: nowrap;
+  color: var(--vscode-descriptionForeground);
+  font-weight: normal;
+}
+.column-units {
+  font-weight: normal;
+  white-space: nowrap;
+}
+#dictionary dt {
+  font-weight: 600;
+}
+#dictionary dd {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+#row-paging {
+  margin-bottom: 12px;
+}
+#dictionary-source {
+  max-width: 100%;
+}

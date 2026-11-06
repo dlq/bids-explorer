@@ -1,43 +1,37 @@
-import { streamSquashfsMember } from './squashfsMember';
+import { constants } from 'node:fs';
+import { sameFileRevision } from './fileRevision';
+import { streamArchiveMember } from './archiveMember';
 import { isArchiveUri, parseArchiveUri } from '../core/archiveUri';
-import { streamTarMember } from './tarIndex';
-import { readZipMember } from './zipMember';
 import { lstat, open, type FileHandle } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { TextSnapshot } from '../core/textSnapshot';
 
-export const MAX_PREVIEW_BYTES = 1024 * 1024;
+export const MAX_TEXT_SNAPSHOT_BYTES = 1024 * 1024;
 
 /** Bounded handle reads, no symlink leaves, and revision checks before/after reading. */
-export interface PreviewReadIO {
+export interface TextSnapshotReadIO {
   stat: typeof lstat;
   open: (path: string) => Promise<Pick<FileHandle, 'stat' | 'read' | 'close'>>;
 }
-const nativeIO: PreviewReadIO = { stat: lstat, open: (path) => open(path, 'r') };
+const nativeIO: TextSnapshotReadIO = {
+  stat: lstat,
+  open: (path) => open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK),
+};
 
 export async function readTextSnapshot(
   uri: string,
   signal: AbortSignal,
-  io: PreviewReadIO = nativeIO,
+  io: TextSnapshotReadIO = nativeIO,
 ): Promise<TextSnapshot> {
   signal.throwIfAborted();
   if (isArchiveUri(uri)) {
     const ref = parseArchiveUri(uri);
     const chunks: Buffer[] = [];
-    if (ref.format)
-      await (ref.format === 'tar' ? streamTarMember : streamSquashfsMember)(
-        ref,
-        signal,
-        MAX_PREVIEW_BYTES,
-        (chunk) => {
-          chunks.push(Buffer.from(chunk));
-          return Promise.resolve();
-        },
-        () => Promise.resolve(),
-      );
-    const bytes = ref.format
-      ? Buffer.concat(chunks)
-      : await readZipMember(uri, signal, MAX_PREVIEW_BYTES);
+    await streamArchiveMember(uri, ref, signal, MAX_TEXT_SNAPSHOT_BYTES, (chunk) => {
+      chunks.push(chunk);
+      return Promise.resolve();
+    });
+    const bytes = Buffer.concat(chunks);
     return Object.freeze({
       sourceUri: uri,
       archiveSource: ref,
@@ -50,15 +44,14 @@ export async function readTextSnapshot(
   const before = await io.stat(path);
   if (!before.isFile() || before.isSymbolicLink())
     throw new Error('Text preview reads ordinary files only, not symbolic links or special files.');
-  if (before.size > MAX_PREVIEW_BYTES)
+  if (before.size > MAX_TEXT_SNAPSHOT_BYTES)
     throw new Error('Text preview is limited to 1 MiB per file.');
   let handle: Pick<FileHandle, 'stat' | 'read' | 'close'> | undefined;
   try {
     handle = await io.open(path);
-    const opened = await handle.stat();
-    if (opened.ino !== before.ino || opened.dev !== before.dev)
+    if (!sameFileRevision(before, await handle.stat()))
       throw new Error('Source changed while opening; retry the preview.');
-    const bytes = Buffer.alloc(Math.min(before.size + 1, MAX_PREVIEW_BYTES + 1));
+    const bytes = Buffer.alloc(Math.min(before.size + 1, MAX_TEXT_SNAPSHOT_BYTES + 1));
     let offset = 0;
     while (offset < bytes.length) {
       signal.throwIfAborted();
@@ -70,12 +63,8 @@ export async function readTextSnapshot(
     const current = await io.stat(path);
     if (
       offset !== before.size ||
-      after.size !== before.size ||
-      after.mtimeMs !== before.mtimeMs ||
-      current.ino !== opened.ino ||
-      current.dev !== opened.dev ||
-      current.size !== before.size ||
-      current.mtimeMs !== before.mtimeMs
+      !sameFileRevision(before, after) ||
+      !sameFileRevision(before, current)
     )
       throw new Error('Source changed while reading; retry the preview.');
     signal.throwIfAborted();

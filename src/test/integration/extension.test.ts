@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
-import { DatasetTreeProvider, type EntryElement } from '../../ui/datasetTree';
+import { DatasetTreeProvider, type EntryElement } from '../../ui/datasetTreeProvider';
 
 interface ExplorerApi {
   provider: DatasetTreeProvider;

@@ -12,6 +12,7 @@ import {
 import type { DirectoryEntry } from '../core/directory';
 
 export function openAvailabilityView(
+  extensionUri: vscode.Uri,
   load: (
     controller: AbortController,
     progress: (completed: number, total: number) => void,
@@ -19,12 +20,14 @@ export function openAvailabilityView(
   ) => Promise<AvailabilityIndex>,
   reveal: (participant: DirectoryEntry) => Promise<void>,
 ): vscode.WebviewPanel {
+  const mediaUri = vscode.Uri.joinPath(extensionUri, 'media');
   const panel = vscode.window.createWebviewPanel(
     'bidsExplorer.availability',
     'BIDS Availability',
     vscode.ViewColumn.Active,
-    { enableScripts: true, localResourceRoots: [] },
+    { enableScripts: true, localResourceRoots: [mediaUri] },
   );
+  const styles = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'gradients.css'));
   const nonce = randomBytes(16).toString('hex');
   const escape = (text: string) =>
     text
@@ -123,11 +126,12 @@ export function openAvailabilityView(
       )
       .join('');
     const totalPages = Math.max(1, Math.ceil(matches.length / availabilityPageSize));
-    const pagination = matches.length
-      ? `<p><button data-page="${page - 1}" ${page === 0 ? 'disabled' : ''}>Previous</button>
+    const pagination =
+      totalPages > 1
+        ? `<p><button data-page="${page - 1}" ${page === 0 ? 'disabled' : ''}>Previous</button>
          Page ${page + 1} of ${totalPages}
          <button data-page="${page + 1}" ${page + 1 === totalPages ? 'disabled' : ''}>Next</button></p>`
-      : '<p>No confirmed matches.</p>';
+        : '';
     const viewButtons = (
       [
         ['sessions', 'By session', true],
@@ -141,7 +145,7 @@ export function openAvailabilityView(
       )
       .join(' ');
     panel.webview.html = renderDocument(`${controls}
-<p>Filter the dataset snapshot for participants with data in every required raw session and the derivative output you need.</p>
+<p>Find participants with data in the sessions, modalities or processing pipelines you need.</p>
 ${report.partial ? '<p><strong>Partial coverage.</strong> Some sources or branches could not be fully checked. More participants may match.</p>' : ''}
 ${report.issues?.length ? `<ul>${report.issues.map((issue) => `<li>${escape(issue)}</li>`).join('')}</ul>` : ''}
 <form id="filters">
@@ -169,9 +173,10 @@ ${rows ? `<div class="grid"><table><thead><tr><th scope="col">Participant</th>${
   const renderDocument = (
     content: string,
   ) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
-<style nonce="${nonce}">body{padding:1rem} table{border-collapse:collapse} th,td{padding:.5rem;border:1px solid var(--vscode-panel-border);text-align:left;vertical-align:top;white-space:nowrap} button{color:var(--vscode-textLink-foreground);background:none;border:0;text-decoration:underline;cursor:pointer;font:inherit} .grid{overflow:auto} td div+div{margin-top:.25rem} button[aria-pressed="true"]{font-weight:bold}</style></head>
-<body><h1>Participant × session availability</h1>${content}
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${panel.webview.cspSource} 'nonce-${nonce}';">
+<link rel="stylesheet" href="${styles.toString()}">
+<style nonce="${nonce}">table{border-collapse:collapse} th,td{padding:.5rem;border:1px solid var(--vscode-panel-border);text-align:left;vertical-align:top;white-space:nowrap} input[name="participant"]{width:min(240px, 100%)} input[type="checkbox"]{width:auto} fieldset{border:1px solid var(--vscode-panel-border);margin-block:8px} .grid{overflow:auto} td div+div{margin-top:.25rem} button[data-participant]{color:var(--vscode-textLink-foreground);background:none;text-decoration:underline;padding:0} button[aria-pressed="true"], button[type="submit"]{color:var(--vscode-button-foreground);background:var(--vscode-button-background)}</style></head>
+<body><main><h1>Participant availability</h1>${content}</main>
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
 document.getElementById('filters')?.addEventListener('submit', event => {
@@ -201,7 +206,7 @@ document.addEventListener('click', event => {
 });
 window.addEventListener('message', ({ data }) => {
   const progress = document.getElementById('scan-progress');
-  if (progress) progress.textContent = data.progress;
+  if (${!!active} && data.revision === ${revision} && progress) progress.textContent = data.progress;
 });
 </script></body></html>`;
 
@@ -216,7 +221,7 @@ window.addEventListener('message', ({ data }) => {
         (completed, total) => {
           status = `Indexed ${completed.toLocaleString()} of ${total.toLocaleString()} participants.`;
           if (snapshot) status += ' Showing the previous snapshot.';
-          if (!disposed) void panel.webview.postMessage({ progress: status });
+          if (!disposed) void panel.webview.postMessage({ progress: status, revision });
         },
         retryIncomplete,
       );
@@ -227,7 +232,7 @@ window.addEventListener('message', ({ data }) => {
       if (view !== 'sessions' && !available.length) view = 'sessions';
       if (!available.includes(focus)) focus = available[0] ?? '';
       updateMatches(next);
-      status = 'Snapshot ready.';
+      status = `Snapshot ready. ${next.participants.length.toLocaleString()} participants indexed.`;
     } catch {
       status = controller.signal.aborted ? 'Scan cancelled.' : 'Scan failed. Try refreshing.';
       if (snapshot) status += ' Showing the previous snapshot.';

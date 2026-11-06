@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
-import { DatasetTreeProvider } from '../../ui/datasetTree';
+import { DatasetTreeProvider } from '../../ui/datasetTreeProvider';
 import { GradientPreviewManager, isGradientFile } from '../../ui/gradientPreview';
 
 async function rendered(

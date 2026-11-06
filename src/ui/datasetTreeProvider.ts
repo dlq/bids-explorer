@@ -1,3 +1,4 @@
+import { isNiftiFileName, niftiIcon } from './niftiPreview';
 import {
   isRootParticipant,
   linkedDerivativeDatasets,
@@ -148,6 +149,7 @@ export class DatasetTreeProvider
     }
     const { entry } = element;
     const isDirectory = entry.kind === 'directory';
+    const isNifti = entry.kind === 'file' && isNiftiFileName(entry.name);
     const item = new vscode.TreeItem(
       element.groupLabel ?? entry.name,
       isDirectory
@@ -184,8 +186,7 @@ export class DatasetTreeProvider
     if (entry.kind === 'file' && isParticipantsTable(item.resourceUri))
       item.contextValue = 'participants';
     if (entry.kind === 'file' && isHistoryFile(item.resourceUri)) item.contextValue = 'history';
-    if (entry.archive && entry.kind === 'file' && /\.nii(\.gz)?$/.test(entry.name))
-      item.contextValue = 'archiveImage';
+    if (entry.archive && isNifti) item.contextValue = 'archiveImage';
     item.description = describeEntry(entry);
     item.tooltip = readableTooltip(entry);
     if (isDirectory)
@@ -202,7 +203,7 @@ export class DatasetTreeProvider
         item.description =
           entry.archive.conflict || entry.logical?.conflict
             ? 'Archived file · source conflict'
-            : /\.nii(\.gz)?$/.test(entry.name)
+            : isNifti
               ? `MRI · ${label} source`
               : `Metadata · ${label} source`;
         if (squashfs && entry.logical?.conflict) item.description = entry.archive.containerPath;
@@ -219,11 +220,7 @@ export class DatasetTreeProvider
           '\n\nRead-only archive source. Selected MRI images use a checked private cache; text previews read bounded members.',
       );
     }
-    if (entry.kind === 'file' && /\.nii(\.gz)?$/.test(entry.name))
-      item.iconPath = {
-        light: vscode.Uri.joinPath(this.extensionUri, 'media', 'icons', 'brain-light.svg'),
-        dark: vscode.Uri.joinPath(this.extensionUri, 'media', 'icons', 'brain-dark.svg'),
-      };
+    if (isNifti) item.iconPath = niftiIcon(this.extensionUri);
     if (entry.logical && entry.logical.kind !== 'resource') {
       item.description =
         describeEntry(entry) + (entry.logical.conflict ? ' · source conflict' : '');
@@ -246,7 +243,10 @@ export class DatasetTreeProvider
     if (!element.groupLabel && !entry.archive && this.acceptsDescription(entry)) {
       const metadata = this.descriptions?.request(entry);
       if (metadata?.description) {
-        item.description = `${describeEntry(entry)} · ${metadata.description.text}`;
+        item.description =
+          entry.relativePath === ''
+            ? metadata.description.text
+            : `${describeEntry(entry)} · ${metadata.description.text}`;
         item.tooltip = readableTooltip(entry, metadata.description);
       }
     }
@@ -501,7 +501,7 @@ function readableTooltip(
       ? describeEntry(entry)
       : entry.kind === 'symlink'
         ? 'Symbolic link · not followed'
-        : /\.nii(?:\.gz)?$/.test(entry.name)
+        : isNiftiFileName(entry.name)
           ? 'NIfTI image'
           : entry.name.endsWith('.json')
             ? 'JSON metadata'

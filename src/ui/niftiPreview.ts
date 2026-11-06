@@ -1,17 +1,28 @@
 import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 
-export const progressiveNiftiEditor = 'bidsExplorer.progressiveNifti';
+export const progressiveNiftiViewType = 'bidsExplorer.progressiveNifti';
+
+export function isNiftiFileName(name: string): boolean {
+  return /\.nii(?:\.gz)?$/.test(name);
+}
+
+export function niftiIcon(extension: vscode.Uri): { light: vscode.Uri; dark: vscode.Uri } {
+  return {
+    light: vscode.Uri.joinPath(extension, 'media', 'icons', 'imaging-light.svg'),
+    dark: vscode.Uri.joinPath(extension, 'media', 'icons', 'imaging-dark.svg'),
+  };
+}
 
 export function openProgressiveNifti(
   extension: vscode.Uri,
   source: vscode.Uri,
 ): vscode.WebviewPanel {
   const renderer = vscode.Uri.joinPath(extension, 'node_modules', '@niivue', 'niivue', 'dist');
-  const scripts = vscode.Uri.joinPath(extension, 'out', 'webview');
+  const scripts = vscode.Uri.joinPath(extension, 'out', 'browser');
   const media = vscode.Uri.joinPath(extension, 'media');
   const panel = vscode.window.createWebviewPanel(
-    progressiveNiftiEditor,
+    progressiveNiftiViewType,
     source.path.split('/').pop() ?? 'NIfTI image',
     vscode.ViewColumn.Active,
     {
@@ -20,6 +31,7 @@ export function openProgressiveNifti(
       localResourceRoots: [renderer, scripts, media, vscode.Uri.joinPath(source, '..')],
     },
   );
+  panel.iconPath = niftiIcon(extension);
   const { webview } = panel;
   const resource = (uri: vscode.Uri) =>
     webview.asWebviewUri(uri).toString().replaceAll('&', '&amp;').replaceAll('"', '&quot;');
@@ -39,7 +51,7 @@ export function openProgressiveNifti(
 <label>Frame <input type="range" min="1" value="1" disabled> <output>1</output></label>
 <button type="button">Cancel loading</button></header>
 <main><canvas aria-label="NIfTI image" data-source="${resource(source)}" data-gzip="${source.path.endsWith('.gz')}"></canvas></main>
-<script type="module" nonce="${nonce}" src="${resource(vscode.Uri.joinPath(scripts, 'ui', 'niftiClient.js'))}"></script>
+<script type="module" nonce="${nonce}" src="${resource(vscode.Uri.joinPath(scripts, 'webview', 'niftiClient.js'))}"></script>
 </body></html>`;
   return panel;
 }

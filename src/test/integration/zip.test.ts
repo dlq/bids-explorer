@@ -1,12 +1,12 @@
-import { archiveRendered } from './archiveRendered';
+import { waitForArchivePreview } from './waitForArchivePreview';
 import { niftiFixture } from '../niftiFixture';
 import { entryArchiveUri, parseArchiveUri, archiveResourceUri } from '../../core/archiveUri';
-import { WorkspaceFolderHandoff } from '../../ui/workspaceFolders';
+import { WorkspaceFolderHandoff } from '../../ui/workspaceFolderHandoff';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { ArchiveImageCache } from '../../sources/imageCache';
+import { ArchiveImageCache } from '../../sources/archiveImageCache';
 import * as vscode from 'vscode';
 import { zipFixture } from '../zipFixture';
 
@@ -74,7 +74,7 @@ suite('ZIP-backed dataset tree', () => {
   test('Add Dataset browses ZIP subject/session branches and hands off the selected MRI', async function () {
     this.timeout(15000);
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-zip-navigation-'));
@@ -123,6 +123,9 @@ suite('ZIP-backed dataset tree', () => {
       assert.equal(images.length, 1);
       const imageItem = api.provider.getTreeItem(images[0]);
       assert.equal(imageItem.contextValue, 'archiveImage');
+      const icon = imageItem.iconPath;
+      assert.ok(icon && typeof icon === 'object' && 'dark' in icon);
+      assert.match(icon.dark.path, /imaging-dark\.svg$/);
       assert.match(String(imageItem.description), /MRI/);
       assert.equal(images[0].type, 'entry');
       if (images[0].type !== 'entry') throw new Error('Expected archive member');
@@ -158,14 +161,19 @@ suite('ZIP-backed dataset tree', () => {
       assert.equal(await otherWindow.clear(), false);
       await vscode.commands.executeCommand('workbench.action.closeAllEditors');
       assert.equal(
-        await vscode.commands.executeCommand(
-          'bidsExplorer.openImageWith',
-          images[0],
-          'bidsExplorer.progressiveNifti',
-        ),
+        await vscode.commands.executeCommand('bidsExplorer.openFile', images[0]),
         explicit,
       );
       assert.equal(await otherWindow.clear(), false);
+      const viewerDeadline = Date.now() + 5000;
+      while (
+        !vscode.window.tabGroups.all.some((group) =>
+          group.tabs.some((tab) => tab.input instanceof vscode.TabInputWebview),
+        )
+      ) {
+        assert.ok(Date.now() < viewerDeadline, 'Default archive opening should show a webview');
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
       assert.deepEqual(await readFile(extractedPath), niftiFixture());
       assert.deepEqual(await readFile(zip), bytes);
       await vscode.commands.executeCommand('workbench.action.closeAllEditors');
@@ -191,7 +199,7 @@ suite('Declared descriptorless collections', () => {
   test('workspace declarations populate and remove an automatic root without a dataset marker', async function () {
     this.timeout(15000);
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-declared-collection-'));
@@ -257,7 +265,7 @@ suite('Archive metadata viewing', () => {
   test('tree JSON, table and gradient entry points render from original archive URIs; raw text is read-only', async function () {
     this.timeout(30000);
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-archive-previews-'));
@@ -297,14 +305,20 @@ suite('Archive metadata viewing', () => {
         jsonEntry,
       );
       panels.push(jsonPanel);
-      const jsonState = await archiveRendered(jsonPanel, (message) => message.fieldCount === 2);
+      const jsonState = await waitForArchivePreview(
+        jsonPanel,
+        (message) => message.fieldCount === 2,
+      );
       assert.ok(String(jsonState.sourceUri).startsWith('bids-zip:'));
       const arrayPanel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
         'bidsExplorer.openFile',
         selected('structure.json'),
       );
       panels.push(arrayPanel);
-      const arrayState = await archiveRendered(arrayPanel, (message) => message.fieldCount === 2);
+      const arrayState = await waitForArchivePreview(
+        arrayPanel,
+        (message) => message.fieldCount === 2,
+      );
       assert.equal(arrayState.firstKey, '0');
       assert.equal(arrayState.title, 'structure.json');
       jsonPanel.reveal();
@@ -314,7 +328,7 @@ suite('Archive metadata viewing', () => {
         '</body>',
         `<script nonce="${nonce}">window.addEventListener('message',event=>{if(event.data?.type==='testControl')document.getElementById(event.data.id)?.click();});</script></body>`,
       );
-      await archiveRendered(jsonPanel, (message) => message.fieldCount === 2);
+      await waitForArchivePreview(jsonPanel, (message) => message.fieldCount === 2);
       await jsonPanel.webview.postMessage({ type: 'testControl', id: 'raw' });
       const deadline = Date.now() + 10000;
       while (vscode.window.activeTextEditor?.document.uri.scheme !== 'bids-zip') {
@@ -335,7 +349,7 @@ suite('Archive metadata viewing', () => {
         selected('events.tsv'),
       );
       panels.push(tablePanel);
-      const tableState = await archiveRendered(
+      const tableState = await waitForArchivePreview(
         tablePanel,
         (message) => message.dictionaryStatus === 'loaded',
       );
@@ -345,7 +359,7 @@ suite('Archive metadata viewing', () => {
         selected('dwi.bval'),
       );
       panels.push(gradients);
-      await archiveRendered(gradients, (message) => message.volumeCount === 2);
+      await waitForArchivePreview(gradients, (message) => message.volumeCount === 2);
       assert.equal(
         await vscode.commands.executeCommand('bidsExplorer.clearImageCache'),
         false,

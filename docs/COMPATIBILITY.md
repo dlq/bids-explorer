@@ -1,0 +1,64 @@
+# Compatibility and stabilization evidence
+
+The November 6, 2026 pass used a fresh source export of `v0.8.0` (`0b98c8b`), a locked dependency install, and one newly built VSIX. The test cases used synthetic BIDS-like data. These results describe the configurations exercised in this pass.
+
+| Source             | macOS arm64, VS Code 1.96.0         | macOS arm64, VS Code 1.145.2        | Rorqual Linux x64, Remote SSH 1.145.2 |
+| ------------------ | ----------------------------------- | ----------------------------------- | ------------------------------------- |
+| Ordinary directory | Loose `.nii` and `.nii.gz` rendered | Loose `.nii` and `.nii.gz` rendered | Both NIfTI suffixes rendered          |
+| ZIP                | Both NIfTI suffixes rendered        | Both NIfTI suffixes rendered        | Both NIfTI suffixes rendered          |
+| POSIX ustar        | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered           |
+| Gzip POSIX ustar   | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered           |
+| SquashFS 4.0       | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered         | Archived `.nii.gz` rendered           |
+
+Both local profiles installed the VSIX in isolated extension directories. The viewer checks observed the first-frame status and both loaded frames. For archive cases, the harness also compared extracted bytes with the fixture. Rorqual host checks used the compiled extension code from the checksum-matched VSIX in two independent SSH sessions. They compared decoded fixture bytes and exercised ZIP replacement and refresh.
+
+Use desktop VS Code 1.96 or newer in a trusted, non-virtual workspace with ordinary file access on the workspace host. Remote SSH uses the remote workspace host's filesystem. Archive readers ship with the extension. Python, system archive tools, and the standalone NiiVue extension are optional for these workflows. Windows, Linux desktop clients, and other SSH hosts were outside this pass.
+
+| Source            | Supported scope                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directory         | Ordinary directories and regular files through workspace-host `file:` URIs                                                                      |
+| ZIP               | Unencrypted stored or Deflate members within the limits in [ZIP.md](ZIP.md)                                                                     |
+| Tar               | POSIX ustar headers in `.tar`, `.tar.gz`, or `.tgz`. Inventory and member scans are sequential. See [TAR.md](TAR.md).                           |
+| SquashFS          | SquashFS 4.0 with uncompressed or gzip metadata and data blocks. Unsupported shards can yield partial coverage. See [SQUASHFS.md](SQUASHFS.md). |
+| Progressive NIfTI | `.nii` and `.nii.gz`, up to 1 GiB decoded. The first-frame budget is 128 MiB. Archive extraction is limited to 512 MiB per selected member.     |
+
+## Scale and recovery
+
+A synthetic directory held 5,000 participants with one session and an anatomical folder each. The host probe measured the immediate logical dataset listing, a repeat from the in-memory snapshot, and one participant expansion. It added a participant, refreshed, cancelled the next listing, verified the old 5,000-row snapshot remained visible, and retried successfully with 5,001 rows.
+
+| Host              | Initial listing | Cached listing | Participant expansion | Refresh retry |
+| ----------------- | --------------: | -------------: | --------------------: | ------------: |
+| macOS arm64       |           45 ms |          <1 ms |                  1 ms |         33 ms |
+| Rorqual Linux x64 |           66 ms |          <1 ms |                  1 ms |         52 ms |
+
+These are single host-side runs with uncontrolled filesystem caches. The numbers exclude VS Code rendering and SSH transport. The Rorqual probe used VS Code's server Node binary with reduced thread pools.
+
+In two separate Rorqual SSH sessions, the baseline read all five sources. After the ZIP changed, the old member reference was rejected and a refreshed listing returned the replacement member. The Remote SSH viewer passed all seven cases before and after a deliberate disconnect. The server logged a graceful disconnect. Reopening the same workspace in a separate disposable VS Code profile started a fresh extension host and returned identical results. Earlier startup attempts hit the host's 512-task quota. Stopping four extension hosts from completed synthetic tests freed capacity. Persistent ZIP and tar inventory reuse has separate reconnect evidence. [0.6.0 Remote SSH validation](MILESTONE_0.6.0.md)
+
+## Build and security
+
+The clean snapshot passed the 157 unit tests, packaging and Semgrep. Both VS Code versions passed 43 integration tests, with one opt-in test pending in each run. The dependency audit reported zero runtime findings and no high or critical findings overall. The full audit reported 13 moderate and one low finding in development tooling.
+
+## 0.9.0 candidate pass
+
+On November 6, 2026, a fresh copy of the current source changes was built after a locked dependency install. The candidate retained manifest version `0.8.0` for this pre-release check. The VSIX SHA-256 was `fe2d03de3a30e8fb295a2f2a09a0f617e0decf7047d967ebbc4276ac17736508`, verified on macOS and Rorqual.
+
+| Candidate check           | macOS arm64, VS Code 1.96.0                           | macOS arm64, VS Code 1.145.2 | Rorqual Linux x64, Remote SSH 1.145.2               |
+| ------------------------- | ----------------------------------------------------- | ---------------------------- | --------------------------------------------------- |
+| Default NIfTI viewer      | 7 synthetic cases passed                              | 7 synthetic cases passed     | 7 synthetic cases passed before and after reconnect |
+| JSON metadata preview     | Directory, ZIP, ustar, gzip ustar and SquashFS passed | Same five formats passed     | Same five formats passed before and after reconnect |
+| Full extension-host suite | 44 passed, 1 opt-in pending                           | 44 passed, 1 opt-in pending  | Synthetic smoke tests above                         |
+
+The local runs installed the VSIX into separate test profiles. The remote runs loaded the checksum-matched VSIX contents in a synthetic Remote SSH workspace. The first successful run closed the remote connection. Reopening the workspace ran the same checks in a different remote extension-host process. The NIfTI checks confirmed the first-frame preview and both loaded frames. Archived images were also checked against the fixture bytes. JSON checks waited for the rendered preview and confirmed the recorded fields.
+
+The 5,000-participant synthetic host probe listed the dataset in 52 ms locally and 64 ms on Rorqual. Repeat listings took under 1 ms. Cancellation retained the prior listing, and refresh returned the new participant. In a separate Rorqual session, an old ZIP reference was rejected after the archive was replaced, and refreshing exposed the new member.
+
+The published UKB collection contained 12 gzip SquashFS images at the time of this check. The candidate indexed 62,051 participants in 112.8 seconds. A separate SSH invocation loaded the persisted index in 359 ms without rebuilding. Both invocations returned the same first page after paging forward and back. These measurements are host-side and exclude VS Code rendering and transport.
+
+A local synthetic participant table was visually checked in Dark Modern and Dark High Contrast. Keyboard focus reached the column disclosure controls and row filter. Filtering reduced two rows to the expected one. The keyboard walkthrough also focused the logical tree, opened the dataset description, found a field by its readable label, opened Participant Availability from the dataset context menu and applied a participant filter. The completed availability view showed the correct count, with a minor singular-label issue. Full screen-reader testing and theme coverage across the other previews remain open.
+
+The clean source passed formatting, type checking, lint, coverage and all 157 unit tests. The Semgrep rule tests and source scan passed. The dependency audit reported no runtime findings and 13 moderate and one low finding in development tooling, with no high or critical findings.
+
+## 0.9.0 release artifact
+
+The local release VSIX is `bids-explorer-0.9.0.vsix`, SHA-256 `44f81550f8f7fe3fd2c4d7c3763fe130de7a428587bfd8eaa3c34bc021f3bcaa`. Its 390 packaged runtime files matched the candidate byte for byte. The installed release passed the seven NIfTI cases and all five metadata source cases on VS Code 1.96.0 and 1.145.2. The release source passed 157 unit tests and 44 extension-host tests on each VS Code version, with one opt-in test pending on each. Semgrep passed. The dependency audit found no runtime, high or critical findings. Rorqual verified the release checksum and reran the synthetic host read and stale ZIP recovery checks successfully. The Remote SSH rendering and reconnect evidence above used the runtime-identical candidate.

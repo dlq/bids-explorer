@@ -1,3 +1,4 @@
+import { withCancellation } from './cancellation';
 import { assertArchivePath } from '../core/archive';
 import * as vscode from 'vscode';
 import { readSquashfsRoot, type SquashfsPageRead } from '../sources/squashfsDirectory';
@@ -14,6 +15,21 @@ export class ArchiveInspector implements vscode.Disposable {
   dispose(): void {
     this.cancelPending();
   }
+  private read<T>(title: string, action: (signal: AbortSignal) => Promise<T>): Thenable<T> {
+    return vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title, cancellable: true },
+      async (_, token) => {
+        const controller = new AbortController();
+        this.pending.add(controller);
+        try {
+          return await withCancellation(token, controller, action);
+        } finally {
+          this.pending.delete(controller);
+        }
+      },
+    );
+  }
+
   async browseSquashfs(supplied?: vscode.Uri): Promise<void> {
     const uri =
       supplied ??
@@ -39,25 +55,7 @@ export class ArchiveInspector implements vscode.Disposable {
     let read = directory.read;
     try {
       for (;;) {
-        const page = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: 'BIDS Explorer: Reading SquashFS directory page',
-            cancellable: true,
-          },
-          async (_, token) => {
-            const controller = new AbortController();
-            this.pending.add(controller);
-            const listener = token.onCancellationRequested(() => controller.abort());
-            try {
-              if (token.isCancellationRequested) controller.abort();
-              return await read(controller.signal);
-            } finally {
-              listener.dispose();
-              this.pending.delete(controller);
-            }
-          },
-        );
+        const page = await this.read('BIDS Explorer: Reading SquashFS directory page', read);
         const items: (vscode.QuickPickItem & { action: () => void })[] = [];
         if (directory.parent)
           items.push({
@@ -150,31 +148,14 @@ export class ArchiveInspector implements vscode.Disposable {
       return undefined;
     }
     try {
-      const index = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: zip
-            ? 'BIDS Explorer: Indexing ZIP central directory'
-            : squashfs
-              ? 'BIDS Explorer: Reading SquashFS superblock'
-              : 'BIDS Explorer: Scanning tar sequentially',
-          cancellable: true,
-        },
-        async (_, token) => {
-          const controller = new AbortController();
-          this.pending.add(controller);
-          const listener = token.onCancellationRequested(() => controller.abort());
-          try {
-            if (token.isCancellationRequested) controller.abort();
-            return await (zip ? indexZip : squashfs ? inspectSquashfs : indexTar)(
-              uri.toString(),
-              controller.signal,
-            );
-          } finally {
-            listener.dispose();
-            this.pending.delete(controller);
-          }
-        },
+      const index = await this.read(
+        zip
+          ? 'BIDS Explorer: Indexing ZIP central directory'
+          : squashfs
+            ? 'BIDS Explorer: Reading SquashFS superblock'
+            : 'BIDS Explorer: Scanning tar sequentially',
+        async (signal) =>
+          (zip ? indexZip : squashfs ? inspectSquashfs : indexTar)(uri.toString(), signal),
       );
       const document = await vscode.workspace.openTextDocument({
         language: 'json',

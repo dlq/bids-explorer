@@ -18,6 +18,10 @@ This is a separate project from the native SwiftUI/Metal viewer. BIDS Explorer p
 
 Dataset exploration is read-only by default. The initial implementation must not rename, move, restructure, rewrite or automatically validate/fix datasets. Explicit validation and rationalization workflows are later, separate work in PLANS.md.
 
+## Intended audience
+
+BIDS Explorer is for neuroimaging researchers and staff who know concepts such as participants, sessions, modalities, and derivatives. They may have little experience with programming, JSON, the terminal, or VS Code extension development. Lead with study context, recorded values, units, and what the user can do next. Keep exact BIDS names and original files accessible, and put technical paths and parsing details under source information. Distinguish what the dataset records, what the BIDS specification defines, and what the explorer could check.
+
 ## Navigation and dataset context
 
 - Automatically recognize BIDS workspace roots by the presence of an ordinary root-level `dataset_description.json`; no recursive discovery or conformance validation. Manual registration remains available for external/noncanonical directories; explicit `bidsExplorer.collectionRoots` declarations also populate descriptorless workspace collections without filename-based membership guessing.
@@ -57,4 +61,4 @@ Keep public sample data and large caches in their existing locations until a con
 
 ## Version and release direction
 
-The current manifest is `0.8.0`, released locally as `v0.8.0`. It has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
+The current manifest is `0.9.0`, released locally as `v0.9.0`. It has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.

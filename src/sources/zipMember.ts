@@ -1,3 +1,4 @@
+import { sameFileRevision } from './fileRevision';
 import { constants } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -58,8 +59,7 @@ export async function streamZipMember(
   const handle = await io.open(path);
   let result: MemberReadInfo;
   try {
-    const opened = await handle.stat();
-    if (!opened.isFile() || opened.ino !== before.ino || opened.dev !== before.dev)
+    if (!sameFileRevision(before, await handle.stat()))
       throw new Error('Archive changed while opening.');
     const zip = await fromFdPromise(handle.fd, {
       autoClose: false,
@@ -137,15 +137,7 @@ export async function streamZipMember(
     }
     const after = await handle.stat(),
       current = await io.stat(path);
-    if (
-      after.size !== before.size ||
-      after.mtimeMs !== before.mtimeMs ||
-      after.ctimeMs !== before.ctimeMs ||
-      current.ino !== before.ino ||
-      current.dev !== before.dev ||
-      current.size !== before.size ||
-      current.mtimeMs !== before.mtimeMs
-    )
+    if (!sameFileRevision(before, after) || !sameFileRevision(before, current))
       throw new Error('Archive changed during member reading.');
     signal.throwIfAborted();
     result = info;

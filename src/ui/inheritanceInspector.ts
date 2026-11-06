@@ -50,7 +50,7 @@ export class InheritanceInspector implements vscode.Disposable {
             title: 'Metadata and related files',
             subtitle: resourceLabel(entry.archive ? entryArchiveUri(entry) : entry.uri),
             notice:
-              'Read-only metadata snapshot. No image bytes read, volume/orientation checks or BIDS validation. Values are shortened after 16,000 characters; report values after 4,096. Sources are available as original text. Reload explicitly after external changes.',
+              'Values that apply to the selected file, including metadata inherited from higher in the dataset. See the source under each field. Incomplete or conflicting sources can leave fields unresolved.',
             records: [
               {
                 title: 'Resolution and coverage',

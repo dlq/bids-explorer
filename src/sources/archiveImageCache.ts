@@ -1,12 +1,10 @@
-import { streamSquashfsMember } from './squashfsMember';
+import { streamArchiveMember } from './archiveMember';
 import { mkdir, lstat, opendir, open, writeFile, rename, rm, chmod } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { hostname } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArchiveUri } from '../core/archiveUri';
-import { streamTarMember } from './tarIndex';
-import { streamZipMember } from './zipMember';
 
 export interface ImageCacheLimits {
   readonly bytes: number;
@@ -95,7 +93,7 @@ export class ArchiveImageCache {
       throw error;
     }
   }
-  private async inventory(): Promise<{ bytes: number; entries: number }> {
+  private async inventory(enforceEntryLimit: boolean): Promise<{ bytes: number; entries: number }> {
     await mkdir(this.root, { recursive: true, mode: 0o700 });
     const rootStat = await lstat(this.root);
     if (!rootStat.isDirectory() || rootStat.isSymbolicLink())
@@ -115,7 +113,8 @@ export class ArchiveImageCache {
         await rm(join(this.root, dir.name), { recursive: true, force: true });
         continue;
       }
-      if (++entries > this.limits.entries)
+      entries++;
+      if (enforceEntryLimit && entries > this.limits.entries)
         throw new Error(
           'Image cache entry budget exceeded. Close editor tabs and clear the extracted image cache.',
         );
@@ -160,7 +159,7 @@ export class ArchiveImageCache {
         }
         this.completed.delete(uri);
       }
-      const inventory = await this.inventory();
+      const inventory = await this.inventory(true);
       if (inventory.entries >= this.limits.entries)
         throw new Error(
           'Image cache is full. Close editor tabs and clear the extracted image cache.',
@@ -197,11 +196,7 @@ export class ArchiveImageCache {
               );
             return Promise.resolve();
           };
-          if (ref.format === 'tar')
-            await streamTarMember(ref, signal, this.limits.memberBytes, write, start);
-          else if (ref.format === 'squashfs')
-            await streamSquashfsMember(ref, signal, this.limits.memberBytes, write, start);
-          else await streamZipMember(uri, signal, this.limits.memberBytes, write, start);
+          await streamArchiveMember(uri, ref, signal, this.limits.memberBytes, write, start);
         } finally {
           await handle.close();
         }
@@ -226,7 +221,7 @@ export class ArchiveImageCache {
       const activity = await this.markActivity('clear');
       try {
         if (await activity.blocked()) return false;
-        await this.inventory();
+        await this.inventory(false);
         for await (const entry of await opendir(this.root))
           await rm(join(this.root, entry.name), { recursive: true, force: true });
         this.completed.clear();

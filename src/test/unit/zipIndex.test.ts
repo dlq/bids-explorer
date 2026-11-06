@@ -187,6 +187,20 @@ void test('ZIP indexing cancels before IO and between entries, closes handles an
       },
     };
     await assert.rejects(indexZip(uri, signal(), undefined, changed), /changed while indexing/);
+    await writeFile(path, bytes);
+    stats = 0;
+    const sameSizeRewrite: ZipIndexIO = {
+      open: (p) => open(p, 'r'),
+      stat: async (p) => {
+        const stat = await lstat(p);
+        if (++stats === 2) stat.ctimeMs++;
+        return stat;
+      },
+    };
+    await assert.rejects(
+      indexZip(uri, signal(), undefined, sameSizeRewrite),
+      /changed while indexing/,
+    );
     // Abortion immediately after opening is checked before parsing and still closes the handle.
     const early = new AbortController();
     await assert.rejects(

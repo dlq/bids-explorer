@@ -1,36 +1,34 @@
-import { linkedDerivativeDatasets } from './core/participantData';
-import { AvailabilityCache } from './sources/availabilityCache';
-import { datasetAvailability } from './core/availability';
-import { openAvailabilityView } from './ui/availabilityView';
-import { ArchiveInventoryCache } from './sources/archiveInventoryCache';
-import { ZipDirectorySource } from './sources/zipDirectory';
-import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
-import { entryArchiveUri, resourcePath } from './core/archiveUri';
-import { ArchiveImageCache } from './sources/imageCache';
-import { readTextSnapshot } from './sources/previewText';
-import { loadLogicalInheritance } from './sources/logicalInheritance';
-import { LogicalDirectorySource, savedArchivePlacements } from './sources/logicalDirectory';
-import { ArchiveInspector } from './ui/archiveInspector';
 import * as vscode from 'vscode';
-import { WorkspaceFolderHandoff } from './ui/workspaceFolders';
-import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
-import { descriptionPlan, type DescriptionOptions } from './core/treeDescriptions';
-import { loadTreeDescription } from './sources/treeDescriptions';
-import { TablePreviewManager, isSummaryTable } from './ui/tablePreview';
-import { InheritanceInspector } from './ui/inheritanceInspector';
-import { interpretEntry } from './core/entities';
+import { entryArchiveUri, resourcePath } from './core/archiveUri';
+import { datasetAvailability } from './core/availability';
 import { DatasetBrowser } from './core/browser';
+import { describeEntry, folderEntities, type DirectoryEntry } from './core/directory';
+import { interpretEntry } from './core/entities';
+import { linkedDerivativeDatasets } from './core/participantData';
 import { DatasetRegistrations } from './core/registrations';
+import { descriptionPlan, type DescriptionOptions } from './core/treeDescriptions';
 import { WorkspaceDiscovery, isDeclaredCollection } from './core/workspaceDiscovery';
-import { describeEntry, folderEntities } from './core/directory';
+import { ArchiveImageCache } from './sources/archiveImageCache';
+import { ArchiveInventoryCache } from './sources/archiveInventoryCache';
+import { AvailabilityCache } from './sources/availabilityCache';
 import { directoryRoot, recognizeLocalDataset } from './sources/localDirectory';
-import { DatasetTreeProvider, type TreeElement } from './ui/datasetTree';
-
+import { LogicalDirectorySource, savedArchivePlacements } from './sources/logicalDirectory';
+import { loadLogicalInheritance } from './sources/logicalInheritance';
+import { readTextSnapshot } from './sources/textSnapshotReader';
+import { loadTreeDescription } from './sources/treeDescriptionLoader';
+import { ZipDirectorySource } from './sources/zipDirectory';
+import { ArchiveInspector } from './ui/archiveInspector';
+import { openAvailabilityView } from './ui/availabilityView';
+import { withCancellation } from './ui/cancellation';
+import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
+import { DatasetTreeProvider, type TreeElement } from './ui/datasetTreeProvider';
 import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
-
+import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
+import { InheritanceInspector } from './ui/inheritanceInspector';
 import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
-
-import { openProgressiveNifti, progressiveNiftiEditor } from './ui/niftiPreview';
+import { isNiftiFileName, openProgressiveNifti, progressiveNiftiViewType } from './ui/niftiPreview';
+import { TablePreviewManager, isSummaryTable } from './ui/tablePreview';
+import { WorkspaceFolderHandoff } from './ui/workspaceFolderHandoff';
 
 const registrationsKey = 'bidsExplorer.datasets.v1';
 
@@ -44,6 +42,14 @@ export function activate(context: vscode.ExtensionContext): {
       .fsPath,
   );
   const archiveWork = new Set<AbortController>();
+  const trackArchiveWork = async <T>(controller: AbortController, read: () => PromiseLike<T>) => {
+    archiveWork.add(controller);
+    try {
+      return await read();
+    } finally {
+      archiveWork.delete(controller);
+    }
+  };
   context.subscriptions.push({
     dispose: () => {
       for (const controller of archiveWork) controller.abort();
@@ -52,22 +58,20 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(
     ...['bids-zip', 'bids-tar', 'bids-squashfs'].map((scheme) =>
       vscode.workspace.registerTextDocumentContentProvider(scheme, {
-        provideTextDocumentContent: async (uri, token) => {
+        provideTextDocumentContent: (uri, token) => {
           const controller = new AbortController();
-          const listener = token.onCancellationRequested(() => controller.abort());
-          archiveWork.add(controller);
-          try {
-            if (token.isCancellationRequested) controller.abort();
-            return (await readTextSnapshot(uri.toString(), controller.signal)).text;
-          } finally {
-            listener.dispose();
-            archiveWork.delete(controller);
-          }
+          return trackArchiveWork(controller, () =>
+            withCancellation(
+              token,
+              controller,
+              async (signal) => (await readTextSnapshot(uri.toString(), signal)).text,
+            ),
+          );
         },
       }),
     ),
   );
-  const fileUri = (entry: import('./core/directory').DirectoryEntry): vscode.Uri =>
+  const entryUri = (entry: DirectoryEntry): vscode.Uri =>
     vscode.Uri.parse(entry.archive ? entryArchiveUri(entry) : entry.uri);
   const archiveInspector = new ArchiveInspector();
   context.subscriptions.push(archiveInspector);
@@ -100,7 +104,7 @@ export function activate(context: vscode.ExtensionContext): {
     loadLogicalInheritance(source, entry, signal),
   );
   context.subscriptions.push(inheritance);
-  const preview = async (uri: vscode.Uri): Promise<vscode.WebviewPanel | undefined> => {
+  const previewGradients = async (uri: vscode.Uri): Promise<vscode.WebviewPanel | undefined> => {
     try {
       return await gradients.open(uri);
     } catch (error) {
@@ -111,9 +115,7 @@ export function activate(context: vscode.ExtensionContext): {
     }
   };
   const browser = new DatasetBrowser(source);
-  const descriptionOptions = (
-    entry: import('./core/directory').DirectoryEntry,
-  ): DescriptionOptions => {
+  const descriptionOptions = (entry: DirectoryEntry): DescriptionOptions => {
     const settings = vscode.workspace.getConfiguration(
       'bidsExplorer',
       vscode.Uri.parse(entry.datasetUri),
@@ -127,7 +129,7 @@ export function activate(context: vscode.ExtensionContext): {
       sessionColumn: column('sessionLabelColumn'),
     };
   };
-  const descriptionEligible = (entry: import('./core/directory').DirectoryEntry): boolean =>
+  const descriptionEligible = (entry: DirectoryEntry): boolean =>
     !entry.archive &&
     (!entry.logical ||
       (entry.logical.sources.length === 1 &&
@@ -193,14 +195,14 @@ export function activate(context: vscode.ExtensionContext): {
   const command = (name: string, action: (arg?: TreeElement) => unknown): vscode.Disposable =>
     vscode.commands.registerCommand(name, action);
 
-  let imageOpens = 0;
-  let imagePanels = 0;
-  let imageUse: Promise<() => Promise<void>> | undefined;
+  let pendingArchiveImageOpens = 0;
+  let openArchiveImagePanels = 0;
+  let imageCacheLease: Promise<() => Promise<void>> | undefined;
   const hasTabs = () => vscode.window.tabGroups.all.some((group) => group.tabs.length);
   const releaseUnusedImages = async () => {
-    if (imageOpens || imagePanels || hasTabs() || !imageUse) return;
-    const lease = imageUse;
-    imageUse = undefined;
+    if (pendingArchiveImageOpens || openArchiveImagePanels || hasTabs() || !imageCacheLease) return;
+    const lease = imageCacheLease;
+    imageCacheLease = undefined;
     try {
       await (
         await lease
@@ -213,10 +215,10 @@ export function activate(context: vscode.ExtensionContext): {
     vscode.window.tabGroups.onDidChangeTabs(() => void releaseUnusedImages()),
   );
 
-  const openImage = async (entry: import('./core/directory').DirectoryEntry, editor?: string) => {
-    const uri = fileUri(entry);
+  const openImage = async (entry: DirectoryEntry, editor = progressiveNiftiViewType) => {
+    const uri = entryUri(entry);
     const open = async (target: vscode.Uri) => {
-      if (editor === progressiveNiftiEditor)
+      if (editor === progressiveNiftiViewType)
         return openProgressiveNifti(context.extensionUri, target);
       if (editor) await vscode.commands.executeCommand('vscode.openWith', target, editor);
       else await vscode.commands.executeCommand('vscode.open', target);
@@ -224,13 +226,13 @@ export function activate(context: vscode.ExtensionContext): {
     if (entry.archive) {
       const controller = new AbortController();
       archiveWork.add(controller);
-      imageOpens++;
+      pendingArchiveImageOpens++;
       try {
-        imageUse ??= imageCache.retain().catch((error: unknown) => {
-          imageUse = undefined;
+        imageCacheLease ??= imageCache.retain().catch((error: unknown) => {
+          imageCacheLease = undefined;
           throw error;
         });
-        await imageUse;
+        await imageCacheLease;
         const extracted = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
@@ -240,33 +242,41 @@ export function activate(context: vscode.ExtensionContext): {
                 : 'BIDS Explorer: Preparing selected MRI image',
             cancellable: true,
           },
-          async (_, token) => {
-            const listener = token.onCancellationRequested(() => controller.abort());
-            try {
-              if (token.isCancellationRequested) controller.abort();
-              return await imageCache.materialize(uri.toString(), controller.signal);
-            } finally {
-              listener.dispose();
-            }
-          },
+          (_, token) =>
+            withCancellation(token, controller, (signal) =>
+              imageCache.materialize(uri.toString(), signal),
+            ),
         );
         controller.signal.throwIfAborted();
         const panel = await open(vscode.Uri.parse(extracted));
         if (panel) {
-          imagePanels++;
+          openArchiveImagePanels++;
           panel.onDidDispose(() => {
-            imagePanels--;
+            openArchiveImagePanels--;
             void releaseUnusedImages();
           });
         }
         return extracted;
       } finally {
         archiveWork.delete(controller);
-        imageOpens--;
+        pendingArchiveImageOpens--;
         await releaseUnusedImages();
       }
     }
     return await open(uri);
+  };
+  const previewOrOpenText = async (
+    uri: vscode.Uri,
+    load: () => Promise<vscode.WebviewPanel>,
+    warning: string,
+  ) => {
+    try {
+      return await load();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      void vscode.window.showWarningMessage(warning + ' ' + String(error));
+      await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
+    }
   };
   const reportOpenError = (error: unknown) => {
     if (error instanceof Error && error.name === 'AbortError') return;
@@ -338,9 +348,9 @@ export function activate(context: vscode.ExtensionContext): {
         .find((dataset) => dataset.datasetUri === element.entry.datasetUri);
       if (!root) return;
       return openAvailabilityView(
-        async (controller, progress, retryIncomplete) => {
-          archiveWork.add(controller);
-          try {
+        context.extensionUri,
+        (controller, progress, retryIncomplete) =>
+          trackArchiveWork(controller, async () => {
             if (!browser.datasets().includes(root)) throw new Error('Dataset was removed');
             const links = linkedDerivativeDatasets(root, browser.datasets(), derivativeLinks());
             const scan = () =>
@@ -360,10 +370,7 @@ export function activate(context: vscode.ExtensionContext): {
               retryIncomplete,
               links.roots,
             );
-          } finally {
-            archiveWork.delete(controller);
-          }
-        },
+          }),
         async (participant) => {
           const current = browser
             .snapshot(root)
@@ -415,13 +422,13 @@ export function activate(context: vscode.ExtensionContext): {
         const uri =
           target ??
           (element?.type === 'entry' && element.entry.kind === 'file'
-            ? fileUri(element.entry)
+            ? entryUri(element.entry)
             : vscode.window.activeTextEditor?.document.uri);
         if (!uri || !isGradientFile(uri)) {
           void vscode.window.showInformationMessage('Select a .bval or .bvec file to preview.');
           return undefined;
         }
-        return preview(uri);
+        return previewGradients(uri);
       },
     ),
     vscode.commands.registerCommand(
@@ -435,7 +442,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isJsonMetadata(active)
               ? active
               : element?.type === 'entry' && element.entry.kind === 'file'
-                ? fileUri(element.entry)
+                ? entryUri(element.entry)
                 : vscode.window.activeTextEditor?.document.uri;
         if (!uri || !isJsonMetadata(uri)) {
           void vscode.window.showInformationMessage('Select a JSON metadata file to preview.');
@@ -462,7 +469,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isSummaryTable(active)
               ? active
               : element?.type === 'entry' && element.entry.kind === 'file'
-                ? fileUri(element.entry)
+                ? entryUri(element.entry)
                 : active;
         if (!uri || !isSummaryTable(uri)) {
           void vscode.window.showInformationMessage(
@@ -500,7 +507,7 @@ export function activate(context: vscode.ExtensionContext): {
             : active && isHistoryFile(active)
               ? active
               : element?.type === 'entry'
-                ? fileUri(element.entry)
+                ? entryUri(element.entry)
                 : active;
         if (!uri || !isHistoryFile(uri)) {
           void vscode.window.showInformationMessage('Select a CHANGES file to preview.');
@@ -546,74 +553,43 @@ export function activate(context: vscode.ExtensionContext): {
       try {
         if (metadataVersions && name === 'dataset_description.json') {
           const controller = new AbortController();
-          archiveWork.add(controller);
-          try {
-            return await vscode.window.withProgress(
+          return await trackArchiveWork(controller, () =>
+            vscode.window.withProgress(
               {
                 location: vscode.ProgressLocation.Notification,
                 title: 'BIDS Explorer: Comparing dataset descriptions',
                 cancellable: true,
               },
-              async (_, token) => {
-                const cancel = token.onCancellationRequested(() => controller.abort());
-                try {
-                  if (token.isCancellationRequested) controller.abort();
-                  return await openDatasetDescriptionComparison(
-                    metadataVersions,
-                    context.extensionUri,
-                    controller.signal,
-                  );
-                } finally {
-                  cancel.dispose();
-                }
-              },
-            );
-          } finally {
-            archiveWork.delete(controller);
-          }
+              (_, token) =>
+                withCancellation(token, controller, (signal) =>
+                  openDatasetDescriptionComparison(metadataVersions, context.extensionUri, signal),
+                ),
+            ),
+          );
         }
         if (element.entry.kind !== 'file') return;
         await source.revision(element.entry);
-        const uri = fileUri(element.entry);
-        if (/\.nii(\.gz)?$/.test(resourcePath(uri.toString())))
-          return await openImage(element.entry);
-        if (isGradientFile(uri)) return preview(uri);
-        if (isHistoryFile(uri)) {
-          try {
-            return await history.open(uri);
-          } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') return undefined;
-            void vscode.window.showWarningMessage(
-              `Could not preview history; opening the original text. ${String(error)}`,
-            );
-            await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
-            return undefined;
-          }
-        }
-        if (isSummaryTable(uri)) {
-          try {
-            return await tables.open(uri, element.entry.datasetUri);
-          } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') return undefined;
-            void vscode.window.showWarningMessage(
-              `Could not preview the table; opening the original TSV instead. ${String(error)}`,
-            );
-            await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
-            return undefined;
-          }
-        }
-        if (isJsonMetadata(uri)) {
-          try {
-            return await metadata.open(uri);
-          } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') return undefined;
-            void vscode.window.showWarningMessage(
-              `Could not preview JSON metadata; opening the original JSON instead. ${String(error)}`,
-            );
-            await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
-            return undefined;
-          }
-        }
+        const uri = entryUri(element.entry);
+        if (isNiftiFileName(resourcePath(uri.toString()))) return await openImage(element.entry);
+        if (isGradientFile(uri)) return previewGradients(uri);
+        if (isHistoryFile(uri))
+          return await previewOrOpenText(
+            uri,
+            () => history.open(uri),
+            'Could not preview history; opening the original text.',
+          );
+        if (isSummaryTable(uri))
+          return await previewOrOpenText(
+            uri,
+            () => tables.open(uri, element.entry.datasetUri),
+            'Could not preview the table; opening the original TSV instead.',
+          );
+        if (isJsonMetadata(uri))
+          return await previewOrOpenText(
+            uri,
+            () => metadata.open(uri),
+            'Could not preview JSON metadata; opening the original JSON instead.',
+          );
         await vscode.commands.executeCommand('vscode.open', uri);
       } catch (error) {
         reportOpenError(error);
@@ -626,7 +602,7 @@ export function activate(context: vscode.ExtensionContext): {
         if (
           element?.type !== 'entry' ||
           element.entry.kind !== 'file' ||
-          !/\.nii(\.gz)?$/.test(element.entry.name)
+          !isNiftiFileName(element.entry.name)
         )
           return;
         try {
@@ -634,7 +610,7 @@ export function activate(context: vscode.ExtensionContext): {
           let editor = viewId;
           if (editor === undefined) {
             const choices: { label: string; editor?: string }[] = [
-              { label: 'BIDS Explorer · Progressive NIfTI', editor: progressiveNiftiEditor },
+              { label: 'BIDS Explorer · Progressive NIfTI', editor: progressiveNiftiViewType },
               { label: 'Configured editor', editor: '' },
               { label: 'VS Code text editor', editor: 'default' },
             ];

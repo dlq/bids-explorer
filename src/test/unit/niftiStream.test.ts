@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { gunzipSync } from 'node:zlib';
-import { readNiftiStream } from '../../ui/niftiStream';
+import { readNiftiStream } from '../../webview/niftiStream';
 import { niftiFixture } from '../niftiFixture';
 
 void test('shows the first frame before the remaining chunks are available', async () => {

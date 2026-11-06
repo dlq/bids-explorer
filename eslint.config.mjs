@@ -20,14 +20,7 @@ export default tseslint.config(
     },
   },
   {
-    files: [
-      'src/ui/gradientClient.ts',
-      'src/ui/metadataClient.ts',
-      'src/ui/tableClient.ts',
-      'src/ui/documentClient.ts',
-      'src/ui/niftiClient.ts',
-      'src/ui/niftiStream.ts',
-    ],
+    files: ['src/webview/**/*.ts'],
     languageOptions: {
       parserOptions: {
         projectService: false,

@@ -1,4 +1,5 @@
-import { constants, type Stats } from 'node:fs';
+import { sameFileRevision, type RevisionStat } from './fileRevision';
+import { constants } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -43,7 +44,6 @@ const nativeIO = {
   open: (path: string) =>
     open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK),
 };
-type RevisionStat = Pick<Stats, 'isFile' | 'dev' | 'ino' | 'size' | 'mtimeMs' | 'ctimeMs'>;
 type HeaderIO = {
   stat: (path: string) => Promise<RevisionStat>;
   open: (path: string) => Promise<{
@@ -73,16 +73,10 @@ export async function withSquashfs<T>(
   const before = await io.stat(path);
   if (!before.isFile() || !Number.isSafeInteger(before.size) || before.size < headerBytes)
     throw new Error('Choose an ordinary SquashFS image with a complete superblock.');
-  const matches = (stat: typeof before): boolean =>
-    stat.isFile() &&
-    stat.dev === before.dev &&
-    stat.ino === before.ino &&
-    stat.size === before.size &&
-    stat.mtimeMs === before.mtimeMs &&
-    stat.ctimeMs === before.ctimeMs;
   const handle = await io.open(path);
   try {
-    if (!matches(await handle.stat())) throw new Error('SquashFS source changed while opening.');
+    if (!sameFileRevision(before, await handle.stat()))
+      throw new Error('SquashFS source changed while opening.');
     const read = async (position: number, length: number) => {
       const buffer = Buffer.alloc(length);
       let offset = 0;
@@ -95,7 +89,10 @@ export async function withSquashfs<T>(
       return buffer;
     };
     const result = await action(await read(0, headerBytes), read, before);
-    if (!matches(await handle.stat()) || !matches(await io.stat(path)))
+    if (
+      !sameFileRevision(before, await handle.stat()) ||
+      !sameFileRevision(before, await io.stat(path))
+    )
       throw new Error('SquashFS source changed while reading.');
     signal.throwIfAborted();
     return result;

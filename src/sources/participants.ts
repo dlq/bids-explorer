@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseTable } from '../core/tables';
 import { parseJsonMetadata } from '../core/metadata';
 import type { ParticipantsPreview } from '../core/tableTypes';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 
 /** Same-directory participant dictionary only; no recursive discovery or inferred defaults. */
 export async function loadParticipants(

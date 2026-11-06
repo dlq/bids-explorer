@@ -5,14 +5,8 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM"],
     "types": [],
-    "outDir": "out/webview"
+    "outDir": "out/browser"
   },
-  "include": [
-    "src/ui/gradientClient.ts",
-    "src/ui/metadataClient.ts",
-    "src/ui/tableClient.ts",
-    "src/ui/documentClient.ts",
-    "src/ui/niftiClient.ts"
-  ],
+  "include": ["src/webview/**/*.ts"],
   "exclude": []
 }

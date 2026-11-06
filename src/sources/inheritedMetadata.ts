@@ -9,7 +9,7 @@ import {
 } from '../core/inheritance';
 import { parseJsonMetadata } from '../core/metadata';
 import type { DirectoryEntry } from '../core/directory';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 
 const nativeIO = { lstat, opendir, readTextSnapshot };
 

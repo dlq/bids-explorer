@@ -1,8 +1,8 @@
 {
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
-  "description": "Explore BIDS datasets locally and over SSH.",
-  "version": "0.8.0",
+  "description": "Browse BIDS studies, preview metadata and open NIfTI images locally or over SSH.",
+  "version": "0.9.0",
   "publisher": "bids-explorer-dev",
   "private": true,
   "engines": {
@@ -117,7 +117,7 @@
     "viewsWelcome": [
       {
         "view": "bidsExplorer.datasets",
-        "contents": "Browse a dataset without changing its files.\n[Add Dataset](command:bidsExplorer.addDataset)\nDirectories and ZIP navigation. Add descriptorless ZIP collections explicitly; metadata and MRI opening are read-only."
+        "contents": "Open a BIDS dataset folder in VS Code, or choose a folder to browse here. BIDS Explorer leaves your dataset files unchanged.\n[Add Dataset](command:bidsExplorer.addDataset)"
       }
     ],
     "menus": {
@@ -142,7 +142,7 @@
         {
           "command": "bidsExplorer.showAvailability",
           "when": "view == bidsExplorer.datasets && viewItem == dataset",
-          "group": "inline"
+          "group": "navigation@1"
         },
         {
           "command": "bidsExplorer.removeDataset",
@@ -266,14 +266,14 @@
           "default": "",
           "maxLength": 200,
           "scope": "resource",
-          "description": "Exact TSV column to use as the participant tree description. Empty disables table-based labels. Identifiers are never replaced; unique source rows and unambiguous columns are required."
+          "description": "Column in participants.tsv to show next to participant IDs. Leave blank to show the standard labels. A value appears when the participant row and column are unique."
         },
         "bidsExplorer.sessionLabelColumn": {
           "type": "string",
           "default": "",
           "maxLength": 200,
           "scope": "resource",
-          "description": "Exact TSV column to use as the session tree description. Empty disables table-based labels. Identifiers are never replaced; unique source rows and unambiguous columns are required."
+          "description": "Column in the participant’s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
         },
         "bidsExplorer.derivativeDatasets": {
           "type": "object",
@@ -349,7 +349,7 @@
     "test": "npm run build && node --test out/test/unit/*.test.js",
     "test:integration": "npm run build && vscode-test --coverage",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:coverage",
-    "vscode:prepublish": "npm run build",
+    "vscode:prepublish": "node -e \"require('node:fs').rmSync('out', { recursive: true, force: true })\" && npm run build",
     "package": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true })\" && vsce package --out dist/ --allow-missing-repository --skip-license",
     "test:coverage": "npm run build && c8 node --test out/test/unit/*.test.js",
     "format": "prettier --write .",

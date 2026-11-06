@@ -3,6 +3,7 @@ declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
 const element = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 let table: TableSnapshot | undefined, dictionary: SummaryTablePreview['dictionary'] | undefined;
+let isEventsTable = false;
 let page = 0,
   columnPage = 0,
   visibleCount = 0;
@@ -28,8 +29,50 @@ function report(): void {
       (cell) => cell.textContent,
     ),
     displayedColumns: element('head').querySelectorAll('th').length - 1,
+    columnLabels: Array.from(element('head').querySelectorAll('th')).map(
+      (header) => header.textContent,
+    ),
+    hasColumnPaging: !element('column-paging').hidden,
+    hasRowPaging: !element('next').hidden,
+    dictionaryLabels: Array.from(element('dictionary').querySelectorAll('dt')).map(
+      (term) => term.textContent,
+    ),
   });
 }
+function dictionaryDescription(valueText: string): HTMLElement | undefined {
+  let value: unknown;
+  try {
+    value = JSON.parse(valueText);
+  } catch {
+    return;
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  const fields = value as Record<string, unknown>;
+  const description = document.createElement('dl');
+  const add = (label: string, text: string) => {
+    const term = document.createElement('dt');
+    const definition = document.createElement('dd');
+    term.textContent = short(label);
+    definition.textContent = short(text);
+    description.append(term, definition);
+  };
+  for (const [key, label] of [
+    ['LongName', 'Name'],
+    ['Description', 'Description'],
+    ['Units', 'Units'],
+  ]) {
+    const text = fields[key];
+    if (typeof text === 'string') add(label, text);
+  }
+  const levels = fields.Levels;
+  if (levels && typeof levels === 'object' && !Array.isArray(levels)) {
+    for (const [code, meaning] of Object.entries(levels).slice(0, 100)) {
+      if (typeof meaning === 'string') add(code, meaning);
+    }
+  }
+  return description.childElementCount ? description : undefined;
+}
+
 function render(): void {
   if (!table) return;
   const filter = element<HTMLInputElement>('filter').value.toLowerCase();
@@ -53,12 +96,19 @@ function render(): void {
     line = document.createElement('th');
   line.textContent = 'Source line';
   line.scope = 'col';
+  line.className = 'source-line';
   heading.append(line);
   for (const i of columns) {
     const th = document.createElement('th');
     th.scope = 'col';
     th.textContent = short(table.columns[i] ?? `Extra cell ${i + 1} (no header)`);
     if (th.textContent === '') th.textContent = `(empty header ${i + 1})`;
+    if (isEventsTable && (table.columns[i] === 'onset' || table.columns[i] === 'duration')) {
+      const units = document.createElement('span');
+      units.className = 'column-units';
+      units.textContent = ' (s)';
+      th.append(units);
+    }
     heading.append(th);
   }
   head.append(heading);
@@ -68,6 +118,7 @@ function render(): void {
     const tr = document.createElement('tr'),
       index = document.createElement('th');
     index.scope = 'row';
+    index.className = 'source-line';
     index.textContent = String(row.line);
     tr.append(index);
     for (const i of columns) {
@@ -87,12 +138,15 @@ function render(): void {
     `${rows.length ? page * 50 + 1 : 0}–${Math.min(rows.length, (page + 1) * 50)} of ${rows.length} matching rows`;
   element('columns').textContent =
     `${columnPage * 12 + 1}–${Math.min(width, (columnPage + 1) * 12)} of ${width} columns`;
+  element('column-paging').hidden = width <= 12;
+  element('previous').hidden = rows.length <= 50;
+  element('next').hidden = rows.length <= 50;
   element<HTMLButtonElement>('previous').disabled = page === 0;
   element<HTMLButtonElement>('next').disabled = (page + 1) * 50 >= rows.length;
   element<HTMLButtonElement>('left').disabled = columnPage === 0;
   element<HTMLButtonElement>('right').disabled = (columnPage + 1) * 12 >= width;
   element('summary').textContent =
-    `${table.rows.length} recorded rows · ${table.columns.length} header columns · Source order preserved`;
+    `${table.rows.length} recorded rows · ${table.columns.length} columns`;
   element('issues').textContent = [
     table.duplicateHeaders.length ? `${table.duplicateHeaders.length} duplicate header names` : '',
     table.duplicateIds.length
@@ -108,7 +162,7 @@ function render(): void {
   definitions.replaceChildren();
   element('dictionary-status').textContent =
     dictionary?.status === 'loaded'
-      ? 'Definitions for the displayed columns, with source provenance. Session/scan/event dictionaries use BIDS inheritance; unresolved dictionaries have no selected values. No units, level labels or defaults are applied to cells.'
+      ? 'Expand a column to see its recorded definition. Values in the table are shown as recorded.'
       : `Dictionary ${dictionary?.status ?? 'unavailable'}${dictionary?.error ? ': ' + short(dictionary.error) : ''}`;
   for (const i of columns) {
     const name = table.columns[i];
@@ -119,7 +173,8 @@ function render(): void {
       summary = document.createElement('summary');
     summary.textContent =
       short(name ?? `Extra cell ${i + 1}`) +
-      (fields.length ? ` · ${fields.length} recorded definition(s)` : ' · no recorded definition');
+      (fields.length > 1 ? ` · ${fields.length} recorded definitions` : '');
+    if (!fields.length) continue;
     details.append(summary);
     for (const field of fields) {
       const pre = document.createElement('pre'),
@@ -132,10 +187,24 @@ function render(): void {
       provenance.textContent = short(
         `${field.sourceUri} · ${field.pointer}${field.duplicated ? ' · ambiguous duplicate name' : ''}`,
       );
-      details.append(pre, provenance);
+      const description =
+        !field.duplicated && field.valueText.length <= 16000
+          ? dictionaryDescription(field.valueText)
+          : undefined;
+      if (description) {
+        const sourceDetails = document.createElement('details');
+        const sourceSummary = document.createElement('summary');
+        sourceSummary.textContent = 'Recorded JSON and source';
+        sourceDetails.append(sourceSummary, pre, provenance);
+        details.append(description, sourceDetails);
+      } else {
+        details.append(pre, provenance);
+      }
     }
     definitions.append(details);
   }
+  if (!definitions.childElementCount && dictionary?.status === 'loaded')
+    element('dictionary-status').textContent = 'No recorded definitions for these columns.';
   report();
 }
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
@@ -175,16 +244,17 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
             ? 'Table'
             : 'Participants';
   table = message.table as TableSnapshot;
-  if ('kind' in message && message.kind === 'events')
+  isEventsTable = 'kind' in message && message.kind === 'events';
+  if (isEventsTable)
     element('table-note').textContent =
-      'Recorded events in source order. Onsets, durations and trial values remain literal; repeated onsets are allowed. No timeline, image/run association or time-unit conversion is inferred. n/a, empty and absent cells remain distinct.';
+      'Events are shown in file order. BIDS defines onset and duration in seconds. n/a marks missing data.';
   element('filename').textContent = decodeURIComponent(
     new URL(table.snapshot.sourceUri).pathname.split('/').at(-1)!,
   );
   if (table.snapshot.archiveSource)
     element('table-note').textContent =
       (element('table-note').textContent ?? '') +
-      ' Archive dictionary coverage is limited to the literal same-directory JSON file; inheritance across archive boundaries is not applied.';
+      ' This preview uses the dictionary next to the table inside the archive, when available.';
   dictionary = message.dictionary as SummaryTablePreview['dictionary'];
   columnPage = Math.min(columnPage, Math.max(0, Math.ceil(table.columns.length / 12) - 1));
   const origin = table.snapshot.archiveSource;

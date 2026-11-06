@@ -1,3 +1,4 @@
+import { sameFileRevision } from './fileRevision';
 import { constants } from 'node:fs';
 import { lstat, open, type FileHandle } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -42,8 +43,7 @@ export async function indexZip(
     throw new Error('ZIP indexing requires an ordinary file; symbolic links are not followed.');
   const handle = await io.open(path);
   try {
-    const opened = await handle.stat();
-    if (!opened.isFile() || opened.ino !== before.ino || opened.dev !== before.dev)
+    if (!sameFileRevision(before, await handle.stat()))
       throw new Error('ZIP source changed while opening.');
     signal.throwIfAborted();
     // autoClose false leaves sole fd ownership with FileHandle, including failure/cancellation.
@@ -93,14 +93,7 @@ export async function indexZip(
       signal.throwIfAborted();
       const after = await handle.stat();
       const current = await io.stat(path);
-      if (
-        after.size !== before.size ||
-        after.mtimeMs !== before.mtimeMs ||
-        current.ino !== before.ino ||
-        current.dev !== before.dev ||
-        current.size !== before.size ||
-        current.mtimeMs !== before.mtimeMs
-      )
+      if (!sameFileRevision(before, after) || !sameFileRevision(before, current))
         throw new Error('ZIP source changed while indexing.');
       return Object.freeze({
         sourceUri: pathToFileURL(path).toString(),

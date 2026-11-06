@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
-import { DatasetTreeProvider } from '../../ui/datasetTree';
+import { DatasetTreeProvider } from '../../ui/datasetTreeProvider';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
 import { InheritanceInspector } from '../../ui/inheritanceInspector';

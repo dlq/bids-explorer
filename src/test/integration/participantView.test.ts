@@ -78,7 +78,8 @@ suite('Participant Data view', () => {
         )
           await setTimeout(25);
         const html = panel.webview.html;
-        assert.match(html, /Snapshot ready/);
+        assert.match(html, /Snapshot ready\. 2 participants indexed\./);
+        assert.doesNotMatch(html, /data-page="/);
         assert.match(html, /data-view="sessions" aria-pressed="true">By session/);
         assert.match(html, /data-view="modality" aria-pressed="false">By modality/);
         assert.match(html, /data-view="pipeline" aria-pressed="false">By pipeline/);

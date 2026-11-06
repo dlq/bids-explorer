@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { loadTreeDescription } from '../../sources/treeDescriptions';
+import { loadTreeDescription } from '../../sources/treeDescriptionLoader';
 import type { DirectoryEntry } from '../../core/directory';
 const options = { participantColumn: 'label', sessionColumn: 'label' };
 

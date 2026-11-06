@@ -4,7 +4,7 @@ import { inheritanceBoundary, resolveInheritance, type MetadataLevel } from '../
 import { layoutHint } from '../core/logicalLayout';
 import { parseJsonMetadata } from '../core/metadata';
 import type { LogicalDirectorySource } from './logicalDirectory';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 
 function resource(entry: DirectoryEntry): DirectoryEntry {
   return entry.archive && entry.kind === 'file' ? { ...entry, uri: entryArchiveUri(entry) } : entry;

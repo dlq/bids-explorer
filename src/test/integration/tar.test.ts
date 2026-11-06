@@ -1,4 +1,4 @@
-import { archiveRendered } from './archiveRendered';
+import { waitForArchivePreview } from './waitForArchivePreview';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -47,7 +47,7 @@ suite('Tar inventory command', () => {
 suite('Tar logical browsing', () => {
   const verify = async (folder: string, real: boolean) => {
     const extension = vscode.extensions.getExtension<{
-      provider: import('../../ui/datasetTree').DatasetTreeProvider;
+      provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
     }>('bids-explorer-dev.bids-explorer')!;
     const { provider } = await extension.activate();
     const root = await vscode.commands.executeCommand<
@@ -73,7 +73,10 @@ suite('Tar logical browsing', () => {
         modalities.flatMap((row) => (row.type === 'entry' ? [row.entry.name] : [])),
         real ? ['anat', 'dwi', 'func'] : ['anat'],
       );
-      const preview = async (row: import('../../ui/datasetTree').TreeElement, title: RegExp) => {
+      const preview = async (
+        row: import('../../ui/datasetTreeProvider').TreeElement,
+        title: RegExp,
+      ) => {
         const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
           'bidsExplorer.openFile',
           row,
@@ -81,7 +84,7 @@ suite('Tar logical browsing', () => {
         assert.ok(panel);
         try {
           assert.match(panel.title, title);
-          const rendered = await archiveRendered(panel, () => true);
+          const rendered = await waitForArchivePreview(panel, () => true);
           if (/Gradient/.test(panel.title)) assert.equal(rendered.volumeCount, 129);
           else assert.match(String(rendered.sourceUri), /^bids-tar:/);
         } finally {

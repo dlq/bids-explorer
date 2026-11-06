@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
-import { DatasetTreeProvider } from '../../ui/datasetTree';
+import { DatasetTreeProvider } from '../../ui/datasetTreeProvider';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
 import { isJsonMetadata } from '../../ui/metadataPreview';
@@ -101,6 +101,17 @@ suite('Task metadata and event-file entry points', () => {
       assert.deepEqual(rows.displayedCells, ['0.000', '1.2', 'A']);
       assert.equal(rows.dictionaryStatus, 'loaded');
       assert.match(String(rows.dictionaryText), /Recorded event duration/);
+      assert.deepEqual(rows.columnLabels, [
+        'Source line',
+        'onset (s)',
+        'duration (s)',
+        'trial_type',
+      ]);
+      assert.equal(rows.hasColumnPaging, false);
+      assert.equal(rows.hasRowPaging, false);
+      assert.ok(
+        Array.isArray(rows.dictionaryLabels) && rows.dictionaryLabels.includes('Description'),
+      );
       assert.equal(await readFile(json.fsPath, 'utf8'), jsonText);
       assert.equal(await readFile(events.fsPath, 'utf8'), eventText);
       // Unusable sidecars retain raw JSON access instead of a blank preview.

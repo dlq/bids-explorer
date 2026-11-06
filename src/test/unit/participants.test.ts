@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadParticipants } from '../../sources/participants';
-import { readTextSnapshot } from '../../sources/previewText';
+import { readTextSnapshot } from '../../sources/textSnapshotReader';
 
 void test('participant loader keeps independent source snapshots and tolerates absent, malformed and linked dictionaries', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bids-table-'));

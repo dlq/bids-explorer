@@ -11,7 +11,7 @@ import {
 } from '../core/treeDescriptions';
 import { parseJsonMetadata } from '../core/metadata';
 import { loadInheritedMetadata } from './inheritedMetadata';
-import { readTextSnapshot } from './previewText';
+import { readTextSnapshot } from './textSnapshotReader';
 import { loadSummaryTable } from './summaryTables';
 
 /** Explicit, bounded metadata reads only; no image bytes or descendant discovery. */

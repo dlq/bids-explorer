@@ -6,8 +6,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import * as vscode from 'vscode';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
-import { DatasetTreeProvider } from '../../ui/datasetTree';
-import { progressiveNiftiEditor } from '../../ui/niftiPreview';
+import { DatasetTreeProvider } from '../../ui/datasetTreeProvider';
 import { niftiFixture } from '../niftiFixture';
 
 suite('Progressive NIfTI viewer', () => {
@@ -34,11 +33,14 @@ suite('Progressive NIfTI viewer', () => {
       assert.equal(entries.length, 2);
       for (const entry of entries) {
         const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
-          'bidsExplorer.openImageWith',
+          'bidsExplorer.openFile',
           entry,
-          progressiveNiftiEditor,
         );
         assert.ok(panel);
+        const treeIcon = provider.getTreeItem(entry).iconPath;
+        assert.ok(treeIcon && typeof treeIcon === 'object' && 'light' in treeIcon);
+        assert.match(treeIcon.light.path, /imaging-light\.svg$/);
+        assert.deepEqual(panel.iconPath, treeIcon);
         let report: { status?: string; previewFrames?: number; loadedFrames?: number } = {};
         const listener = panel.webview.onDidReceiveMessage((state: typeof report) => {
           report = state;

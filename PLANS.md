@@ -151,7 +151,7 @@ Release validation on Rorqual reconciled all 62,051 indexed participants with th
 
 Review the standalone NiiVue editor's user interface for broader viewer coordination. Evaluate its controls, layout, navigation, file icons, editor/toolbars and display-state behavior in normal dataset exploration. Identify which surfaces should belong to BIDS Explorer and which should remain with NiiVue, including how to keep navigation and metadata coherent when opening images. Compare the standalone editor and embedded library for broader viewing workflows. Record usability findings and supported customization points; include the current NIfTI file icon in this review. Keep the review separate from the existing rendering-performance benchmark.
 
-**Progressive NIfTI** is an explicit choice in **Open Image With**. It uses a packaged NiiVue renderer and the VS Code webview resource path to display the first frame of a 4D `.nii` or `.nii.gz` while the rest of the same response loads. The [Rorqual prototype measurements](RESEARCH.md#first-frame-and-ssh-traffic-on-a-512-mib-image) cover first display and transferred bytes. Peak memory, broader cold/warm measurements and chunked or multiresolution alternatives remain follow-up work.
+**Progressive NIfTI** is the default for NIfTI clicks in BIDS Explorer. It uses a packaged NiiVue renderer and the VS Code webview resource path to display the first frame of a 4D `.nii` or `.nii.gz` while the rest of the same response loads. The [Rorqual prototype measurements](RESEARCH.md#first-frame-and-ssh-traffic-on-a-512-mib-image) cover first display and transferred bytes. Peak memory, broader cold/warm measurements and chunked or multiresolution alternatives remain follow-up work.
 
 **Open Image With** now supports loose and extracted NIfTI files through the documented VS Code custom editor command. The picker offers the configured editor, the VS Code text editor, NiiVue when installed, and a custom editor ID. Establish ownership of extracted-file lifetime before viewer handoff. Rich comparison, overlays and label controls remain separate decisions; private webview/Preact probes are excluded.
 
@@ -165,9 +165,7 @@ Local validation opened loose and ZIP NIfTI fixtures in NiiVue 2.9.0 through VS 
 
 ## 0.9.0 — Stabilization
 
-Complete the compatibility matrix, documentation and security review. Run clean-checkout packaging, minimum/current VS Code tests, representative large-tree profiling and authorized local/SSH workflows for each supported source format. Test cancellation, disconnects, stale indexes and recovery. Resolve release-blocking defects with 0.9.x patches; add another minor if significant feature work remains.
-
-**Ready when:** all 1.0 gates below have recorded evidence and there are no known release-blocking defects. Published preview builds, if used, must follow the separate Marketplace channel policy in VERSIONING.md.
+Released locally as `v0.9.0`. The [support matrix](docs/COMPATIBILITY.md) records the clean-package checks, local and Remote SSH workflows, cancellation and recovery, and large-collection cache measurements. Full screen-reader testing and broader theme coverage remain open. Distribution still requires the publisher, license and repository decisions below.
 
 ## 1.0.0 — Supported core workflows
 
