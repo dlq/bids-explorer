@@ -129,13 +129,9 @@ The supported workflow uses the native reader on the workspace host. Uncompresse
 
 ## 0.6.0 — Remote SSH and persistent indexing
 
-Design for remote execution from 0.1.0, and perform an early smoke test of directory browsing before investing in all archive readers. Use a synthetic dataset on an explicitly authorized test host. Do not initiate connections merely to discover test locations.
+The local 0.6.0 release persists ZIP and tar browsing inventories in private workspace-host storage and revalidates source identity and read access before reuse. The Rorqual checks verified targeted archive replacement across SSH processes and inventory reuse after reopening the same VS Code workspace. A separate synthetic extraction worker was terminated mid-write. Retry on the same host removed the abandoned partial and recovered the exact member bytes.
 
-Add persistent host-local metadata indexes, revision checks and explicit refresh semantics. Keep image bytes separate from metadata. Define storage locations, cache budgets, incomplete-download accounting, eviction and resource lifetime before enabling cached extracted files. Verify viewer opening from the remote host without creating unnecessary local copies.
-
-Test disconnect/reconnect, stale indexes, missing tools, permissions, cancelled work and source changes during extraction. Cached metadata may remain browsable offline, but must not imply images are available or current.
-
-**Ready when:** directory and supported archive workflows work locally and over Remote SSH; tools execute on the correct host; refreshing one source preserves others; interrupted work leaves usable completed indexes and no orphaned partial extraction files.
+SquashFS retains on-demand paging. Evaluate a bounded branch cache if more cold-branch measurements justify it. Offline browsing and recovery from an unplanned transport loss while the VS Code extension host remains active are follow-up work. [0.6.0 validation](docs/MILESTONE_0.6.0.md)
 
 ## 0.7.0 — Dataset overview and exploration
 

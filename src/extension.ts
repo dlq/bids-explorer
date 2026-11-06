@@ -1,3 +1,5 @@
+import { ArchiveInventoryCache } from './sources/archiveInventoryCache';
+import { ZipDirectorySource } from './sources/zipDirectory';
 import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
 import { entryArchiveUri, resourcePath } from './core/archiveUri';
 import { ArchiveImageCache } from './sources/imageCache';
@@ -73,7 +75,13 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(metadata);
   const gradients = new GradientPreviewManager(context.extensionUri);
   context.subscriptions.push(gradients);
-  const source = new LogicalDirectorySource();
+  const inventoryCache = new ArchiveInventoryCache(
+    vscode.Uri.joinPath(context.storageUri ?? context.globalStorageUri, 'archive-inventories-v1')
+      .fsPath,
+  );
+  const source = new LogicalDirectorySource(
+    new ZipDirectorySource(undefined, undefined, inventoryCache),
+  );
   const inheritance = new InheritanceInspector(context.extensionUri, gradients, (entry, signal) =>
     loadLogicalInheritance(source, entry, signal),
   );

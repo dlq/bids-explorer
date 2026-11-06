@@ -16,7 +16,8 @@ import {
   rename,
 } from 'node:fs/promises';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { createHash, randomUUID } from 'node:crypto';
+import { hostname, tmpdir } from 'node:os';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { crc32 } from 'node:zlib';
 import {
@@ -507,5 +508,38 @@ void test('literal JSON array previews preserve items, pointers and numeric toke
       (await loadSummaryTable(await ref('events.tsv', 1), signal())).dictionary.status,
       'unavailable',
     );
+  });
+});
+
+void test('MRI retry reclaims a dead local extraction and retains live, foreign and legacy directories', async (t) => {
+  await fixture(async (folder, _path, ref, write) => {
+    await write([{ name: 'T1w.nii', text: 'payload' }]);
+    const cache = new ArchiveImageCache(join(folder, 'cache'));
+    await mkdir(cache.root);
+    const host = createHash('sha256').update(hostname()).digest('hex').slice(0, 16);
+    const otherHost = host === '0000000000000000' ? '1111111111111111' : '0000000000000000';
+    const dead = `partial-${host}-12345-${randomUUID()}`;
+    const live = `partial-${host}-${process.pid}-${randomUUID()}`;
+    const unknown = `partial-${host}-12346-${randomUUID()}`;
+    const foreign = `partial-${otherHost}-12345-${randomUUID()}`;
+    const legacy = `partial-${randomUUID()}`;
+    for (const name of [dead, live, unknown, foreign, legacy]) await mkdir(join(cache.root, name));
+    await writeFile(join(cache.root, dead, 'T1w.nii'), 'interrupted');
+    const mock = t.mock.method(process, 'kill', (pid: number, value: number) => {
+      assert.equal(value, 0);
+      if (pid === process.pid) return true;
+      if (pid === 12346) throw Object.assign(new Error('unknown owner'), { code: 'EPERM' });
+      assert.equal(pid, 12345);
+      throw Object.assign(new Error('owner exited'), { code: 'ESRCH' });
+    });
+    try {
+      const result = await cache.materialize(await ref('T1w.nii'), signal());
+      assert.equal(await readFile(fileURLToPath(result), 'utf8'), 'payload');
+    } finally {
+      mock.mock.restore();
+    }
+    const names = await readdir(cache.root);
+    assert(!names.includes(dead));
+    for (const name of [live, unknown, foreign, legacy]) assert(names.includes(name));
   });
 });

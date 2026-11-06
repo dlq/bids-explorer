@@ -1,6 +1,7 @@
 import { streamSquashfsMember } from './squashfsMember';
 import { mkdir, lstat, opendir, open, writeFile, rename, rm, chmod } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { hostname } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArchiveUri } from '../core/archiveUri';
@@ -17,6 +18,19 @@ const defaults: ImageCacheLimits = {
   entries: 128,
   memberBytes: 512 * 1024 ** 2,
 };
+
+// Workspace storage may be shared across cluster nodes. Only inspect local owner PIDs.
+const host = createHash('sha256').update(hostname()).digest('hex').slice(0, 16);
+const ownedPartial = /^partial-([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f-]{36}$/;
+
+function ownerExited(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'ESRCH';
+  }
+}
 
 /** Completed files survive extension reload and are never evicted while a viewer may use them. */
 export class ArchiveImageCache {
@@ -47,12 +61,17 @@ export class ArchiveImageCache {
     let bytes = 0,
       entries = 0;
     for await (const dir of await opendir(this.root)) {
+      const owner = ownedPartial.exec(dir.name);
       if (
-        !/^(partial|image)-[0-9a-f-]{36}$/.test(dir.name) ||
+        (!owner && !/^(partial|image)-[0-9a-f-]{36}$/.test(dir.name)) ||
         !dir.isDirectory() ||
         dir.isSymbolicLink()
       )
         throw new Error('Unexpected entry in private image cache.');
+      if (owner?.[1] === host && ownerExited(Number(owner[2]))) {
+        await rm(join(this.root, dir.name), { recursive: true, force: true });
+        continue;
+      }
       if (++entries > this.limits.entries)
         throw new Error(
           'Image cache entry budget exceeded. Close editor tabs and clear the extracted image cache.',
@@ -98,7 +117,7 @@ export class ArchiveImageCache {
           'Image cache is full. Close editor tabs and clear the extracted image cache.',
         );
       const id = randomUUID();
-      const partial = join(this.root, 'partial-' + id),
+      const partial = join(this.root, `partial-${host}-${process.pid}-${id}`),
         complete = join(this.root, 'image-' + id);
       const original = basename(ref.memberPath);
       const name = /^[a-zA-Z0-9+_.-]{1,200}$/.test(original)

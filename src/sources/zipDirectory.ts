@@ -1,3 +1,4 @@
+import { archiveFingerprint, type ArchiveInventoryCache } from './archiveInventoryCache';
 import { tarSuffix, type ArchiveInventory } from '../core/archive';
 import { archiveTree } from '../core/archiveTree';
 import {
@@ -13,6 +14,7 @@ import { indexZip } from './zipIndex';
 interface CachedArchive {
   readonly container: DirectoryEntry;
   readonly index: ArchiveInventory;
+  readonly stamp?: string;
   readonly branches: ReadonlyMap<string, readonly DirectoryEntry[]>;
 }
 /** Archives remain separate physical branches. Only expanded archives are indexed, on the data host. */
@@ -21,6 +23,7 @@ export class ZipDirectorySource implements DirectorySource {
   constructor(
     private readonly directories: DirectorySource = new LocalDirectorySource(),
     private readonly readIndex: typeof indexZip = indexZip,
+    private readonly persistent?: ArchiveInventoryCache,
   ) {}
   root(uri: string): Promise<DirectoryEntry> {
     return this.directories.root(uri);
@@ -69,10 +72,12 @@ export class ZipDirectorySource implements DirectorySource {
     if (parent.kind !== 'directory') return [];
     const { sourceUri, memberPath } = parent.archive;
     const key = JSON.stringify([parent.datasetUri, sourceUri, parent.archive.containerPath]);
+    const fingerprint = this.persistent && (await archiveFingerprint(sourceUri));
     let cached = this.cache.get(key);
     if (cached) {
       const revision = await this.revision(parent);
       if (
+        fingerprint?.stamp !== cached.stamp ||
         revision.size !== cached.index.revision.size ||
         revision.modifiedAt !== cached.index.revision.modifiedAt
       ) {
@@ -82,14 +87,17 @@ export class ZipDirectorySource implements DirectorySource {
       this.cache.delete(key);
       this.cache.set(key, cached);
     } else {
-      const index = await (parent.archive.format === 'tar' ? indexTar : this.readIndex)(
-        sourceUri,
-        signal,
-      );
+      const saved = fingerprint && (await this.persistent?.read(fingerprint, signal));
+      const index =
+        saved ??
+        (await (parent.archive.format === 'tar' ? indexTar : this.readIndex)(sourceUri, signal));
       const container: DirectoryEntry = { ...parent, relativePath: parent.archive.containerPath };
       const branches = await archiveTree(container, index, signal);
+      if (fingerprint && (await archiveFingerprint(sourceUri)).stamp !== fingerprint.stamp)
+        throw new Error('Archive changed since indexing. Refresh the archive branch.');
+      if (fingerprint && !saved) await this.persistent?.write(index, fingerprint, signal);
       signal.throwIfAborted();
-      cached = { container, index, branches };
+      cached = { container, index, branches, stamp: fingerprint?.stamp };
       // Bound retained inventories independently of the browser's completed branch snapshots.
       while (
         this.cache.size >= 4 ||

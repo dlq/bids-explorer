@@ -1,8 +1,18 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.5.0` is a local tagged release (`v0.5.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.6.0` is a local tagged release (`v0.6.0`).
 
 ## Unreleased
+
+## [0.6.0] - 2026-11-06
+
+### Added
+
+- Reuse completed ZIP and tar browsing inventories across reloads when the archive revision still matches.
+
+### Fixed
+
+- Reclaim interrupted image extractions on retry when their owner process has exited on the workspace host.
 
 ## [0.5.0] - 2026-11-05
 

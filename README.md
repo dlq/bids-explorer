@@ -4,7 +4,9 @@ A VS Code extension for exploring BIDS neuroimaging datasets and derivatives. Br
 
 Version 0.5.0 adds SquashFS inspection, paging in both directions in the logical tree, and shard collections. Repeated metadata paths expand to their original source files. Open a grouped `dataset_description.json` to compare recorded values across shards. Use **Browse SquashFS Image** to inspect an individual image, or open a collection folder and use **Add Dataset** if needed. The reader supports uncompressed and gzip blocks and reports unavailable shards as partial coverage.
 
-**Status: `0.5.0` is a local release tagged `v0.5.0`.**
+Version 0.6.0 reuses completed ZIP and tar inventories across reloads and Remote SSH reconnects. Inventories are stored on the workspace host and checked against the archive before use.
+
+**Status: `0.6.0` is a local release tagged `v0.6.0`.**
 
 ## Available today
 
@@ -161,7 +163,7 @@ Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the nativ
 | `0.8.0`–`0.9.0`  | Optional viewer integration, distribution preparation and stabilization                 |
 | `1.0.0`          | Supported core exploration across documented formats and hosts                          |
 
-The first five milestones are tagged locally. Roadmap targets begin at `0.6.0`. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
+The first six milestones are tagged locally. Roadmap targets begin at `0.7.0`. BIDS validation, restructuring and renaming are later, separate opt-in workflows; exploration stays read-only by default. Browsing a dataset does not establish BIDS conformance.
 
 ## Documentation and feedback
 
@@ -173,4 +175,4 @@ The first five milestones are tagged locally. Roadmap targets begin at `0.6.0`. 
 
 A public issue tracker and private vulnerability-reporting channel will be linked when the GitHub repository is available. Do not share private datasets, credentials or sensitive clinical information in public reports.
 
-In the source checkout, `docs/MILESTONE_0.5.0.md` records SquashFS release validation and `docs/MILESTONE_0.4.0.md` records the tar release scope. ZIP and Remote SSH evidence is in `docs/MILESTONE_0.3.0.md`.
+In the source checkout, `docs/MILESTONE_0.6.0.md` records Remote SSH recovery, `docs/MILESTONE_0.5.0.md` records SquashFS release validation and `docs/MILESTONE_0.4.0.md` records the tar release scope. ZIP and Remote SSH evidence is in `docs/MILESTONE_0.3.0.md`.
