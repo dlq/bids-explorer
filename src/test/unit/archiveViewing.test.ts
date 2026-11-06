@@ -393,11 +393,15 @@ void test('MRI cache extracts only one verified member, publishes privately, reu
     assert.equal(await cache.materialize(uri, signal()), result);
     assert.equal((await readdir(cache.root)).length, 1);
     const reopened = new ArchiveImageCache(cache.root);
-    await reopened.clear();
+    const release = await cache.retain();
+    assert.equal(await reopened.clear(), false);
+    assert.deepEqual(await readFile(fileURLToPath(result)), payload);
+    await release();
+    assert.equal(await reopened.clear(), true);
     assert.equal((await readdir(cache.root)).length, 0);
-    await assert.rejects(cache.materialize(uri, signal()), /ENOENT/);
-    await cache.clear();
     const next = await cache.materialize(uri, signal());
+    assert.notEqual(next, result);
+    assert.deepEqual(await readFile(fileURLToPath(next)), payload);
     await chmod(fileURLToPath(next), 0o600);
     await appendFile(fileURLToPath(next), 'edited');
     await assert.rejects(cache.materialize(uri, signal()), /changed/);
@@ -541,5 +545,36 @@ void test('MRI retry reclaims a dead local extraction and retains live, foreign 
     const names = await readdir(cache.root);
     assert(!names.includes(dead));
     for (const name of [live, unknown, foreign, legacy]) assert(names.includes(name));
+  });
+});
+
+void test('image cache excludes overlapping clears and refuses unsafe activity storage', async (t) => {
+  await fixture(async (folder) => {
+    const cache = new ArchiveImageCache(join(folder, 'cache'));
+    const directory = cache.root + '-activity';
+    await mkdir(directory);
+    const host = createHash('sha256').update(hostname()).digest('hex').slice(0, 16);
+    const active = join(directory, `clear-${host}-${process.pid}-${randomUUID()}`);
+    await mkdir(active);
+    await assert.rejects(cache.retain(), /being cleared/);
+    assert.equal(await cache.clear(), false);
+    assert.deepEqual(await readdir(directory), [active.split('/').pop()]);
+    await rm(active, { recursive: true });
+    const stale = join(directory, `use-${host}-12345-${randomUUID()}`);
+    await mkdir(stale);
+    const mock = t.mock.method(process, 'kill', () => {
+      throw Object.assign(new Error('owner exited'), { code: 'ESRCH' });
+    });
+    try {
+      assert.equal(await cache.clear(), true);
+      assert.deepEqual(await readdir(directory), []);
+    } finally {
+      mock.mock.restore();
+    }
+    await writeFile(join(directory, 'unexpected'), '');
+    await assert.rejects(cache.retain(), /Unexpected entry/);
+    await rm(directory, { recursive: true });
+    await symlink(folder, directory);
+    await assert.rejects(cache.clear(), /ordinary private directory/);
   });
 });

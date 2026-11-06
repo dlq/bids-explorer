@@ -14,7 +14,7 @@ These documents distinguish agreed scope, historical observations and ideas that
 
 Build a VS Code extension for exploring BIDS datasets locally and over SSH, whether stored as ordinary directories, ZIP archives, tar archives (including compressed tarballs), or SquashFS images. Dataset exploration across these storage forms is the core purpose.
 
-This is a separate project from the native SwiftUI/Metal viewer. Begin by designing clear boundaries with the existing NiiVue extension; embedding a viewer remains undecided.
+This is a separate project from the native SwiftUI/Metal viewer. BIDS Explorer packages the NiiVue library for progressive NIfTI viewing and supports other VS Code editors through Open Image With.
 
 Dataset exploration is read-only by default. The initial implementation must not rename, move, restructure, rewrite or automatically validate/fix datasets. Explicit validation and rationalization workflows are later, separate work in PLANS.md.
 
@@ -37,7 +37,7 @@ Dataset exploration is read-only by default. The initial implementation must not
 
 ## Extension boundary
 
-BIDS Explorer owns navigation, indexing, archives, metadata, tables, availability and provenance. Its read-only gradient metadata preview uses raw b-vector components; it does not render images or infer anatomical orientation. NiiVue owns visualization and display state. NiiVue should initially be optional: the browser remains useful without it and can open files using a selected viewer.
+BIDS Explorer owns navigation, indexing, archives, metadata, tables, availability and provenance. Its read-only gradient metadata preview uses raw b-vector components without inferring anatomical orientation. BIDS Explorer manages the image stream in its progressive viewer and delegates rendering to the NiiVue library. The standalone NiiVue editor is an optional editor choice.
 
 Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
 
@@ -57,4 +57,4 @@ Keep public sample data and large caches in their existing locations until a con
 
 ## Version and release direction
 
-The current manifest is `0.7.0`, released locally as `v0.7.0`. It has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
+The current manifest is `0.8.0`, released locally as `v0.8.0`. It has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.

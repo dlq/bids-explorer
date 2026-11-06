@@ -2,7 +2,7 @@
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
   "description": "Explore BIDS datasets locally and over SSH.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "publisher": "bids-explorer-dev",
   "private": true,
   "engines": {
@@ -41,6 +41,10 @@
         "command": "bidsExplorer.showDetails",
         "title": "BIDS Explorer: Show Source Details",
         "icon": "$(info)"
+      },
+      {
+        "command": "bidsExplorer.openImageWith",
+        "title": "BIDS Explorer: Open Image With..."
       },
       {
         "command": "bidsExplorer.openFile",
@@ -148,6 +152,11 @@
         {
           "command": "bidsExplorer.refresh",
           "when": "view == bidsExplorer.datasets && (viewItem == dataset || viewItem == directory)",
+          "group": "navigation"
+        },
+        {
+          "command": "bidsExplorer.openImageWith",
+          "when": "view == bidsExplorer.datasets && (viewItem == file || viewItem == archiveImage) && resourceFilename =~ /\\.nii(\\.gz)?$/",
           "group": "navigation"
         },
         {
@@ -373,6 +382,7 @@
     "onStartupFinished"
   ],
   "dependencies": {
+    "@niivue/niivue": "0.69.0",
     "yauzl": "3.4.0"
   }
 }

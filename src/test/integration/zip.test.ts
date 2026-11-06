@@ -5,7 +5,8 @@ import { WorkspaceFolderHandoff } from '../../ui/workspaceFolders';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { ArchiveImageCache } from '../../sources/imageCache';
 import * as vscode from 'vscode';
 import { zipFixture } from '../zipFixture';
 
@@ -145,8 +146,36 @@ suite('ZIP-backed dataset tree', () => {
       );
       assert.ok(extracted?.startsWith('file:'));
       assert.deepEqual(await readFile(vscode.Uri.parse(extracted).fsPath), niftiFixture());
+      const explicit = await vscode.commands.executeCommand<string>(
+        'bidsExplorer.openImageWith',
+        images[0],
+        'default',
+      );
+      assert.equal(explicit, extracted);
+      assert.equal(await vscode.commands.executeCommand('bidsExplorer.clearImageCache'), false);
+      const extractedPath = vscode.Uri.parse(explicit).fsPath;
+      const otherWindow = new ArchiveImageCache(dirname(dirname(extractedPath)));
+      assert.equal(await otherWindow.clear(), false);
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      assert.equal(
+        await vscode.commands.executeCommand(
+          'bidsExplorer.openImageWith',
+          images[0],
+          'bidsExplorer.progressiveNifti',
+        ),
+        explicit,
+      );
+      assert.equal(await otherWindow.clear(), false);
+      assert.deepEqual(await readFile(extractedPath), niftiFixture());
       assert.deepEqual(await readFile(zip), bytes);
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      let cleared = false;
+      for (let attempt = 0; attempt < 40 && !cleared; attempt++) {
+        cleared = await otherWindow.clear();
+        if (!cleared) await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      assert.equal(cleared, true, 'Closing the last tab should release the cache guard');
+      await assert.rejects(readFile(extractedPath), { code: 'ENOENT' });
     } finally {
       if (root)
         await vscode.commands.executeCommand(

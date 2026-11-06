@@ -30,6 +30,8 @@ import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
 
 import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
 
+import { openProgressiveNifti, progressiveNiftiEditor } from './ui/niftiPreview';
+
 const registrationsKey = 'bidsExplorer.datasets.v1';
 
 /** Read-only dataset browser. The exported instance also supports extension-host tests. */
@@ -191,17 +193,98 @@ export function activate(context: vscode.ExtensionContext): {
   const command = (name: string, action: (arg?: TreeElement) => unknown): vscode.Disposable =>
     vscode.commands.registerCommand(name, action);
 
+  let imageOpens = 0;
+  let imagePanels = 0;
+  let imageUse: Promise<() => Promise<void>> | undefined;
+  const hasTabs = () => vscode.window.tabGroups.all.some((group) => group.tabs.length);
+  const releaseUnusedImages = async () => {
+    if (imageOpens || imagePanels || hasTabs() || !imageUse) return;
+    const lease = imageUse;
+    imageUse = undefined;
+    try {
+      await (
+        await lease
+      )();
+    } catch (error) {
+      output.appendLine(`Could not release extracted image cache use: ${String(error)}`);
+    }
+  };
+  context.subscriptions.push(
+    vscode.window.tabGroups.onDidChangeTabs(() => void releaseUnusedImages()),
+  );
+
+  const openImage = async (entry: import('./core/directory').DirectoryEntry, editor?: string) => {
+    const uri = fileUri(entry);
+    const open = async (target: vscode.Uri) => {
+      if (editor === progressiveNiftiEditor)
+        return openProgressiveNifti(context.extensionUri, target);
+      if (editor) await vscode.commands.executeCommand('vscode.openWith', target, editor);
+      else await vscode.commands.executeCommand('vscode.open', target);
+    };
+    if (entry.archive) {
+      const controller = new AbortController();
+      archiveWork.add(controller);
+      imageOpens++;
+      try {
+        imageUse ??= imageCache.retain().catch((error: unknown) => {
+          imageUse = undefined;
+          throw error;
+        });
+        await imageUse;
+        const extracted = await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title:
+              entry.archive.format === 'tar'
+                ? 'BIDS Explorer: Opening tar MRI (first open scans sequentially)'
+                : 'BIDS Explorer: Preparing selected MRI image',
+            cancellable: true,
+          },
+          async (_, token) => {
+            const listener = token.onCancellationRequested(() => controller.abort());
+            try {
+              if (token.isCancellationRequested) controller.abort();
+              return await imageCache.materialize(uri.toString(), controller.signal);
+            } finally {
+              listener.dispose();
+            }
+          },
+        );
+        controller.signal.throwIfAborted();
+        const panel = await open(vscode.Uri.parse(extracted));
+        if (panel) {
+          imagePanels++;
+          panel.onDidDispose(() => {
+            imagePanels--;
+            void releaseUnusedImages();
+          });
+        }
+        return extracted;
+      } finally {
+        archiveWork.delete(controller);
+        imageOpens--;
+        await releaseUnusedImages();
+      }
+    }
+    return await open(uri);
+  };
+  const reportOpenError = (error: unknown) => {
+    if (error instanceof Error && error.name === 'AbortError') return;
+    output.appendLine(`Could not open selected source: ${String(error)}`);
+    void vscode.window.showErrorMessage(`BIDS Explorer could not open the file: ${String(error)}`);
+  };
+
   context.subscriptions.push(
     provider,
     tree,
     vscode.commands.registerCommand('bidsExplorer.clearImageCache', async () => {
-      if (archiveWork.size || vscode.window.tabGroups.all.some((group) => group.tabs.length)) {
+      await releaseUnusedImages();
+      if (archiveWork.size || hasTabs() || !(await imageCache.clear())) {
         void vscode.window.showInformationMessage(
-          'Close all editor/viewer tabs and finish pending archive reads before clearing extracted images.',
+          'Close editor and viewer tabs in all windows using this workspace and finish pending archive work before clearing extracted images.',
         );
         return false;
       }
-      await imageCache.clear();
       return true;
     }),
     vscode.commands.registerCommand('bidsExplorer.inspectZip', (uri?: vscode.Uri) =>
@@ -492,36 +575,8 @@ export function activate(context: vscode.ExtensionContext): {
         if (element.entry.kind !== 'file') return;
         await source.revision(element.entry);
         const uri = fileUri(element.entry);
-        if (element.entry.archive && /\.nii(\.gz)?$/.test(resourcePath(uri.toString()))) {
-          const controller = new AbortController();
-          archiveWork.add(controller);
-          try {
-            const extracted = await vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title:
-                  element.entry.archive?.format === 'tar'
-                    ? 'BIDS Explorer: Opening tar MRI (first open scans sequentially)'
-                    : 'BIDS Explorer: Preparing selected MRI image',
-                cancellable: true,
-              },
-              async (_, token) => {
-                const listener = token.onCancellationRequested(() => controller.abort());
-                try {
-                  if (token.isCancellationRequested) controller.abort();
-                  return await imageCache.materialize(uri.toString(), controller.signal);
-                } finally {
-                  listener.dispose();
-                }
-              },
-            );
-            controller.signal.throwIfAborted();
-            await vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(extracted));
-            return extracted;
-          } finally {
-            archiveWork.delete(controller);
-          }
-        }
+        if (/\.nii(\.gz)?$/.test(resourcePath(uri.toString())))
+          return await openImage(element.entry);
         if (isGradientFile(uri)) return preview(uri);
         if (isHistoryFile(uri)) {
           try {
@@ -561,13 +616,53 @@ export function activate(context: vscode.ExtensionContext): {
         }
         await vscode.commands.executeCommand('vscode.open', uri);
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') return undefined;
-        output.appendLine(`Could not open selected source: ${String(error)}`);
-        void vscode.window.showErrorMessage(
-          `BIDS Explorer could not open the file: ${String(error)}`,
-        );
+        reportOpenError(error);
       }
     }),
+    vscode.commands.registerCommand(
+      'bidsExplorer.openImageWith',
+      async (arg?: TreeElement, viewId?: string) => {
+        const element = selected(arg);
+        if (
+          element?.type !== 'entry' ||
+          element.entry.kind !== 'file' ||
+          !/\.nii(\.gz)?$/.test(element.entry.name)
+        )
+          return;
+        try {
+          if (viewId !== undefined && typeof viewId !== 'string') return;
+          let editor = viewId;
+          if (editor === undefined) {
+            const choices: { label: string; editor?: string }[] = [
+              { label: 'BIDS Explorer · Progressive NIfTI', editor: progressiveNiftiEditor },
+              { label: 'Configured editor', editor: '' },
+              { label: 'VS Code text editor', editor: 'default' },
+            ];
+            if (vscode.extensions.getExtension('korbinianeckstein.niivue'))
+              choices.push({ label: 'NiiVue', editor: 'niiVue.default' });
+            choices.push({ label: 'Other custom editor…' });
+            const choice = await vscode.window.showQuickPick(choices, {
+              placeHolder: 'Open NIfTI image with',
+            });
+            if (!choice) return;
+            editor =
+              choice.editor ??
+              (
+                await vscode.window.showInputBox({
+                  prompt: 'Enter the custom editor view ID from the viewer extension’s manifest',
+                  validateInput: (value) =>
+                    value.trim() ? undefined : 'Enter a custom editor view ID.',
+                })
+              )?.trim();
+            if (editor === undefined) return;
+          }
+          await source.revision(element.entry);
+          return await openImage(element.entry, editor);
+        } catch (error) {
+          reportOpenError(error);
+        }
+      },
+    ),
     command('bidsExplorer.showDetails', async (arg) => {
       const element = selected(arg);
       if (element?.type !== 'entry') return;

@@ -32,15 +32,59 @@ The implementation plan flags compressed sequential access as a constraint: list
 
 ## Extension development options and setup
 
+### NIfTI editor handoff in 0.8.0
+
+BIDS Explorer can pass loose and extracted NIfTI file URIs to VS Code’s documented custom editor command. The installed NiiVue 2.9.0 manifest declares the `niiVue.default` editor for both NIfTI suffixes. Its documented controls cover slice and volume navigation, windowing, crosshair, layout, and overlays. Keep those controls and viewer state in NiiVue. Keep the dataset tree, file identity, and related metadata in BIDS Explorer. The NiiVue manifest contributes an extension icon and a custom editor. The BIDS tree supplies its own MRI affordance for archived images. [VS Code commands](https://code.visualstudio.com/api/references/commands) · [NiiVue controls](https://github.com/niivue/niivue-vscode#keyboard-shortcuts)
+
+The custom editor contract accepts an image URI and an editor ID. The installed viewer exposes no documented cross-extension contract for setting a frame, consuming an event time, or moving the crosshair in a named image space. Opening the related file is the supported starting point. A future coordination test needs to agree on original and extracted image identity, the frame/time mapping, and voxel versus world coordinates before adding any synchronization.
+
 ### Progressive NIfTI loading: revisit with NiiVue integration
 
-Recorded November 3, 2026, during the authorized Remote SSH MRI smoke test. The current BIDS Explorer handoff does not implement image streaming or an image-byte cache. Dataset-tree laziness and cached directory listings are separate from progressive voxel loading.
+Recorded November 3, 2026, during the authorized Remote SSH MRI smoke test. The ordinary handoff to the standalone editor delegates image loading to that editor. Dataset-tree laziness and cached directory listings are separate from progressive voxel loading.
 
 - Header-first inspection is feasible: the [NIfTI layout](https://nifti.nimh.nih.gov/nifti-1/documentation/faq/index.html) separates header information from voxel data using an offset. For compressed files, read only a bounded decompressed prefix when inspecting headers.
 - NiiVue's library documents limited initial 4D loading through `limitFrames4D`, followed by [loading deferred volumes](https://niivue.com/docs/api/niivue/classes/Niivue/#loaddeferred4dvolumes). Treat initial volumes, later volumes, spatial slices and multiresolution detail as different capabilities.
 - Ordinary `.nii` allows offset-based reads if the transport and viewer support them. Ordinary `.nii.gz` generally needs sequential decompression to reach later data; early-prefix loading can still stop before the full file. Do not assume arbitrary compressed byte ranges correspond to voxel ranges, or that every partial loader supports every NIfTI variant.
-- Static inspection of installed NiiVue VS Code 2.9.0 found `limitFrames4D` in its bundled library, but no exposure in its extension-host wrapper. This is an observation about that installed build, not a supported cross-extension API or a guarantee about newer releases. The current handoff must not claim progressive loading.
-- For the in-workspace NIfTI path inspected in that build, NiiVue uses VS Code's `asWebviewUri`; other paths/formats can use `workspace.fs.readFile`. Preserve supported VS Code Remote SSH resource handling rather than adding a parallel SSH transport. Range handling, early cancellation and transferred-byte savings through this resource path remain unmeasured.
+- Static inspection of installed NiiVue VS Code 2.9.0 found `limitFrames4D` in its bundled library, but no exposure in its extension-host wrapper. This is an observation about that installed build, not a supported cross-extension API or a guarantee about newer releases. That ordinary handoff provides no control over when the first frame appears.
+- For the in-workspace NIfTI path inspected in that build, NiiVue uses VS Code's `asWebviewUri`; other paths/formats can use `workspace.fs.readFile`. Preserve supported VS Code Remote SSH resource handling rather than adding a parallel SSH transport. Current VS Code source handles byte ranges and cancels Electron resource streams. That establishes an implementation path to test over Remote SSH. Range handling on the minimum supported VS Code version remains unmeasured. [VS Code webview resource loader](https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/webview/browser/webviewElement.ts)
+
+A November 6, 2026 probe used VS Code 1.145.2 over Remote SSH to Rorqual, with an instrumented copy of NiiVue VS Code 2.9.0 and synthetic 128 × 128 × 64 × 64 int16 NIfTI-1 data. The two files were about 128 MiB each. NiiVue opened both through the webview resource URL. Each run made one request with no Range header, got HTTP 200, and had all 64 frames and 128 MiB of decoded voxel data when its load promise resolved. No initial frame limit was set.
+
+| Format    | First measured open | Repeat open | Frames at load completion |
+| --------- | ------------------- | ----------- | ------------------------- |
+| `.nii`    | 1.08 s              | 0.57 s      | 64 of 64                  |
+| `.nii.gz` | 11.87 s             | 0.62 s      | 64 of 64                  |
+
+These timings run from the editor open command to the completion report. They include editor startup and do not measure first paint. This is one sequence with uncontrolled filesystem and webview caches. The synthetic data was deliberately high entropy, so the gzip file was about the same size as the uncompressed file. The probe observed requests, responses and decoded voxel bytes. It did not measure SSH wire bytes, peak memory or GPU residency.
+
+A separate probe from the same Remote SSH webview requested bytes 0–351. VS Code returned HTTP 206 with exactly 352 bytes for both URLs. For `.nii`, those bytes contain the NIfTI header and extension flag. For `.nii.gz`, they are compressed bytes and still need decompression. This confirms range support on the tested VS Code version. NiiVue did not use that range path during ordinary opening.
+
+A follow-up on the same fixtures set `limitFrames4D = 1` in the disposable viewer copy, then called `loadDeferred4DVolumes`. Both formats initially loaded 1 of 64 frames and held 2 MiB of decoded voxels. The deferred call loaded all 64 frames and brought decoded voxel data to 128 MiB.
+
+| Format    | Initial viewer load | Deferred viewer load | Initial HTTP requests |
+| --------- | ------------------- | -------------------- | --------------------- |
+| `.nii`    | 160 ms              | 559 ms               | 1                     |
+| `.nii.gz` | 242 ms              | 699 ms               | 3                     |
+
+Each request returned HTTP 200 without a Range header. Each deferred call issued a new request for the same URL. These are viewer load timings from a single follow-up after prior opens, excluding editor startup. The probe did not measure first paint or bytes transferred, so it establishes staged decoding on these fixtures rather than a cold-open speedup or network savings. The production editor handoff still opens the full image.
+
+#### First frame and SSH traffic on a 512 MiB image
+
+A larger Rorqual probe used an uncompressed synthetic NIfTI-1 file with 256 int16 frames at 128 × 128 × 64 voxels each. It used the same VS Code and NiiVue versions. The display marker was the second browser animation callback after drawing, timed from the editor open command. SSH measurements are approximate inbound TCP payload deltas from macOS `nettop` on the Rorqual socket. The socket was shared with other VS Code windows and occasional log reads. Idle traffic was small relative to the image transfers. Distinct file URLs pointed at the same source bytes. These are single runs with uncontrolled caches.
+
+- An ordinary full open reached the display marker in 48.1 s after receiving about 514 MiB over SSH.
+- With the one-frame limit and no follow-up request, the marker arrived in 1.0 s. Samples bracketing the marker showed roughly 2–5 MiB received, but the connection continued receiving data after the preview and settled at about 514 MiB. The viewer still held only the first frame.
+- In a separate attempt, calling the ordinary deferred loader after an eight-second pause triggered a second request that returned HTTP 408. The socket received about 1,027 MiB before returning to idle. Socket counters cannot attribute those bytes to individual HTTP requests.
+
+A disposable viewer probe split the original response stream inside the webview. One branch supplied the first frame, and the other immediately continued into the full loader after the display marker. It reached the first-frame marker in 1.03 s, with about 6 MiB received by the next socket sample. All 256 frames were ready at 48.23 s. The browser made one HTTP 200 request without a Range header, and about 514 MiB crossed the SSH socket in total. This demonstrated a faster first display with the same overall transfer on this uncompressed fixture. The prototype used fetch instrumentation in a viewer copy. It did not change BIDS Explorer or the installed viewer, and peak memory remains unmeasured.
+
+The gzip follow-up used the same 256 frames. The webview decompressed the incoming response once before splitting the decoded stream. The first-frame marker arrived in 0.71 s, after 2.19 MiB of compressed data had reached the decoder. The first SSH socket sample after the marker showed about 8.1 MiB received since opening, including data that arrived after the marker. All 256 frames were ready at 46.04 s, and the first 64 voxel values matched the preview. One HTTP 200 request delivered the entire 537,034,280-byte gzip payload, and the SSH socket received about 514.3 MiB. The deliberately high-entropy synthetic data compressed poorly, so these figures do not estimate typical gzip file sizes. This was a single run in the disposable viewer.
+
+The 0.8.0 progressive viewer pins the stable NiiVue library at `0.69.0`. BIDS Explorer reads one webview resource response, decompresses gzip in the webview, and uses the public NiiVue buffer loader for the first frame and the complete volume. The standalone editor is still available through the editor picker. [NiiVue volume loading API](https://niivue.com/docs/loading/)
+
+The packaged implementation passed the VS Code 1.96 extension-host test with synthetic `.nii` and `.nii.gz` images. A separate Rorqual smoke test on the large gzip fixture observed the first-frame status at 3.9 s and all 256 frames at 49.0 s from the open command. The smoke harness polled viewer status, so these figures include viewer startup and polling delay. Its purpose was to verify the packaged viewer over SSH.
+
+The published `1.0.0-rc.109` adds WebGPU alongside WebGL2 and exposes chunk sources and GPU memory budgets for spatial streaming. Its public streaming image specification describes a three-dimensional grid and an application-supplied chunk source. The 0.8.0 path uses a sequential NIfTI response and preserves the file geometry. No side-by-side rendering benchmark has established a speed advantage for the release candidate on this path. [NiiVue monorepo](https://github.com/niivue/mono) · [Published release candidate](https://www.npmjs.com/package/@niivue/niivue/v/1.0.0-rc.109)
 
 When revisiting integration, verify the installed viewer's public configuration/API and exact library version. Compare header-first metadata, limited initial 4D volumes and any supported chunked/multiresolution alternatives using real 3D and 4D fixtures. Measure bytes transferred, time to first useful image, deferred-load latency, memory and cancellation separately under cold and warm conditions. Keep source files unchanged; any derived previews or indexes need explicit provenance and bounded storage outside datasets. Do not use private webview/Preact instrumentation as a production integration.
 

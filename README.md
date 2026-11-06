@@ -6,7 +6,7 @@ Version 0.5.0 adds SquashFS inspection, paging in both directions in the logical
 
 Version 0.6.0 reuses completed ZIP and tar inventories across reloads and Remote SSH reconnects. Inventories are stored on the workspace host and checked against the archive before use.
 
-**Status: `0.7.0` is a local release tagged `v0.7.0`.**
+**Status: `0.8.0` is a local release tagged `v0.8.0`.**
 
 Expand **Participant Data** under a participant in BIDS Explorer. It shows **Raw** and matching pipelines from the same dataset’s `derivatives/` folder. Uninspected branches are reported, and the original tree remains available for browsing by pipeline.
 
@@ -21,6 +21,10 @@ To include a separately registered derivative dataset in **Participant Data** an
 ```
 
 Choose **Show Participant Availability** on a dataset to open a read-only grid for the registered dataset. Each participant has one row. Each session gets a Raw column and, when pipelines are present, a Derivatives column listing modalities by pipeline. Select the raw sessions you require and optionally require derivative output from a particular pipeline, session or modality. Choose **Apply filters** to find confirmed matches across the indexed raw dataset and its linked derivatives. Linked pipelines display their dataset URI. Results show 50 participants per page. Choose **By modality** to browse matches with confirmed data for one modality, or **By pipeline** to browse one pipeline’s outputs by session. Both views apply the current participant filters. The initial scan follows source pages in the background. You can cancel or refresh it from the grid. For SquashFS collections, completed indexes are cached on the workspace host and reused after reconnecting while the shard files have the same revisions. Linked indexes are cached when every linked source is a SquashFS collection. If a scan encounters read failures, the cached results keep their partial coverage warning. Use **Refresh snapshot** to retry those reads. Partial coverage means additional participants may match. The grid marks incomplete checks separately from missing data. Select a participant in the grid to locate them in BIDS Explorer.
+
+Right-click a NIfTI file and choose **Open Image With** to use the configured editor, select NiiVue when installed, or enter another custom editor’s view ID. Archived images are extracted to private storage on the workspace host before opening. Close viewers in every window using the workspace before clearing the extracted image cache.
+
+Choose **BIDS Explorer · Progressive NIfTI** in that picker to show the first frame of a 4D `.nii` or `.nii.gz` while the remaining frames arrive over the same request. The frame control becomes available when the image finishes loading. The preview has a 128 MiB first-frame budget and the viewer accepts up to 1 GiB of decoded image data. For archived images, loading starts after extraction.
 
 ## Available today
 
@@ -165,7 +169,7 @@ Click a `.nii` or `.nii.gz` entry in the logical tree to open it with your confi
 
 Selected images are limited to 512 MiB per ZIP member. The private cache is limited to 2 GiB and 128 artifact directories per workspace; completed files remain available across extension reloads and are never automatically evicted from an active viewer. To reclaim space, close all editor/viewer tabs in that window and run **BIDS Explorer: Clear Extracted Image Cache**. Failed/cancelled reads remove their partial output. Storage includes any incomplete artifacts left by an interrupted host; limits may require explicit clearing before another image opens.
 
-ZIP member reading supports unencrypted stored/Deflate members and rejects links, special members, unsafe paths and excessive compression ratios. This is selected-file extraction, not progressive NIfTI loading or whole-dataset unpacking. The viewer may buffer the complete selected image.
+ZIP member reading supports unencrypted stored/Deflate members and rejects links, special members, unsafe paths and excessive compression ratios. The progressive viewer starts reading once the selected member has been extracted.
 
 ## Requirements and data handling
 

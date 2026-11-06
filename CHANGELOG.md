@@ -1,8 +1,16 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.7.0` is a local tagged release (`v0.7.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.8.0` is a local tagged release (`v0.8.0`).
 
 ## Unreleased
+
+## [0.8.0] - 2026-11-06
+
+- Protect extracted images from cache clearing in another VS Code window while the workspace still has them open.
+
+- Open a 4D `.nii` or `.nii.gz` with **Progressive NIfTI** to see its first frame while the remaining frames load from the same request.
+
+- Choose a VS Code editor for loose and archived NIfTI files from the BIDS tree with **Open Image With**. NiiVue appears as a choice when installed.
 
 ## [0.7.0] - 2026-11-06
 

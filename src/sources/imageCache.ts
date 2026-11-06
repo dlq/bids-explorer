@@ -23,6 +23,8 @@ const defaults: ImageCacheLimits = {
 const host = createHash('sha256').update(hostname()).digest('hex').slice(0, 16);
 const ownedPartial = /^partial-([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f-]{36}$/;
 
+const activityOwner = /^(use|clear)-([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f-]{36}$/;
+
 function ownerExited(pid: number): boolean {
   try {
     process.kill(pid, 0);
@@ -51,6 +53,47 @@ export class ArchiveImageCache {
       () => undefined,
     );
     return next;
+  }
+  private async markActivity(kind: 'use' | 'clear') {
+    const directory = this.root + '-activity';
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const stat = await lstat(directory);
+    if (!stat.isDirectory() || stat.isSymbolicLink())
+      throw new Error('Image cache activity must use an ordinary private directory.');
+    const marker = `${kind}-${host}-${process.pid}-${randomUUID()}`;
+    const path = join(directory, marker);
+    await mkdir(path, { mode: 0o700 });
+    return {
+      release: () => rm(path, { recursive: true, force: true }),
+      blocked: async () => {
+        // Publish before checking. An overlapping open or clear must see the other
+        // operation's marker before proceeding, even in a different extension host.
+        for await (const entry of await opendir(directory)) {
+          if (entry.name === marker) continue;
+          const owner = activityOwner.exec(entry.name);
+          if (!owner || !entry.isDirectory())
+            throw new Error('Unexpected entry in image cache activity directory.');
+          if (owner[2] === host && ownerExited(Number(owner[3]))) {
+            await rm(join(directory, entry.name), { recursive: true, force: true });
+          } else if (kind === 'clear' || owner[1] === 'clear') {
+            return true;
+          }
+        }
+        return false;
+      },
+    };
+  }
+  /** Hold from before extraction until the window closes its viewer tabs. */
+  async retain(): Promise<() => Promise<void>> {
+    const activity = await this.markActivity('use');
+    try {
+      if (await activity.blocked())
+        throw new Error('The extracted image cache is being cleared. Try opening the image again.');
+      return activity.release;
+    } catch (error) {
+      await activity.release();
+      throw error;
+    }
   }
   private async inventory(): Promise<{ bytes: number; entries: number }> {
     await mkdir(this.root, { recursive: true, mode: 0o700 });
@@ -101,15 +144,21 @@ export class ArchiveImageCache {
         throw new Error('Archive changed. Refresh the tree before opening the image.');
       const existing = this.completed.get(uri);
       if (existing) {
-        const stat = await lstat(fileURLToPath(existing.uri));
-        if (
-          !stat.isFile() ||
-          stat.isSymbolicLink() ||
-          stat.size !== existing.size ||
-          stat.mtimeMs !== existing.modifiedAt
-        )
-          throw new Error('Extracted image changed. Close editor tabs and clear its cache.');
-        return existing.uri;
+        const stat = await lstat(fileURLToPath(existing.uri)).catch((error: unknown) => {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+          return undefined;
+        });
+        if (stat) {
+          if (
+            !stat.isFile() ||
+            stat.isSymbolicLink() ||
+            stat.size !== existing.size ||
+            stat.mtimeMs !== existing.modifiedAt
+          )
+            throw new Error('Extracted image changed. Close editor tabs and clear its cache.');
+          return existing.uri;
+        }
+        this.completed.delete(uri);
       }
       const inventory = await this.inventory();
       if (inventory.entries >= this.limits.entries)
@@ -172,13 +221,19 @@ export class ArchiveImageCache {
       }
     });
   }
-  /** Host UI must refuse this operation while any editor/viewer tabs remain open. */
-  clear(): Promise<void> {
+  clear(): Promise<boolean> {
     return this.serialize(async () => {
-      await this.inventory();
-      for await (const entry of await opendir(this.root))
-        await rm(join(this.root, entry.name), { recursive: true, force: true });
-      this.completed.clear();
+      const activity = await this.markActivity('clear');
+      try {
+        if (await activity.blocked()) return false;
+        await this.inventory();
+        for await (const entry of await opendir(this.root))
+          await rm(join(this.root, entry.name), { recursive: true, force: true });
+        this.completed.clear();
+        return true;
+      } finally {
+        await activity.release();
+      }
     });
   }
 }
