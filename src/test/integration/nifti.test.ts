@@ -110,8 +110,18 @@ suite('Progressive NIfTI viewer', () => {
           ])
             await panel.webview.postMessage({ type: 'imageControl', control });
           const controlsDeadline = Date.now() + 5000;
-          while (report.display?.frame !== 2 || report.display.colormap !== 'viridis') {
-            assert.ok(Date.now() < controlsDeadline);
+          while (
+            report.display?.frame !== 2 ||
+            report.display.colormap !== 'viridis' ||
+            String(report.display.layout) !== 'axial' ||
+            report.display.minimum !== 10 ||
+            report.display.maximum !== 90 ||
+            report.display.crosshair !== false
+          ) {
+            assert.ok(
+              Date.now() < controlsDeadline,
+              `Image controls did not settle: ${JSON.stringify(report.display)}`,
+            );
             await panel.webview.postMessage('inspect');
             await new Promise((resolve) => setTimeout(resolve, 30));
           }
