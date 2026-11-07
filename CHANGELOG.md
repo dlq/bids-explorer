@@ -1,8 +1,13 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `1.0.0` is a local tagged release (`v1.0.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `1.0.1` is the Marketplace release; `v1.0.0` remains the original development-publisher artifact.
 
 ## Unreleased
+
+## [1.0.1] - 2026-11-07
+
+- Add a five-minute public-data walkthrough, a separately downloadable 13 MB anatomical sample with upstream attribution/provenance, troubleshooting, citation metadata, a pull-request template and scoped roadmap issues.
+- Exercise minimum and current stable VS Code in hosted CI and publishing verification, preserving the required aggregate check and separate coverage reports.
 
 - Update CI actions and the test-runner patch, and separate routine Dependabot updates from major toolchain changes while preserving the supported API/type baselines.
 

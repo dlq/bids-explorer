@@ -95,7 +95,7 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `1.0.0`, tagged locally as `v1.0.0` with public source at [dlq/bids-explorer](https://github.com/dlq/bids-explorer) and no Marketplace publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-1.0.0.vsix` and release tags such as `v1.0.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `1.0.1`, prepared for release as `v1.0.1` with public source at [dlq/bids-explorer](https://github.com/dlq/bids-explorer) and Marketplace automation configured. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-1.0.1.vsix` and release tags such as `v1.0.1`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 
@@ -120,3 +120,5 @@ See [Publishing](PUBLISHING.md) for CodeQL, Dependabot and tagged-release Market
 Dependabot groups development-tool minor/patch updates and routine action minor/patch updates separately. Major toolchain changes and production-library changes remain individual reviews; there is no blanket auto-merge. Keep `@types/vscode` at the minimum supported API version (`1.96.0`) until `engines.vscode` is deliberately raised, and keep Node types on the selected Node 22 toolchain. TypeScript versions `>=6.1.0` are temporarily excluded because the current `typescript-eslint` peer range ends below 6.1; revise that exclusion alongside a compatible parser/toolchain.
 
 The reviewed maintenance update uses the official v7 checkout, setup-node, setup-python and upload-artifact actions, pinned to commit SHAs, and updates `@vscode/test-cli` from 0.0.12 to 0.0.15 (Node 22 or newer). TypeScript 7, ESLint 10, c8 12 and test-electron 3 are not part of this combined update. Require clean installation, coverage, integration, security, packaging and hosted CodeQL/CI before merging.
+
+CI runs the minimum supported VS Code 1.96 and current stable on Linux, alongside quality/package and security jobs. The aggregate `check` status requires quality and both integration jobs to succeed. Separate coverage artifacts identify each version. Publishing verification also runs both versions.

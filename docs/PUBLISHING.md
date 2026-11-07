@@ -27,7 +27,7 @@ The production extension identifier is `MCIN-dlq.bids-explorer`; older developme
 
 ## Release workflow
 
-Use a new patch release containing the MIT license, production publisher and workflow setup; do not change the existing `v1.0.0` tag or its downloadable artifact.
+Version 1.0.1 is the authorized first Marketplace release, containing the MIT license, production publisher and workflow setup. Keep the existing `v1.0.0` tag and development-publisher artifact unchanged.
 
 1. Follow [VERSIONING.md](../VERSIONING.md): update the manifest and lockfile together, update release notes, test and create an authorized `vX.Y.Z` tag on `main`.
 2. Publish a stable GitHub Release for that tag. This starts **Marketplace release**. Publishing a prerelease is deliberately rejected until a separate preview-channel policy is adopted.

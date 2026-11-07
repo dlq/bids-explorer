@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is `1.0.0`, released locally as `v1.0.0`. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); Marketplace publication remains separate. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is `1.0.1`, prepared for the first Marketplace release after the local `v1.0.0` milestone. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -179,7 +179,7 @@ Commit to documented behavior for registering, browsing, inspecting and opening 
 - Automated formatting, type checking, linting, coverage, integration, security and packaging checks pass; remaining limitations and accepted lower-severity dependency findings are documented.
 - Source identities, metadata/absence semantics, resource lifetime and refresh/cancellation behavior are tested and documented.
 - Configuration, persisted registration and cache compatibility policies are documented; migrations or explicit rebuild paths exist where needed.
-- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. Marketplace distribution still requires a production publisher and explicit authorization; a local tag does not authorize publication.
+- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. The production publisher is `MCIN-dlq`, and the user has authorized the first Marketplace publication as 1.0.1. A local tag alone does not publish an extension.
 
 Derivative image overlays and rich comparison scenes, external clinical joins and processing execution are not 1.0 requirements.
 
@@ -219,8 +219,16 @@ Use fast core tests for semantics and identity, extension-host tests for command
 
 The `0.1.0` directory milestone and early authorized Remote SSH smoke test are complete; evidence and limits are in [milestone validation](docs/MILESTONE_0.1.0.md). The first `0.2.0` literal metadata slice is implemented. Entity evidence/conflict rules are now implemented. Selected-file JSON inheritance and DWI companion resolution now have an initial explicit report. Bounded participant/session/scan previews are implemented, including quoted TSV, correct identifier columns, source-backed dictionary records and explicit snapshots. Session/scan dictionaries now use the inheritance resolver. The readable inspector, source actions, inherited-gradient opening and history view now complete the agreed feature scope. The local `v0.2.0` release established the metadata foundation for ZIP and declared collections in `v0.3.0`. Metadata tree descriptions are implemented for dataset/pipeline names, task NIfTI files and explicitly mapped participant/session columns. Broader relationships remain planned; keep lexical entity evidence separate from metadata applicability. Continue to distinguish this bounded smoke test from broader remote compatibility, reconnect behavior, persistent indexing and archive support.
 
-When the GitHub repository is created, enable the repository controls listed in [SECURITY.md](SECURITY.md). When it is pushed, add `CONTRIBUTING.md` covering development setup, tests, pull requests and changelog expectations.
+The public GitHub repository has the controls described in [SECURITY.md](SECURITY.md), plus [CONTRIBUTING.md](CONTRIBUTING.md), issue forms and a pull-request template. CI tests the minimum supported and current stable VS Code versions.
 
-Workflow execution, Slurm submission, a custom renderer and automatic Marketplace publishing are outside this plan's initial scope.
+Workflow execution, Slurm submission and a custom renderer remain outside the supported core. Authorized stable GitHub Releases now trigger the verified Marketplace publishing workflow; ordinary pushes do not publish.
 
 Post-preparation feedback: simplified readable tree hovers, added literal JSON-sidecar/dictionary previewing by default in the BIDS tree, and added bounded event-table previews. Event plotting and image/run association remain separate work. These feedback changes are included in the final local `v0.2.0` release.
+
+## Actionable follow-up issues
+
+- [Recorded field-map target navigation (#14)](https://github.com/dlq/bids-explorer/issues/14): source-backed links with explicit ambiguity and coverage.
+- [Large participant/event-table paging (#15)](https://github.com/dlq/bids-explorer/issues/15): bounded reading/indexing without changing small-table behavior.
+- [Explicit read-only BIDS validation (#16)](https://github.com/dlq/bids-explorer/issues/16): separate user action, never automatic fixes during exploration.
+
+These issues specify future work and acceptance criteria; they do not authorize dataset changes or assign release dates.

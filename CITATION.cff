@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: If BIDS Explorer supports your research, please cite the software version you used and cite the datasets and relevant methods separately.
+type: software
+title: BIDS Explorer
+abstract: Read-only exploration of BIDS neuroimaging studies in Visual Studio Code, including local and SSH-hosted directories, ZIP, tarballs and SquashFS collections, metadata previews and NIfTI viewing.
+authors:
+  - family-names: Quesnel
+    given-names: Darcy
+version: 1.0.1
+date-released: '2026-11-07'
+license: MIT
+repository-code: https://github.com/dlq/bids-explorer
+url: https://github.com/dlq/bids-explorer
+keywords:
+  - BIDS
+  - neuroimaging
+  - NIfTI
+  - Visual Studio Code
+  - scientific visualization

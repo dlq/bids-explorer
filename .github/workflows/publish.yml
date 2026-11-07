@@ -76,7 +76,10 @@ jobs:
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run check
-      - run: xvfb-run -a npm run test:integration
+      - name: Test minimum supported VS Code
+        run: xvfb-run -a npm run test:integration
+      - name: Test current stable VS Code
+        run: xvfb-run -a npm run test:integration -- --code-version stable
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.12'
