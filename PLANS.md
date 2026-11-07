@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is `1.0.1`, published as the first Marketplace release after the local `v1.0.0` milestone. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is `1.0.1`, released on GitHub and uploaded for the first Marketplace release (verification pending) after the local `v1.0.0` milestone. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -179,7 +179,7 @@ Commit to documented behavior for registering, browsing, inspecting and opening 
 - Automated formatting, type checking, linting, coverage, integration, security and packaging checks pass; remaining limitations and accepted lower-severity dependency findings are documented.
 - Source identities, metadata/absence semantics, resource lifetime and refresh/cancellation behavior are tested and documented.
 - Configuration, persisted registration and cache compatibility policies are documented; migrations or explicit rebuild paths exist where needed.
-- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. The production publisher is `MCIN-dlq`, and version 1.0.1 is published on the Marketplace. A local tag alone does not publish an extension.
+- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. The production publisher is `MCIN-dlq`, and version 1.0.1 has been uploaded and awaits Microsoft verification. A local tag alone does not publish an extension.
 
 Derivative image overlays and rich comparison scenes, external clinical joins and processing execution are not 1.0 requirements.
 
