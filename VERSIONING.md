@@ -33,7 +33,7 @@ Local development builds can share the unreleased manifest version. Use their co
 3. Move the implemented Unreleased entries into a dated release heading. Leave a new Unreleased section for subsequent work. Update status/support documentation and clearly identify preview limitations.
 4. Run `npm ci`, `npm run check`, `npm run test:integration`, `npm run security`, `npm audit --audit-level=high` and `npm run package`. Complete the required manual/SSH/compatibility validation. Verify the VSIX's manifest version and filename agree and inspect its contents.
 5. Commit the release preparation. When release publication is authorized, tag that commit `vX.Y.Z` and attach the matching VSIX and release notes to the GitHub release. Do not create a tag or publish merely by following ordinary development instructions.
-6. If Marketplace publication is authorized and configured, publish the same tested version/artifact using the selected channel. Publisher, license, repository/security settings and release credentials must be settled first. No automatic publication is configured today.
+6. If Marketplace publication is authorized and configured, publish the same tested version/artifact using the selected channel. Publisher, license, repository/security settings and release credentials must be settled first. The [Marketplace workflow](docs/PUBLISHING.md) verifies stable tagged releases and publishes the tested artifact with OIDC once publisher setup is complete. Ordinary pushes do not publish.
 
 CI builds versioned VSIX artifacts on ordinary changes too. Those are CI build outputs, not releases; tagging and distribution remain explicit actions.
 

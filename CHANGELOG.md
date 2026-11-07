@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Add hosted CodeQL analysis and a tagged-release Marketplace publishing workflow using OIDC Trusted Publishing; upgrade the development-only packaging tool to support it. Publisher account setup remains required.
+
 - License BIDS Explorer under MIT, include the license in future packages and retain third-party notices.
 
 - Add a study-focused README, public-data screenshot, downloadable release instructions and issue forms. Fix VSIX packaging by recording the public repository URL.
