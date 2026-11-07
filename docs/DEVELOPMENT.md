@@ -122,3 +122,5 @@ Dependabot groups development-tool minor/patch updates and routine action minor/
 The reviewed maintenance update uses the official v7 checkout, setup-node, setup-python and upload-artifact actions, pinned to commit SHAs, and updates `@vscode/test-cli` from 0.0.12 to 0.0.15 (Node 22 or newer). TypeScript 7, ESLint 10, c8 12 and test-electron 3 are not part of this combined update. Require clean installation, coverage, integration, security, packaging and hosted CodeQL/CI before merging.
 
 CI runs the minimum supported VS Code 1.96 and current stable on Linux, alongside quality/package and security jobs. The aggregate `check` status requires quality and both integration jobs to succeed. Separate coverage artifacts identify each version. Publishing verification also runs both versions.
+
+Headless CI sets `BIDS_EXPLORER_TEST_SOFTWARE_WEBGL=1` to launch only the disposable test host with Chromium’s [SwiftShader WebGL flags](https://chromium.googlesource.com/chromium/src/+/main/docs/gpu/swiftshader.md). This explicit software-rendering opt-in is for trusted test content on GPU-less runners; it does not change the installed extension or normal VS Code launches.

@@ -12,7 +12,7 @@ Both installed versions also exercised the separately distributed public sample:
 
 The same locally built VSIX passed the seven synthetic image, five metadata-source and seven sidebar cases in an isolated Remote SSH window on Rorqual using VS Code 1.145.2. This smoke test used synthetic temporary data; it did not access research datasets.
 
-`CITATION.cff` passed the Citation File Format 1.2.0 validator. The changed GitHub workflows passed actionlint. Hosted CI adds separate minimum/current-stable integration jobs and keeps the required aggregate `check` status.
+`CITATION.cff` passed the Citation File Format 1.2.0 validator. The changed GitHub workflows passed actionlint. Current stable initially failed on the GPU-less runner because WebGL2 was unavailable. The disposable test host now explicitly opts into SwiftShader for trusted synthetic fixtures; normal extension launches are unchanged. Hosted CI adds separate minimum/current-stable integration jobs and keeps the required aggregate `check` status.
 
 ## Distribution gate and limits
 

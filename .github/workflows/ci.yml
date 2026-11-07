@@ -5,6 +5,8 @@ on:
   pull_request:
 permissions:
   contents: read
+env:
+  BIDS_EXPLORER_TEST_SOFTWARE_WEBGL: '1'
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
