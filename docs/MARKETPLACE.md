@@ -16,6 +16,8 @@ You need desktop [Visual Studio Code](https://code.visualstudio.com/) **1.96 or 
 
 If you previously installed a development VSIX published as `bids-explorer-dev`, disable or uninstall that copy before using this one. VS Code treats these as different extensions; manual dataset registrations may need to be added again. Your dataset files are unaffected.
 
+**New to BIDS Explorer?** Follow the [five-minute walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/QUICKSTART.md) with a ready-to-open 13 MB public sample. No programming or terminal setup is required.
+
 ## Open your first study
 
 1. In VS Code, choose **File → Open Folder…** and select the study’s top-level folder—the one that normally contains `dataset_description.json` and the participant folders.
@@ -89,6 +91,8 @@ Add or open the folder containing your archives. Supported sources can contribut
 
 Large collections may need an initial index. Selected archived images are prepared in a private cache before viewing; a tarball may require a sequential scan. Unsupported compression is reported explicitly. NIfTI viewing currently has a 1 GiB decoded-data limit, and selected archive image extraction has a 512 MiB limit. Metadata and table previews are bounded snapshots rather than unlimited table readers. See [format, size and platform details](https://github.com/dlq/bids-explorer/blob/main/docs/COMPATIBILITY.md).
 
+For fuller recovery instructions, see [Troubleshooting](https://github.com/dlq/bids-explorer/blob/main/docs/TROUBLESHOOTING.md).
+
 ## If something does not appear or open
 
 | What you see                                    | What to try                                                                                                                         |
@@ -121,3 +125,5 @@ This extension does not currently validate or fix BIDS conformance, rename or re
 - [Private security reporting](https://github.com/dlq/bids-explorer/security/advisories/new), [release notes](https://github.com/dlq/bids-explorer/blob/main/CHANGELOG.md) and [planned work](https://github.com/dlq/bids-explorer/blob/main/PLANS.md).
 
 BIDS Explorer is [MIT-licensed](https://github.com/dlq/bids-explorer/blob/main/LICENSE). Image rendering uses the bundled [NiiVue](https://github.com/niivue/niivue) library. Dependencies and datasets retain their own licenses; see [third-party notices](https://github.com/dlq/bids-explorer/blob/main/THIRD_PARTY_NOTICES.txt).
+
+To acknowledge the software in research, use [citation information](https://github.com/dlq/bids-explorer/blob/main/CITATION.cff) for the version you used, and cite datasets and methods separately.

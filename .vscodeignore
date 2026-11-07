@@ -41,3 +41,6 @@ tsconfig.webview.json
 
 # Use the dedicated getting-started guide as the packaged Marketplace README.
 README.md
+
+# Citation metadata is available through the public repository.
+CITATION.cff

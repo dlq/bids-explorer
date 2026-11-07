@@ -48,7 +48,7 @@ Entity tests cover canonical/sessionless/combined layouts, filename-only session
 
 Real SSH tests and private datasets are explicit opt-ins. Ordinary tests must not read `.local/strata-test-context.json`, initiate SSH, require credentials or depend on private data. Use synthetic datasets on authorized hosts for remote smoke tests, disconnections, missing tools and host execution checks.
 
-Before release, validate minimum and current supported VS Code versions and supported host platforms. CI currently uses Linux and VS Code 1.96; broaden that matrix as adapters and host dependencies land.
+Before release, validate minimum and current supported VS Code versions and supported host platforms. CI uses Linux with both VS Code 1.96 and current stable. The aggregate check requires both integration versions and the separate quality/package job to pass; unit and per-version integration coverage reports are uploaded separately.
 
 Keep large generated fixtures outside Git. Measure enumeration, indexing, publication, extraction, transfer and opening separately. Define repeatable workload and responsiveness budgets before adding performance gates; avoid timing assertions on shared CI runners without a reliable baseline. Verify that cached browsing stays usable while other scopes index.
 

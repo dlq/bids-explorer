@@ -14,8 +14,12 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) and [PLANS.md](PLANS.m
 
 Run `npm run check`, `npm run test:integration` and `npm run security` for code changes. Add meaningful regression tests and preserve the per-file coverage gate. Use `npm run format` and `npm run lint:fix` for formatting and lint fixes. Keep SSH/private-data tests opt-in and keep datasets, credentials and caches outside the repository.
 
-Open a pull request with the problem, resulting behavior and verification performed. Record notable user-visible changes under Unreleased in [CHANGELOG.md](CHANGELOG.md). Do not bump versions or move release tags for routine changes. Preserve imported benchmark evidence verbatim.
+Open a pull request using the repository template, with the problem, resulting behavior and verification performed. Record notable user-visible changes under Unreleased in [CHANGELOG.md](CHANGELOG.md). Do not bump versions or move release tags for routine changes. Preserve imported benchmark evidence verbatim.
 
 ## License
 
 BIDS Explorer uses the [MIT license](LICENSE). Contributions intended for inclusion in the project are submitted under the same license. Only contribute material you have permission to license this way. Bundled dependencies retain their own licenses; see [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
+## Cite the software
+
+[CITATION.cff](CITATION.cff) records the author, version, license and repository URL. Update its version and release date during an authorized release. Do not invent an ORCID, publication or DOI.

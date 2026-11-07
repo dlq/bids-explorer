@@ -4,7 +4,7 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 
 ## Open a study
 
-1. In desktop VS Code 1.96 or newer, install the extension from a supplied VSIX using **Extensions: Install from VSIX**. Download the extension from the [1.0.0 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.0).
+1. In desktop VS Code 1.96 or newer, install [BIDS Explorer](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer) from the Extensions view. Alternatively, use **Extensions: Install from VSIX** with the package from the [1.0.1 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.1).
 2. Open a study folder you trust. For a study on a server, connect with VS Code Remote SSH, then open the study folder on that server and install BIDS Explorer on the connected host.
 3. In the **Explorer** sidebar, expand **BIDS**. A folder with a root-level `dataset_description.json` appears automatically. If it doesn’t appear, use **Add Dataset** and select the folder.
 4. Expand a participant, then a session and modality. Click a file to open its preview. The regular **File Explorer** still shows the physical folder layout.
@@ -51,3 +51,5 @@ Browsing is read-only. Saving changes in a regular editor is a separate action. 
 ## Source and feedback
 
 Source code and issue tracking are at [dlq/bids-explorer](https://github.com/dlq/bids-explorer). See [CONTRIBUTING.md](../CONTRIBUTING.md) to contribute and [SECURITY.md](../SECURITY.md) for private vulnerability reporting. BIDS Explorer is available under the [MIT license](../LICENSE). Marketplace publication remains separate.
+
+New users can start with the [five-minute public-data walkthrough](QUICKSTART.md). Use [Troubleshooting](TROUBLESHOOTING.md) for setup and recovery, and [citation metadata](../CITATION.cff) to acknowledge the software version used in research.

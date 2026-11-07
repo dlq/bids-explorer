@@ -26,6 +26,10 @@ export default defineConfig({
   launchArgs: [
     '--user-data-dir=' + join(temporary, 'user-data'),
     '--extensions-dir=' + join(temporary, 'extensions'),
+    // Headless CI has no GPU; opt in only for trusted synthetic test content.
+    ...(process.env.BIDS_EXPLORER_TEST_SOFTWARE_WEBGL === '1'
+      ? ['--use-gl=angle', '--use-angle=swiftshader-webgl', '--enable-unsafe-swiftshader']
+      : []),
     '--disable-extensions',
     '--skip-welcome',
     '--skip-release-notes',

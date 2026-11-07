@@ -21,13 +21,15 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 ## Install and open your first study
 
 1. Install [desktop VS Code](https://code.visualstudio.com/) 1.96 or newer.
-2. [Download BIDS Explorer 1.0.0](https://github.com/dlq/bids-explorer/releases/download/v1.0.0/bids-explorer-1.0.0.vsix). In VS Code, open **Extensions**, choose **… → Install from VSIX…**, and select the downloaded file. A VSIX is the extension’s installation package.
+2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [1.0.1 VSIX](https://github.com/dlq/bids-explorer/releases/download/v1.0.1/bids-explorer-1.0.1.vsix) with **Extensions → … → Install from VSIX…**.
 3. Open a study folder you trust. In the **Explorer** sidebar, expand **BIDS**. A folder containing `dataset_description.json` appears automatically; otherwise choose **Add Dataset**.
 4. Expand a participant, session and modality, then select a scan. Choose **Image controls** to show its parameters and viewing controls.
 
-For a study on a server, first connect using [VS Code Remote SSH](https://code.visualstudio.com/docs/remote/ssh), open the server’s study folder, and install BIDS Explorer on the connected host. The same BIDS view works there.
+**Try it first:** the [five-minute walkthrough](docs/QUICKSTART.md) uses a ready-to-open 13 MB public anatomical sample and requires no terminal commands.
 
-To place image controls on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
+For a study on a server, first connect using [VS Code Remote SSH](https://code.visualstudio.com/docs/remote/ssh), open the server’s study folder, and install BIDS Explorer on the connected host. To place image controls on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**.
+
+Older development copies used publisher `bids-explorer-dev`. Disable that copy before installing the production extension to avoid duplicate commands; manual dataset registrations may need to be recreated. Dataset files are unchanged.
 
 ## What to expect
 
@@ -41,9 +43,14 @@ For a complete first-use walkthrough, see the [Marketplace getting-started guide
 
 ## Help and feedback
 
+- [Troubleshooting](docs/TROUBLESHOOTING.md): missing studies, SSH/MFA, archives, image loading and caches.
 - [User guide](docs/USER_GUIDE.md): metadata, tables, derivatives, keyboard navigation and viewing controls.
 - [Explorer reference](docs/EXPLORER_REFERENCE.md): detailed behavior, source collections and troubleshooting.
 - [Report a problem or suggest an improvement](https://github.com/dlq/bids-explorer/issues/new/choose): omit private participant information, dataset paths and sensitive screenshots.
 - [Contributing](CONTRIBUTING.md) · [Development setup](docs/DEVELOPMENT.md) · [Release notes](CHANGELOG.md) · [Roadmap](PLANS.md) · [Security reporting](SECURITY.md).
 
-BIDS Explorer is available under the [MIT license](LICENSE). BIDS Explorer is distributed here as a VSIX and is not yet on the VS Code Marketplace. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+BIDS Explorer is available under the [MIT license](LICENSE). BIDS Explorer is distributed through the Marketplace and GitHub releases. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
+## Citation
+
+If BIDS Explorer supports your research, use [CITATION.cff](CITATION.cff) or GitHub’s **Cite this repository** control to cite the version you used. Cite datasets and relevant methods separately. A software DOI has not been assigned.
