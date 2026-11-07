@@ -410,5 +410,16 @@
     "url": "https://github.com/dlq/bids-explorer/issues"
   },
   "homepage": "https://github.com/dlq/bids-explorer#readme",
-  "license": "MIT"
+  "license": "MIT",
+  "vsce": {
+    "readmePath": "docs/MARKETPLACE.md"
+  },
+  "keywords": [
+    "BIDS",
+    "neuroimaging",
+    "MRI",
+    "NIfTI",
+    "SSH",
+    "SquashFS"
+  ]
 }

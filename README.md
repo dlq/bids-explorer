@@ -37,6 +37,8 @@ Archive support has compression and size limits. Large collections may need an i
 
 The current release explores data without validating, renaming or restructuring it. Image overlays, such as displaying a segmentation over an anatomical reference, are planned for later. Opening an original file in a regular editor is a separate action that can allow edits.
 
+For a complete first-use walkthrough, see the [Marketplace getting-started guide](docs/MARKETPLACE.md), which is bundled with the extension.
+
 ## Help and feedback
 
 - [User guide](docs/USER_GUIDE.md): metadata, tables, derivatives, keyboard navigation and viewing controls.

@@ -48,3 +48,7 @@ Official actions in the new workflows are pinned to commit SHAs with version com
 ## Initial CodeQL findings
 
 The first extended scan reported ten alerts: six webview message-origin checks, one guarded archive-open race warning, and three test/fixture warnings. They remain open for review; successful analysis is not a clean security review. Triage these before the first Marketplace release.
+
+## Marketplace page content
+
+`package.json` configures `vsce.readmePath` as `docs/MARKETPLACE.md`. That getting-started guide becomes the VSIX `extension/readme.md` and the Marketplace description; the shorter root README remains the GitHub landing page. Its links and image use public HTTPS URLs. Inspect the packaged README before releasing. Marketplace changes take effect when a new package is published; editing GitHub alone does not update an existing listing.

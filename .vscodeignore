@@ -38,3 +38,6 @@ coverage/**
 SECURITY.md
 VERSIONING.md
 tsconfig.webview.json
+
+# Use the dedicated getting-started guide as the packaged Marketplace README.
+README.md
