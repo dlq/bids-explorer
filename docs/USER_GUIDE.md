@@ -50,4 +50,4 @@ Browsing is read-only. Saving changes in a regular editor is a separate action. 
 
 ## Source and feedback
 
-Source code and issue tracking are at [dlq/bids-explorer](https://github.com/dlq/bids-explorer). See [CONTRIBUTING.md](../CONTRIBUTING.md) to contribute and [SECURITY.md](../SECURITY.md) for private vulnerability reporting. A project license has not yet been selected. Marketplace publication remains separate.
+Source code and issue tracking are at [dlq/bids-explorer](https://github.com/dlq/bids-explorer). See [CONTRIBUTING.md](../CONTRIBUTING.md) to contribute and [SECURITY.md](../SECURITY.md) for private vulnerability reporting. BIDS Explorer is available under the [MIT license](../LICENSE). Marketplace publication remains separate.

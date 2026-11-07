@@ -44,4 +44,4 @@ The current release explores data without validating, renaming or restructuring 
 - [Report a problem or suggest an improvement](https://github.com/dlq/bids-explorer/issues/new/choose): omit private participant information, dataset paths and sensitive screenshots.
 - [Contributing](CONTRIBUTING.md) · [Development setup](docs/DEVELOPMENT.md) · [Release notes](CHANGELOG.md) · [Roadmap](PLANS.md) · [Security reporting](SECURITY.md).
 
-Source is public; a project license has not yet been selected. BIDS Explorer is distributed here as a VSIX and is not yet on the VS Code Marketplace. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+BIDS Explorer is available under the [MIT license](LICENSE). BIDS Explorer is distributed here as a VSIX and is not yet on the VS Code Marketplace. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).

@@ -16,6 +16,6 @@ Run `npm run check`, `npm run test:integration` and `npm run security` for code 
 
 Open a pull request with the problem, resulting behavior and verification performed. Record notable user-visible changes under Unreleased in [CHANGELOG.md](CHANGELOG.md). Do not bump versions or move release tags for routine changes. Preserve imported benchmark evidence verbatim.
 
-## License status
+## License
 
-A project license has not yet been selected. Public source availability does not grant an open-source license. Resolve licensing with the maintainer before submitting substantial contributions. Bundled dependencies retain their own licenses; see [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+BIDS Explorer uses the [MIT license](LICENSE). Contributions intended for inclusion in the project are submitted under the same license. Only contribute material you have permission to license this way. Bundled dependencies retain their own licenses; see [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).

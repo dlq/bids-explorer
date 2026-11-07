@@ -6,7 +6,7 @@ Working plan, November 3, 2026. Update this as implementation reveals constraint
 
 Make a VS Code extension for exploring BIDS datasets locally and over SSH, in ordinary directories, ZIP archives, tarballs and SquashFS images. Navigation and dataset context are the product; visualization is optional.
 
-The implementation supports read-only exploration of ordinary directories, ZIP, POSIX ustar/gzip tarballs and SquashFS with documented compression limits, locally and through VS Code Remote SSH. Logical browsing preserves physical source identity, explicit raw/derivative links and partial coverage. Selected-file metadata inheritance, bounded tables and gradients, persistent ZIP/tar inventories and SquashFS availability snapshots are implemented. The built-in progressive NIfTI viewer and native Image sidebar use the packaged NiiVue library. Broader image relationships, additional codecs, offline recovery and public distribution remain separate work; hosted CI has not yet run.
+The implementation supports read-only exploration of ordinary directories, ZIP, POSIX ustar/gzip tarballs and SquashFS with documented compression limits, locally and through VS Code Remote SSH. Logical browsing preserves physical source identity, explicit raw/derivative links and partial coverage. Selected-file metadata inheritance, bounded tables and gradients, persistent ZIP/tar inventories and SquashFS availability snapshots are implemented. The built-in progressive NIfTI viewer and native Image sidebar use the packaged NiiVue library. Broader image relationships, additional codecs, offline recovery and Marketplace distribution remain separate work. The source and original 1.0.0 VSIX are public on GitHub; hosted CI has passed. The project uses the MIT license, while dependencies retain their own licenses.
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and source references before implementing. Strata is reference material, not an implementation to copy wholesale.
 
@@ -179,7 +179,7 @@ Commit to documented behavior for registering, browsing, inspecting and opening 
 - Automated formatting, type checking, linting, coverage, integration, security and packaging checks pass; remaining limitations and accepted lower-severity dependency findings are documented.
 - Source identities, metadata/absence semantics, resource lifetime and refresh/cancellation behavior are tested and documented.
 - Configuration, persisted registration and cache compatibility policies are documented; migrations or explicit rebuild paths exist where needed.
-- Installation, dependencies, troubleshooting and local release provenance are documented. Public distribution additionally requires a license, production publisher, repository and private security-reporting channel; a local tag does not authorize distribution.
+- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. Marketplace distribution still requires a production publisher and explicit authorization; a local tag does not authorize publication.
 
 Derivative image overlays and rich comparison scenes, external clinical joins and processing execution are not 1.0 requirements.
 

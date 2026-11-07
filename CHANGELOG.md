@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- License BIDS Explorer under MIT, include the license in future packages and retain third-party notices.
+
 - Add a study-focused README, public-data screenshot, downloadable release instructions and issue forms. Fix VSIX packaging by recording the public repository URL.
 
 - Publish the source repository at `dlq/bids-explorer` and add contributor and security-reporting links.
