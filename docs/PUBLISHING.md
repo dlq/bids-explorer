@@ -47,7 +47,7 @@ Official actions in the new workflows are pinned to commit SHAs with version com
 
 ## Initial CodeQL findings
 
-The first extended scan reported ten alerts: six webview message-origin checks, one guarded archive-open race warning, and three test/fixture warnings. They remain open for review; successful analysis is not a clean security review. Triage these before the first Marketplace release.
+The first extended scan reported ten alerts. The [review record](CODEQL_REVIEW.md) documents origin hardening for all six browser clients, a stronger HTML-escaping assertion, and the evidence for three test/guarded-operation dismissals. Verify the hosted scan and recorded dispositions before the first Marketplace release; successful analysis alone is not a clean security review.
 
 ## Marketplace page content
 

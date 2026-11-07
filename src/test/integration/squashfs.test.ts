@@ -101,7 +101,7 @@ suite('SquashFS member opening', () => {
     try {
       for (const [shard, name] of [
         ['a.sqfs', '<script>'],
-        ['b.sqfs', 'Diffusion'],
+        ['b.sqfs', 'Diffusion <ScRiPt data-test=unsafe>'],
       ])
         await writeFile(
           join(folder, shard),
@@ -126,7 +126,8 @@ suite('SquashFS member opening', () => {
       assert.match(panel.webview.html, /2 of 2 sources/);
       assert.match(panel.webview.html, /&lt;script&gt;/);
       assert.match(panel.webview.html, /Diffusion/);
-      assert.doesNotMatch(panel.webview.html, /<script>/);
+      assert.match(panel.webview.html, /&lt;ScRiPt data-test=unsafe&gt;/);
+      assert.doesNotMatch(panel.webview.html, /<script\b/i);
       panel.dispose();
     } finally {
       if (root)

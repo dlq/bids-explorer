@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
@@ -87,6 +88,7 @@ suite('History and metadata document previews', () => {
       provider.dispose();
       const panel = await manager.open(uri);
       controls(panel);
+      await assertHostMessages(panel.webview);
       const initial = await state(panel);
       assert.equal(initial.recordCount, 26);
       assert.equal(initial.firstTitle, 'Unparsed source text');

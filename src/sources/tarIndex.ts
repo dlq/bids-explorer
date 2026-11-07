@@ -129,6 +129,8 @@ async function scanTar(
   if (!before.isFile()) throw new Error('Tar indexing requires an ordinary file.');
   if (!before.size || before.size > limits.scanBytes)
     throw new Error('Tar source is empty or exceeds the scan limit.');
+  // lstat is only a candidate snapshot: reject symlinks at open, then compare the
+  // opened descriptor (including inode/device/ctime) before reading any bytes.
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     if (!sameFileRevision(before, await handle.stat()))

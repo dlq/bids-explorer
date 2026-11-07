@@ -75,6 +75,7 @@ window.addEventListener(
       } | null;
     }>,
   ) => {
+    if (event.origin !== window.location.origin) return;
     if (event.data.type === 'inspect') {
       api.postMessage({
         type: 'rendered',

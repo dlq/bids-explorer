@@ -235,3 +235,60 @@ void test('plain and gzip selected reads return exact bytes and cancel during pa
     }
   });
 });
+
+void test('tar rejects path replacement between lstat and open before reading selected or indexed bytes', async (t) => {
+  for (const selected of [false, true]) {
+    for (const replacement of ['file', 'directory', 'symlink']) {
+      await fixture(async (folder) => {
+        const file = join(folder, 'source.tar');
+        const uri = pathToFileURL(file).href;
+        const bytes = tarFixture(tarRecord('data.json', Buffer.from('{}')));
+        await writeFile(file, bytes);
+        const index = await indexTar(uri, new AbortController().signal);
+        const ref = { ...index.members[0].resource, revision: index.revision };
+        const originalOpen = fs.open;
+        let opened = false;
+        let closed = false;
+        let read = false;
+        let emitted = false;
+        const mock = t.mock.method(fs, 'open', async (...args: Parameters<typeof originalOpen>) => {
+          // Keep the original inode alive so replacement cannot reuse it.
+          await fs.rename(file, join(folder, 'original.tar'));
+          if (replacement === 'file') await writeFile(file, bytes);
+          else if (replacement === 'directory') await fs.mkdir(file);
+          else await symlink(join(folder, 'original.tar'), file);
+          const handle = await originalOpen(...args);
+          opened = true;
+          const close = handle.close.bind(handle);
+          handle.close = async () => {
+            closed = true;
+            await close();
+          };
+          const createReadStream = handle.createReadStream.bind(handle);
+          handle.createReadStream = (options) => {
+            read = true;
+            return createReadStream(options);
+          };
+          return handle;
+        });
+        try {
+          const operation = selected
+            ? streamTarMember(ref, new AbortController().signal, 1024, () => {
+                emitted = true;
+                return Promise.resolve();
+              })
+            : indexTar(uri, new AbortController().signal);
+          await assert.rejects(
+            operation,
+            replacement === 'symlink' ? /ELOOP/ : /changed while opening/,
+          );
+          assert.equal(read, false, 'No archive bytes may be read through the replaced path');
+          assert.equal(emitted, false, 'No selected payload may escape the revision check');
+          assert.equal(closed, opened, 'Every successfully opened descriptor must close');
+        } finally {
+          mock.mock.restore();
+        }
+      });
+    }
+  }
+});

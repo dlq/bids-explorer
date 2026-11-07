@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -73,6 +74,7 @@ suite('Progressive NIfTI viewer', () => {
           report = state;
         });
         try {
+          await assertHostMessages(panel.webview, 'inspect');
           const deadline = Date.now() + 20000;
           while (!report.loadedFrames && !report.status?.startsWith('Unable')) {
             assert.ok(

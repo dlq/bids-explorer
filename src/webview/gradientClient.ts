@@ -310,6 +310,7 @@ function showError(message: string): void {
   error.textContent = message;
 }
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
+  if (event.origin !== window.location.origin) return;
   const message = event.data;
   if (!message || typeof message !== 'object' || !('type' in message)) return;
   if (

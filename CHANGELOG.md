@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Reject foreign-origin messages in all six metadata, table, gradient and image clients. Add real-webview sender regressions, deterministic tar path-replacement checks, and a recorded review of the initial CodeQL alerts.
+
 - Bundle a dedicated Marketplace getting-started guide covering local/SSH setup, archives, imaging, metadata, availability, accessibility and troubleshooting; keep the GitHub README concise.
 
 - Add hosted CodeQL analysis and a tagged-release Marketplace publishing workflow using OIDC Trusted Publishing; upgrade the development-only packaging tool to support it. Use the confirmed `MCIN-dlq` publisher and derive integration-test extension identity from the manifest; its repository/workflow/environment trust policy is active. The production extension has a new VS Code identity; disable the development copy and recreate extension-owned registrations if needed.

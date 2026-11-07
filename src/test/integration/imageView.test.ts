@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
@@ -83,6 +84,7 @@ suite('Native Image view', () => {
         }
       };
       try {
+        await assertHostMessages(view.webview);
         await wait(() => !!report.controlsEnabled && !!report.text?.includes('TR (s)'));
         await view.webview.postMessage({ type: 'testToken' });
         await wait(() => !!imageToken);

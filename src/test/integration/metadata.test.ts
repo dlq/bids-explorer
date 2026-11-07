@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -75,6 +76,7 @@ suite('Recorded dataset metadata', () => {
         await vscode.commands.executeCommand('bidsExplorer.previewMetadata', entry),
         panel,
       );
+      await assertHostMessages(panel.webview);
       const state = await rendered(panel, 26);
       assert.equal(state.sourceUri, uri.toString());
       assert.equal(state.duplicateCount, 1);

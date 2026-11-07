@@ -162,6 +162,7 @@ function applyControl(control: ImageControl) {
   publish();
 }
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
+  if (event.origin !== window.location.origin) return;
   if (event.data === 'inspect') publish(true);
   if (
     event.data &&

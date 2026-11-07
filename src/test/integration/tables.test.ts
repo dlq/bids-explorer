@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
@@ -108,6 +109,7 @@ suite('Read-only participant tables', () => {
       );
       assert.ok(panel);
       installControls(panel);
+      await assertHostMessages(panel.webview);
       const result = await rendered(panel, 63);
       assert.equal(result.visibleCount, 50);
       assert.deepEqual(result.displayedCells, [

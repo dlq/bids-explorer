@@ -1,3 +1,4 @@
+// Intentionally unsafe, non-executable Semgrep fixtures; never compiled or packaged.
 import { exec, execSync as runSync, execFile, spawn } from 'node:child_process';
 
 // ruleid: no-shell-command-execution

@@ -1,3 +1,4 @@
+import { assertHostMessages } from './assertHostMessages';
 import { extensionId } from '../extensionId';
 import { gzipSync } from 'node:zlib';
 import { zipFixture } from '../zipFixture';
@@ -71,6 +72,7 @@ suite('Read-only diffusion gradient preview', () => {
         entry,
       );
       assert.ok(panel);
+      await assertHostMessages(panel.webview, { type: 'selectVolume', index: 0 });
       const initial = await rendered(panel, 0);
       assert.equal(initial.volumeCount, 4);
       assert.equal(initial.lowBCount, 1);
