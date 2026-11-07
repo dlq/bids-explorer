@@ -20,6 +20,8 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 
 ## Install and open your first study
 
+Version 1.0.1 has been uploaded to the Marketplace and is awaiting Microsoft verification. Until the listing becomes public, use the VSIX from the [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.1).
+
 1. Install [desktop VS Code](https://code.visualstudio.com/) 1.96 or newer.
 2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [1.0.1 VSIX](https://github.com/dlq/bids-explorer/releases/download/v1.0.1/bids-explorer-1.0.1.vsix) with **Extensions → … → Install from VSIX…**.
 3. Open a study folder you trust. In the **Explorer** sidebar, expand **BIDS**. A folder containing `dataset_description.json` appears automatically; otherwise choose **Add Dataset**.
@@ -49,7 +51,7 @@ For a complete first-use walkthrough, see the [Marketplace getting-started guide
 - [Report a problem or suggest an improvement](https://github.com/dlq/bids-explorer/issues/new/choose): omit private participant information, dataset paths and sensitive screenshots.
 - [Contributing](CONTRIBUTING.md) · [Development setup](docs/DEVELOPMENT.md) · [Release notes](CHANGELOG.md) · [Roadmap](PLANS.md) · [Security reporting](SECURITY.md).
 
-BIDS Explorer is available under the [MIT license](LICENSE). BIDS Explorer is distributed through the Marketplace and GitHub releases. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+BIDS Explorer is available under the [MIT license](LICENSE). GitHub release downloads are available; Marketplace distribution awaits Microsoft verification. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 
 ## Citation
 

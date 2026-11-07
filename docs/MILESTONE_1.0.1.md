@@ -1,6 +1,6 @@
 # 1.0.1 release verification
 
-Prepared November 7, 2026, for the first Marketplace release under `MCIN-dlq`. The original `v1.0.0` development-publisher release remains unchanged.
+Released November 7, 2026, on GitHub and submitted as the first Marketplace version under `MCIN-dlq`. The original `v1.0.0` development-publisher release remains unchanged.
 
 ## Checks completed
 
@@ -19,3 +19,11 @@ The same locally built VSIX passed the seven synthetic image, five metadata-sour
 These checks establish local package readiness; they do not themselves establish Marketplace publication. The stable GitHub Release triggers fresh hosted verification, CodeQL and OIDC publishing. Confirm that workflow and the Marketplace listing before describing publication as complete. Attach the exact workflow-built VSIX and its checksum to the GitHub release.
 
 The 13 MB sample is a documented anatomical subset, not a complete BIDS study or validation fixture. It does not exercise sessions, events, diffusion or derivatives. Those cases have separate integration fixtures. Windows and arbitrary SSH hosts/codecs are not newly certified by this patch. See [compatibility](COMPATIBILITY.md), [security review](CODEQL_REVIEW.md) and [publishing](PUBLISHING.md).
+
+## Upload acceptance and pending Marketplace verification
+
+[Run 42418383488](https://github.com/dlq/bids-explorer/actions/runs/42418383488) completed hosted verification, CodeQL and OIDC publication. The exact hosted VSIX was additionally installed and passed the same local minimum/current and synthetic Remote SSH cases before publication resumed. Every shared extension file matched the local build; the Linux build also included three optional Rollup platform-package files and the corresponding generated content-type entry.
+
+The Marketplace returned version **1.0.1**, publisher **MCIN-dlq**, and SHA-256 `d13466575fb83c7515a7f38999b5b69393e99b544648ceab0a1085b35d4a7274`, matching the tested artifact. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.1) contains that VSIX, the separate sample ZIP and `SHA256SUMS`. The original `v1.0.0` tag/artifact was preserved.
+
+The publisher dashboard showed **Verifying 1.0.1** with **Public** availability after upload. The public listing returned 404 during verification. A successful `vsce publish` and version metadata do not establish that the public listing is already available. GitHub VSIX installation is available while Microsoft verification completes.
