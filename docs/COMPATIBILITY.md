@@ -66,3 +66,9 @@ The local release VSIX is `bids-explorer-0.9.0.vsix`, SHA-256 `44f81550f8f7fe3fd
 ## Usability follow-up
 
 The November 7, 2026 [usability record](USABILITY.md) adds development-host checks of gradient and inherited-metadata previews in dark and high-contrast themes, named image controls, keyboard frame selection and dataset-history opening. The follow-up adds user-assisted VoiceOver announcements, reload recovery and keyboard-accessibility fixes. It distinguishes manual observations, automated checks and installed-package verification.
+
+## 1.0.0 release validation — November 7, 2026
+
+The fresh locked source snapshot passed 169 unit tests and all 58 extension-host tests on each of VS Code 1.96.0 and 1.145.2, including the public tarball and logical-layout image fixtures. The installed 1.0.0 package passed all seven NIfTI cases and JSON previews for directory, ZIP, ustar, gzip ustar and SquashFS on both versions. Image sidebar and four-quadrant rendering states were checked as well.
+
+The checksum-matched package passed the same synthetic image, metadata and sidebar checks in a Rorqual Remote SSH workspace before and after an isolated client reconnect. The final package preserves all 394 candidate runtime files byte for byte; documentation and release metadata are the only packaging changes. Semgrep passed; the audit found zero runtime vulnerabilities and 13 moderate plus one low development-tooling finding. See the [release record](MILESTONE_1.0.0.md) for scope and limitations.

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import * as vscode from 'vscode';
 import type { ImageView } from '../../ui/imageView';
 import { DatasetBrowser } from '../../core/browser';
@@ -19,7 +20,9 @@ suite('Native Image view', () => {
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     const panels: vscode.WebviewPanel[] = [];
     try {
-      await writeFile(join(folder, 'sub-01_task-test_bold.nii.gz'), niftiFixture());
+      const scaled = gunzipSync(niftiFixture());
+      scaled.writeFloatLE(1.1234567, 112);
+      await writeFile(join(folder, 'sub-01_task-test_bold.nii.gz'), gzipSync(scaled));
       await writeFile(join(folder, 'sub-02_T1w.nii.gz'), niftiFixture());
       await writeFile(
         join(folder, 'task-test_bold.json'),
@@ -53,7 +56,16 @@ suite('Native Image view', () => {
         '</body>',
         `<script nonce="${nonce}">const testApi=acquireVsCodeApi();window.acquireVsCodeApi=()=>testApi;let imageToken='';window.addEventListener('message',event=>{if(event.data?.type==='image')imageToken=event.data.image?.target??'';if(event.data?.type==='testToken')testApi.postMessage({type:'testToken',token:imageToken});if(event.data?.type==='testReplay')testApi.postMessage({type:'control',target:event.data.token,control:{action:'colormap',value:'hot'}});if(event.data?.type==='testAction'){const el=document.getElementById(event.data.id);if(event.data.value!==undefined){el.value=event.data.value;el.dispatchEvent(new Event('change'));}else el.click();}});</script></body>`,
       );
-      let report: { text?: string; controlsEnabled?: boolean } = {};
+      let report: {
+        text?: string;
+        controlsEnabled?: boolean;
+        volumeVisible?: boolean;
+        positionExpanded?: boolean;
+        sourceGroups?: number;
+        metadataBeforeControls?: boolean;
+        minimum?: string;
+        maximum?: string;
+      } = {};
       let imageToken = '';
       const listener = view.webview.onDidReceiveMessage(
         (message: { type: string; token?: string } & typeof report) => {
@@ -76,9 +88,18 @@ suite('Native Image view', () => {
         const firstToken = imageToken;
         assert.match(report.text!, /Participant 01/);
         assert.match(report.text!, /2 × 2 × 2 voxels/);
-        assert.match(report.text!, /0.03/);
+        assert.match(report.text!, /TE \(ms\)/);
+        assert.match(report.text!, /30/);
+        assert.equal(report.volumeVisible, false);
+        assert.equal(report.positionExpanded, false);
+        assert.equal(report.sourceGroups, 1);
+        assert.equal(report.metadataBeforeControls, true);
+        assert.doesNotMatch(
+          report.text!,
+          /Cancel loading|Move crosshair by one voxel|Voxel position/,
+        );
         assert.match(report.text!, /<script>not executable<\/script>/);
-        let display: { layout?: string } = {};
+        let display: { layout?: string; minimum?: number; maximum?: number } | undefined;
         const imageListener = panels[0].webview.onDidReceiveMessage(
           (message: { display: typeof display }) => {
             display = message.display;
@@ -87,6 +108,20 @@ suite('Native Image view', () => {
         try {
           await view.webview.postMessage({ type: 'testAction', id: 'layout', value: 'coronal' });
           await wait(() => display?.layout === 'coronal');
+          const exactMaximum = display!.maximum;
+          assert.notEqual(
+            Number(report.maximum),
+            exactMaximum,
+            'The fixture must exercise display rounding',
+          );
+          display = undefined;
+          await view.webview.postMessage({ type: 'testAction', id: 'window' });
+          await wait(() => display?.maximum !== undefined);
+          assert.equal(
+            display!.maximum,
+            exactMaximum,
+            'Applying unedited, shortened limits must retain full precision',
+          );
         } finally {
           imageListener.dispose();
         }

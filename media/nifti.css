@@ -78,3 +78,7 @@ main {
   min-height: 0;
   overflow: hidden;
 }
+
+[hidden] {
+  display: none !important;
+}

@@ -12,7 +12,13 @@ interface ImageSession {
   entry: DirectoryEntry;
   token: string;
   state?: ImageState;
-  metadata: { label: string; value: string; source?: string }[];
+  metadata: {
+    label: string;
+    value: string;
+    sourceUri: string;
+    pointer: string;
+    rawValue: string;
+  }[];
   metadataStatus: string;
   sources: DirectoryEntry[];
   controller: AbortController;
@@ -45,20 +51,19 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
     view.webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${view.webview.cspSource}; base-uri 'none'; form-action 'none';"><link rel="stylesheet" href="${resource(['media', 'imageView.css'])}"><title>Image</title></head><body>
 <p id="empty">Open an image from BIDS to see its information and controls.</p>
 <main hidden><section aria-labelledby="acquisition-title"><h2 id="acquisition-title">Acquisition</h2><p id="acquisition"></p><p id="context"></p><p id="status" role="status"></p></section>
+<section aria-labelledby="parameters-title"><h2 id="parameters-title">Scan parameters</h2><p class="hint">From the NIfTI header</p><dl id="scan-information" class="scan-summary"></dl><p id="metadata-status" class="hint" role="status"></p><dl id="metadata" class="scan-summary"></dl><button id="inspect" type="button">Inspect all metadata</button></section>
 <section aria-labelledby="view-title"><h2 id="view-title">Viewing controls</h2>
 <fieldset id="controls" disabled><legend class="sr-only">Image display</legend>
 <label>Layout<select id="layout"><option value="quad">Three planes + 3D</option><option value="multiplanar">Three planes</option><option value="volume">3D volume</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<label id="volume-control" hidden>Volume <output id="frame-value">1</output><input id="frame" type="range" min="1" value="1" max="1" disabled></label>
 <label>Colour map<select id="colormap"><option value="gray">Grayscale</option><option value="viridis">Viridis</option><option value="hot">Hot</option></select></label>
 <div class="pair"><label>Intensity minimum<input id="minimum" type="number" step="any"></label><label>Intensity maximum<input id="maximum" type="number" step="any"></label></div><button id="window" type="button">Apply intensity window</button><p id="control-error" role="alert"></p>
 <label class="check"><input id="crosshair" type="checkbox" checked>Show crosshair</label>
-<label>Frame <output id="frame-value">1</output><input id="frame" type="range" min="1" value="1" max="1" disabled></label>
-<fieldset><legend>Move crosshair by one voxel</legend><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<button type="button" data-axis="${axis.toLowerCase()}" data-step="-1" aria-label="Decrease ${axis} by one voxel">${axis} −</button><button type="button" data-axis="${axis.toLowerCase()}" data-step="1" aria-label="Increase ${axis} by one voxel">${axis} +</button>`).join('')}</div></fieldset>
-<output id="position" aria-live="polite"></output><button id="reset" type="button">Reset display</button></fieldset>
-<button id="cancel" type="button">Cancel loading</button></section>
-<section aria-labelledby="information-title"><h2 id="information-title">Image information</h2><p class="hint">From the NIfTI header</p><dl id="information"></dl></section>
-<section aria-labelledby="metadata-title"><h2 id="metadata-title">BIDS metadata</h2><p id="metadata-status" role="status"></p><dl id="metadata"></dl><button id="inspect" type="button">Inspect all metadata</button></section>
+<details id="position-details"><summary>Position</summary><fieldset><legend>Move crosshair by one voxel</legend><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<button type="button" data-axis="${axis.toLowerCase()}" data-step="-1" aria-label="Decrease ${axis} by one voxel">${axis} −</button><button type="button" data-axis="${axis.toLowerCase()}" data-step="1" aria-label="Increase ${axis} by one voxel">${axis} +</button>`).join('')}</div></fieldset><output id="position" aria-live="polite"></output></details>
+<button id="reset" type="button">Reset display</button></fieldset></section>
+<details><summary>More image information</summary><p class="hint">From the NIfTI header</p><dl id="information"></dl></details>
 <details><summary>Related files</summary><p class="hint">Applicable JSON and resolved diffusion companions. Other acquisition resources remain in the BIDS tree.</p><div id="related"></div></details>
-<details><summary>Source details</summary><p id="source"></p><dl id="provenance"></dl></details></main>
+<details><summary>Source details</summary><details><summary>Image location</summary><p id="source"></p></details><div id="provenance"></div></details></main>
 <script nonce="${nonce}" type="module" src="${resource(['out', 'browser', 'webview', 'imageViewClient.js'])}"></script></body></html>`;
     view.webview.onDidReceiveMessage(
       (message: { type?: string; target?: string; index?: number; control?: unknown }) => {
@@ -205,7 +210,11 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
         state: session.state,
         metadata: session.metadata,
         metadataStatus: session.metadataStatus,
-        related: session.sources.map((entry, index) => ({ index, name: entry.name })),
+        related: session.sources.map((entry, index) => ({
+          index,
+          name: entry.relativePath,
+          uri: entry.archive ? entryArchiveUri(entry) : entry.uri,
+        })),
       },
     });
   }
@@ -232,15 +241,27 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
       ]);
       session.metadata = [...labels].flatMap(([key, label]) => {
         const field = result.fields.find((field) => field.key === key)?.value;
-        return field
-          ? [
-              {
-                label,
-                value: field.valueText.slice(0, 1000),
-                source: field.sourceUri + ' ' + field.pointer,
-              },
-            ]
-          : [];
+        if (!field) return [];
+        let value = field.type === 'string' ? String(JSON.parse(field.valueText)) : field.valueText;
+        if (
+          key === 'EchoTime' &&
+          field.type === 'number' &&
+          Number.isFinite(Number(field.valueText) * 1000)
+        ) {
+          label = 'TE (ms)';
+          value = String(Number((Number(field.valueText) * 1000).toPrecision(6)));
+        }
+        return [
+          {
+            label,
+            value: value.slice(0, 1000) + (value.length > 1000 ? '…' : ''),
+            sourceUri: field.sourceUri,
+            pointer: field.pointer,
+            rawValue:
+              field.valueText.slice(0, 1000) +
+              (field.valueText.length > 1000 ? '… (shortened; open original JSON)' : ''),
+          },
+        ];
       });
       session.sources = [
         ...new Map(

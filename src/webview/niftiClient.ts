@@ -292,4 +292,5 @@ void open()
   })
   .finally(() => {
     cancel.disabled = true;
+    cancel.hidden = true;
   });

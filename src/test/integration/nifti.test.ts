@@ -99,6 +99,7 @@ suite('Progressive NIfTI viewer', () => {
             report.information?.find((row) => row.label === 'Voxel spacing')?.value,
             '1 × 1 × 1 mm',
           );
+          assert.doesNotMatch(panel.webview.html, /<label>Frame/);
           const originalWindow = [report.display.minimum, report.display.maximum];
           for (const control of [
             { action: 'layout', value: 'axial' },

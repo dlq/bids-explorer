@@ -1,0 +1,342 @@
+{
+  "date": "2026-11-07",
+  "version": "1.0.0",
+  "artifact": "bids-explorer-1.0.0.vsix",
+  "sha256": "020dcefb257f7737ec92845c13236e26d822ba2c15cf29d0822541ce122f8f0f",
+  "runtimeFilesIdenticalToCandidate": 394,
+  "unitTests": 169,
+  "integrationTests": {
+    "1.96.0": 58,
+    "1.145.2": 58
+  },
+  "integrationFixtures": [
+    "synthetic",
+    "public Connectome Mapper tarball",
+    "public logical-layout images"
+  ],
+  "security": {
+    "semgrepRuleFixtures": 3,
+    "semgrepSourceFiles": 74,
+    "semgrepFindings": 0,
+    "runtimeAuditFindings": 0,
+    "developmentAuditFindings": {
+      "moderate": 13,
+      "low": 1
+    },
+    "highOrCriticalAuditFindings": 0
+  },
+  "usability": {
+    "themes": [
+      "Light 2026",
+      "Dark Modern",
+      "Dark High Contrast"
+    ],
+    "narrowSidebar": true,
+    "keyboardPositionControls": true,
+    "voiceOverUserConfirmed": true
+  },
+  "installedArtifact": {
+    "minimum": {
+      "version": "1.96.0",
+      "remote": null,
+      "results": [
+        [
+          "loose",
+          "sub-01_task-test_bold.nii",
+          2
+        ],
+        [
+          "loose",
+          "sub-01_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-03_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-04_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "squashfs",
+          "sub-05_task-test_bold.nii.gz",
+          2
+        ]
+      ],
+      "metadataFormats": [
+        "loose",
+        "squashfs",
+        "tar",
+        "tar.gz",
+        "zip"
+      ],
+      "sidebarCases": [
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-03_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-04_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "squashfs",
+          "name": "sub-05_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        }
+      ],
+      "installedVersion": "1.0.0"
+    },
+    "current": {
+      "version": "1.145.2",
+      "remote": null,
+      "results": [
+        [
+          "loose",
+          "sub-01_task-test_bold.nii",
+          2
+        ],
+        [
+          "loose",
+          "sub-01_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-03_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-04_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "squashfs",
+          "sub-05_task-test_bold.nii.gz",
+          2
+        ]
+      ],
+      "metadataFormats": [
+        "loose",
+        "squashfs",
+        "tar",
+        "tar.gz",
+        "zip"
+      ],
+      "sidebarCases": [
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-03_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-04_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "squashfs",
+          "name": "sub-05_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        }
+      ],
+      "installedVersion": "1.0.0"
+    },
+    "ssh": {
+      "version": "1.145.2",
+      "remote": "ssh-remote",
+      "results": [
+        [
+          "loose",
+          "sub-01_task-test_bold.nii",
+          2
+        ],
+        [
+          "loose",
+          "sub-01_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii",
+          2
+        ],
+        [
+          "zip",
+          "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-03_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "tar",
+          "sub-04_task-test_bold.nii.gz",
+          2
+        ],
+        [
+          "squashfs",
+          "sub-05_task-test_bold.nii.gz",
+          2
+        ]
+      ],
+      "metadataFormats": [
+        "loose",
+        "squashfs",
+        "tar",
+        "tar.gz",
+        "zip"
+      ],
+      "sidebarCases": [
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "loose",
+          "name": "sub-01_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "zip",
+          "name": "sub-02_ses-2_desc-b0_dwi.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-03_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "tar",
+          "name": "sub-04_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        },
+        {
+          "format": "squashfs",
+          "name": "sub-05_task-test_bold.nii.gz",
+          "metadata": true,
+          "volume": true,
+          "provenanceGroups": 1
+        }
+      ],
+      "installedVersion": "1.0.0"
+    }
+  },
+  "candidateRemoteReconnect": "passed before and after isolated client restart; final artifact runtime identical",
+  "published": false
+}

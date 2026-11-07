@@ -1,8 +1,12 @@
 # Changelog
 
-Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `0.9.0` is a local tagged release (`v0.9.0`).
+Record new changes under Unreleased. Released versions use `major.minor.patch`, tags `vX.Y.Z` and dated headings; see VERSIONING.md. Planned work belongs in PLANS.md. Version `1.0.0` is a local tagged release (`v1.0.0`).
 
 ## Unreleased
+
+## [1.0.0] - 2026-11-07
+
+- Prioritize scan dimensions, voxel size and inherited acquisition parameters above image controls. Display TE in milliseconds and JSON strings as text, preserve exact values in provenance, group fields beneath each source file, collapse voxel-position buttons, hide single-volume navigation and completed loading actions, and shorten intensity limits without changing their internal precision.
 
 - Separate image quadrants with a four-pixel display gap and add eight pixels of padding around the image canvas, without doubling the top gap below the toolbar. Add a separate eight-pixel black inset inside the image pane.
 

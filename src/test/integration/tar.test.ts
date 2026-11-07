@@ -102,11 +102,12 @@ suite('Tar logical browsing', () => {
         await preview(participants, /Participants|participants/);
       }
       for (const modality of modalities) {
-        const files = await provider.getChildren(modality);
-        const image = files.find(
+        const listed = await provider.getChildren(modality);
+        const image = listed.find(
           (row) => row.type === 'entry' && row.entry.name.endsWith('.nii.gz'),
         );
         assert.ok(image?.type === 'entry');
+        const files = [...listed, ...(image.acquisition ? await provider.getChildren(image) : [])];
         assert.equal(image.entry.archive?.format, 'tar');
         assert.equal(image.entry.archive?.memberPath, 'ds-sample/' + image.entry.relativePath);
         const item = provider.getTreeItem(image);

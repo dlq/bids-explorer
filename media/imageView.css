@@ -116,3 +116,38 @@ summary {
   overflow: hidden;
   clip-path: inset(50%);
 }
+
+.scan-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+.scan-summary dt {
+  margin-top: 4px;
+}
+.scan-summary dd {
+  margin-bottom: 6px;
+}
+h3 {
+  font-size: 1em;
+  margin: 12px 0 4px;
+  overflow-wrap: anywhere;
+}
+#position-details {
+  margin: 10px 0;
+}
+#position-details summary {
+  font-weight: normal;
+}
+#related button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+@media (max-width: 240px) {
+  .scan-summary,
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

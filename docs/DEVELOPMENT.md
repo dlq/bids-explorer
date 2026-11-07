@@ -59,7 +59,7 @@ The configured CI workflow runs formatting, type checking, linting, unit coverag
 
 ### Dependency audit
 
-On November 6, 2026, the full dependency audit reported 14 findings (13 moderate, 1 low), all in development tooling; none were high or critical. The production-only audit reported zero findings for runtime dependencies, including the ZIP reader and built-in viewer. Development packages remain excluded from the VSIX. The earlier 0.2.0 release evidence retains its audit snapshot. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
+On November 7, 2026, the release dependency audit reported 14 findings (13 moderate, 1 low), all in development tooling; none were high or critical. The production-only audit reported zero findings for runtime dependencies, including the ZIP reader and built-in viewer. Development packages remain excluded from the VSIX. The earlier 0.2.0 release evidence retains its audit snapshot. A `serialize-javascript` override selects a patched release for the test runner. Review upstream updates before release rather than applying `npm audit fix --force`, which proposes incompatible tool downgrades.
 
 ### Persistent archive inventories
 
@@ -95,7 +95,7 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `0.9.0`, tagged locally as `v0.9.0` without Marketplace or GitHub publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-0.9.0.vsix` and release tags such as `v0.9.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `1.0.0`, tagged locally as `v1.0.0` without Marketplace or GitHub publication. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-1.0.0.vsix` and release tags such as `v1.0.0`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 
@@ -111,4 +111,4 @@ History and the inherited-metadata inspector use `DocumentPreviewManager` with `
 
 Use synthetic studies for keyboard and theme checks. Verify the installed package as well as development-host behavior, particularly around Workspace Trust. Exercise light, dark and high-contrast themes. Check the rendered page, accessible names, table headers, keyboard focus and filter/paging results. A successful accessibility-tree inspection does not establish spoken screen-reader usability.
 
-The [usability record](USABILITY.md) lists checked workflows and remaining 1.0 work. Keep user instructions in the README and Explorer reference, with study terminology and exact visible action labels.
+The [usability record](USABILITY.md) lists checked workflows and the limits of the sampled usability evidence. Keep user instructions in the README and Explorer reference, with study terminology and exact visible action labels.

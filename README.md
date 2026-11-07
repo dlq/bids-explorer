@@ -4,14 +4,14 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 
 ## Open a study
 
-1. In desktop VS Code 1.96 or newer, install the extension from a supplied VSIX using **Extensions: Install from VSIX**. Version 0.9.0 is a local release.
+1. In desktop VS Code 1.96 or newer, install the extension from a supplied VSIX using **Extensions: Install from VSIX**. Version 1.0.0 is a local release.
 2. Open a study folder you trust. For a study on a server, connect with VS Code Remote SSH, then open the study folder on that server and install BIDS Explorer on the connected host.
 3. In the **Explorer** sidebar, expand **BIDS**. A folder with a root-level `dataset_description.json` appears automatically. If it doesn’t appear, use **Add Dataset** and select the folder.
 4. Expand a participant, then a session and modality. Click a file to open its preview. The regular **File Explorer** still shows the physical folder layout.
 
 Matching multi-echo images share an acquisition branch with ordered **Echo** children. **Run**, **Acquisition**, **Phase encoding** and other readable labels preserve the distinctions between scans. Expand an echo for its image and metadata; original filenames remain in source details.
 
-Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Image** view follows your selected image. To put it on the right, right-click the **BIDS Image** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
+Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Image** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **BIDS Image** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
 
 ## Find what you need
 
@@ -40,7 +40,7 @@ Expanded acquisitions can show recorded TR, TE and duration after a background m
 
 ## Keyboard and display
 
-The study tree uses VS Code’s arrow-key navigation. **Enter** opens the selected file, and **Shift+F10** opens its actions. Use **Tab** to reach filters and expandable definitions in previews. In a loaded 4D image, the **Frame** control accepts arrow keys. Expand **Image position** and use the X, Y and Z buttons to move the crosshair one voxel at a time. Tab into a table’s scrolling region and use arrow keys to reveal additional columns.
+The study tree uses VS Code’s arrow-key navigation. **Enter** opens the selected file, and **Shift+F10** opens its actions. Use **Tab** to reach filters and expandable definitions in previews. In a loaded 4D image, the **Volume** control accepts arrow keys. Expand **Position** in the Image sidebar and use the X, Y and Z buttons to move the crosshair one voxel at a time. Tab into a table’s scrolling region and use arrow keys to reveal additional columns.
 
 Previews follow the VS Code theme. Representative keyboard and VoiceOver workflows have been checked on macOS; see `docs/USABILITY.md` for the tested scope.
 
