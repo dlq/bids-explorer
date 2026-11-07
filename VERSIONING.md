@@ -2,7 +2,7 @@
 
 ## Version source and status
 
-`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.1`, prepared as `v1.0.1`; the source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer), with Marketplace publication through the configured workflow. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
+`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.1`, released as `v1.0.1`; the source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer), with Marketplace publication through the configured workflow. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
 
 Use three numeric components: `major.minor.patch`. Do not bump the version for every commit. Node, TypeScript, archive tool and `engines.vscode` versions are separate compatibility/development requirements; they do not track the extension version.
 
@@ -20,7 +20,7 @@ Documentation, internal refactoring and tooling improvements normally wait for t
 ## Release names and artifacts
 
 - Manifest version: `1.0.1`.
-- Prepared release tag: `v1.0.1`; the latest completed release is `v1.0.0` until closeout. Later release tags still require explicit authorization.
+- Current release tag: `v1.0.1`. Later release tags still require explicit authorization.
 - VSIX: `bids-explorer-1.0.1.vsix`, produced under `dist/` by `npm run package` using the manifest version.
 - Changelog heading: `## [1.0.1] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
 
