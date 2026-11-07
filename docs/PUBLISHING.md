@@ -19,7 +19,7 @@ Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-ex
 
 4. Keep the GitHub environment named `marketplace`. Only the publishing job requests an OIDC token; test and package jobs cannot obtain publishing credentials. Do not add a `VSCE_PAT` secret for this workflow.
 
-Publisher ownership is confirmed and the manifest uses `MCIN-dlq`. The policy above was created and shown as Active on November 7, 2026. No actual Marketplace publish or OIDC token exchange has been exercised yet. Review the initial CodeQL findings and prepare a new authorized release before the first publication.
+Publisher ownership is confirmed and the manifest uses `MCIN-dlq`. The policy above was created and shown as Active on November 7, 2026. No actual Marketplace publish or OIDC token exchange has been exercised yet. The initial CodeQL findings have been reviewed and resolved; prepare a new authorized release before the first publication.
 
 ## Moving from the development VSIX
 
@@ -47,7 +47,7 @@ Official actions in the new workflows are pinned to commit SHAs with version com
 
 ## Initial CodeQL findings
 
-The first extended scan reported ten alerts. The [review record](CODEQL_REVIEW.md) documents origin hardening for all six browser clients, a stronger HTML-escaping assertion, and the evidence for three test/guarded-operation dismissals. Verify the hosted scan and recorded dispositions before the first Marketplace release; successful analysis alone is not a clean security review.
+The first extended scan reported ten alerts. The [review record](CODEQL_REVIEW.md) documents origin hardening for all six browser clients, a stronger HTML-escaping assertion, and the evidence for three test/guarded-operation dismissals. Hosted CodeQL confirmed seven fixes, the three reviewed findings were dismissed with evidence, and no alerts remain open at the end of that review. Continue reviewing future alerts; successful analysis alone is not a clean security review.
 
 ## Marketplace page content
 

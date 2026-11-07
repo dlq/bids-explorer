@@ -1,0 +1,137 @@
+{
+  "date": "2026-11-07",
+  "sourceFixCommit": "a1cf22a",
+  "codeqlRun": "https://github.com/dlq/bids-explorer/actions/runs/42415379161",
+  "ciRun": "https://github.com/dlq/bids-explorer/actions/runs/42415379217",
+  "fixedAlerts": [
+    1,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "dismissedAlerts": {
+    "2": "used in tests",
+    "3": "false positive",
+    "4": "used in tests"
+  },
+  "openCodeqlAlerts": 0,
+  "unitTests": 170,
+  "integrationTests": {
+    "1.96.0": {
+      "passed": 56,
+      "optInFixturesSkipped": 2
+    },
+    "1.145.2": {
+      "passed": 56,
+      "optInFixturesSkipped": 2
+    }
+  },
+  "webviewOriginRegressionClients": 6,
+  "tarReplacementRegressionCases": 6,
+  "semgrepFindings": 0,
+  "syntheticRemoteSsh": {
+    "version": "1.145.2",
+    "remote": "ssh-remote",
+    "results": [
+      [
+        "loose",
+        "sub-01_task-test_bold.nii",
+        2
+      ],
+      [
+        "loose",
+        "sub-01_task-test_bold.nii.gz",
+        2
+      ],
+      [
+        "zip",
+        "sub-02_ses-2_desc-b0_dwi.nii",
+        2
+      ],
+      [
+        "zip",
+        "sub-02_ses-2_desc-b0_dwi.nii.gz",
+        2
+      ],
+      [
+        "tar",
+        "sub-03_task-test_bold.nii.gz",
+        2
+      ],
+      [
+        "tar",
+        "sub-04_task-test_bold.nii.gz",
+        2
+      ],
+      [
+        "squashfs",
+        "sub-05_task-test_bold.nii.gz",
+        2
+      ]
+    ],
+    "metadataFormats": [
+      "loose",
+      "squashfs",
+      "tar",
+      "tar.gz",
+      "zip"
+    ],
+    "sidebarCases": [
+      {
+        "format": "loose",
+        "name": "sub-01_task-test_bold.nii",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "loose",
+        "name": "sub-01_task-test_bold.nii.gz",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "zip",
+        "name": "sub-02_ses-2_desc-b0_dwi.nii",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "zip",
+        "name": "sub-02_ses-2_desc-b0_dwi.nii.gz",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "tar",
+        "name": "sub-03_task-test_bold.nii.gz",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "tar",
+        "name": "sub-04_task-test_bold.nii.gz",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      },
+      {
+        "format": "squashfs",
+        "name": "sub-05_task-test_bold.nii.gz",
+        "metadata": true,
+        "volume": true,
+        "provenanceGroups": 1
+      }
+    ],
+    "installedVersion": "1.0.0"
+  },
+  "testedVsixSha256": "bbe0d24d53e567f089c1c3a4d5445e2ed9ae44b8c580a5cdbf48280506110ec1",
+  "marketplacePublished": false
+}
