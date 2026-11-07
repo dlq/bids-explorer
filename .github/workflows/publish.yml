@@ -53,7 +53,7 @@ jobs:
         env:
           RELEASE_REF: ${{ github.event.release.tag_name || inputs.ref }}
           PUBLISH: ${{ github.event_name == 'release' || inputs.publish }}
-          EXPECTED_PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER || 'dlq' }}
+          EXPECTED_PUBLISHER: ${{ vars.MARKETPLACE_PUBLISHER || 'MCIN-dlq' }}
         run: |
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';

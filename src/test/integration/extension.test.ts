@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -23,9 +24,7 @@ async function waitFor(condition: () => boolean): Promise<void> {
 suite('Automatic workspace recognition', () => {
   test('opening a BIDS workspace activates the extension and populates roots without Add Dataset', async function () {
     this.timeout(20000);
-    const extension = vscode.extensions.getExtension<ExplorerApi>(
-      'bids-explorer-dev.bids-explorer',
-    );
+    const extension = vscode.extensions.getExtension<ExplorerApi>(extensionId);
     assert.ok(extension);
     await waitFor(() => extension.isActive);
     const { provider, ready } = extension.exports;
@@ -38,9 +37,7 @@ suite('Automatic workspace recognition', () => {
 
   test('new workspace roots are recognized and removed automatically, with explicit Add retaining manual ownership', async function () {
     this.timeout(20000);
-    const extension = vscode.extensions.getExtension<ExplorerApi>(
-      'bids-explorer-dev.bids-explorer',
-    )!;
+    const extension = vscode.extensions.getExtension<ExplorerApi>(extensionId)!;
     const { provider } = extension.exports;
     const folder = await mkdtemp(join(tmpdir(), 'bids-auto-workspace-'));
     const uri = vscode.Uri.file(folder);
@@ -109,9 +106,7 @@ suite('Automatic workspace recognition', () => {
 suite('BIDS Explorer directory workflows', () => {
   test('native Explorer handoff tolerates an unconfirmed workspace update', async function () {
     this.timeout(15000);
-    const extension = vscode.extensions.getExtension<ExplorerApi>(
-      'bids-explorer-dev.bids-explorer',
-    )!;
+    const extension = vscode.extensions.getExtension<ExplorerApi>(extensionId)!;
     const { provider } = await extension.activate();
     const first = await mkdtemp(join(tmpdir(), 'bids-pending-workspace-'));
     const second = await mkdtemp(join(tmpdir(), 'bids-handoff-workspace-'));
@@ -158,9 +153,7 @@ suite('BIDS Explorer directory workflows', () => {
   });
 
   test('commands register a real dataset, open a file, show provenance and remove registration without deleting data', async () => {
-    const extension = vscode.extensions.getExtension<ExplorerApi>(
-      'bids-explorer-dev.bids-explorer',
-    );
+    const extension = vscode.extensions.getExtension<ExplorerApi>(extensionId);
     assert.ok(extension);
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-extension-'));

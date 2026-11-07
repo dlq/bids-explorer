@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -43,7 +44,7 @@ async function rendered(
 suite('Recorded dataset metadata', () => {
   test('tree clicks default to duplicate-aware metadata previews, with explicit preview and raw JSON access', async function () {
     this.timeout(30000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-metadata-host-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     let panel: vscode.WebviewPanel | undefined;
@@ -120,7 +121,7 @@ suite('Recorded dataset metadata', () => {
 
   test('physical raw/derivative descriptors keep separate panels; pending opens coalesce and failures are retryable', async function () {
     this.timeout(30000);
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     const manager = new MetadataPreviewManager(extension.extensionUri);
     const folder = await mkdtemp(join(tmpdir(), 'bids-metadata-lifetime-'));
     try {

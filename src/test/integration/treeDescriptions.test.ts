@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -19,7 +20,7 @@ suite('Metadata-based tree descriptions', () => {
   test('dataset/task names and explicitly mapped participant/session descriptions preserve tree identity and source provenance', async function () {
     this.timeout(30000);
     const { provider } = await vscode.extensions
-      .getExtension<{ provider: DatasetTreeProvider }>('bids-explorer-dev.bids-explorer')!
+      .getExtension<{ provider: DatasetTreeProvider }>(extensionId)!
       .activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-tree-descriptions-host-'));
     const rootUri = vscode.Uri.file(folder);

@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -26,7 +27,7 @@ function named(
 suite('Source-backed entity interpretation', () => {
   test('combined and canonical folders coexist; filename-only sessions and conflicts remain explicit in source details', async function () {
     this.timeout(20000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-entities-host-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     const paths = [

@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,7 +9,7 @@ import { image, records, squashfsFile, squashfsSuperblock } from '../squashfsFix
 
 suite('SquashFS inspection', () => {
   test('opens a header report with explicitly unknown member coverage', async () => {
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const directory = await mkdtemp(join(tmpdir(), 'bids-sqfs-inspect-'));
     try {
       const image = vscode.Uri.file(join(directory, 'fixture.sqfs'));
@@ -37,7 +38,7 @@ suite('SquashFS logical tree', () => {
   test('the next-page tree action replaces rows and retains unavailable source coverage', async () => {
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-collection-'));
     let root: import('../../core/directory').DirectoryEntry | undefined;
@@ -93,7 +94,7 @@ suite('SquashFS member opening', () => {
   test('the grouped dataset description shows shared fields and shard-specific values', async () => {
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-comparison-'));
     let root: import('../../core/directory').DirectoryEntry | undefined;
@@ -137,7 +138,7 @@ suite('SquashFS member opening', () => {
   test('tree clicks preview selected JSON and hand selected NIfTI bytes to VS Code', async () => {
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-sqfs-open-'));
     let root: import('../../core/directory').DirectoryEntry | undefined;

@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -38,7 +39,7 @@ async function rendered(
 suite('Task metadata and event-file entry points', () => {
   test('task JSON opens recorded metadata and task events open a literal table with matching dictionary', async function () {
     this.timeout(25000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-task-previews-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     const panels: vscode.WebviewPanel[] = [];

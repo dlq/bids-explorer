@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -55,7 +56,7 @@ async function text(uri: vscode.Uri): Promise<void> {
 suite('History and metadata document previews', () => {
   test('history displays recorded headers/unparsed text safely, pages/filters and retains snapshots on failed reload', async function () {
     this.timeout(30000);
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     await extension.activate();
     const manager = new HistoryPreviewManager(extension.extensionUri);
     const folder = await mkdtemp(join(tmpdir(), 'bids-history-ui-'));
@@ -146,7 +147,7 @@ suite('History and metadata document previews', () => {
   });
   test('inspector gradient action opens independently inherited sources and refuses newly ambiguous matches', async function () {
     this.timeout(30000);
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     const gradients = new GradientPreviewManager(extension.extensionUri),
       inspector = new InheritanceInspector(extension.extensionUri, gradients);
     const folder = await mkdtemp(join(tmpdir(), 'bids-inherited-gradient-ui-'));

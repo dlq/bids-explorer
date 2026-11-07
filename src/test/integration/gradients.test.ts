@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { gzipSync } from 'node:zlib';
 import { zipFixture } from '../zipFixture';
 import { tarFixture, tarRecord } from '../tarFixture';
@@ -45,7 +46,7 @@ async function rendered(
 suite('Read-only diffusion gradient preview', () => {
   test('tree and explicit commands open a real script-enabled preview with linked selection and paired identity', async function () {
     this.timeout(30000);
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-gradient-host-'));
     let panel: vscode.WebviewPanel | undefined;
@@ -97,7 +98,7 @@ suite('Read-only diffusion gradient preview', () => {
 
   test('manager deduplicates concurrent opens, reports load failures and rejects opens after disposal', async function () {
     this.timeout(30000);
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     const manager = new GradientPreviewManager(extension.extensionUri);
     const folder = await mkdtemp(join(tmpdir(), 'bids-gradient-lifetime-'));
     try {
@@ -136,7 +137,7 @@ suite('Archived diffusion gradients', () => {
   ] as const) {
     test(`renders both gradient files from ${suffix} through the tree`, async function () {
       this.timeout(20000);
-      await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+      await vscode.extensions.getExtension(extensionId)!.activate();
       const folder = await mkdtemp(join(tmpdir(), 'bids-gradient-archive-'));
       const provider = new DatasetTreeProvider(new DatasetBrowser(new LogicalDirectorySource()));
       let panel: vscode.WebviewPanel | undefined;

@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,7 +13,7 @@ import { niftiFixture } from '../niftiFixture';
 suite('Progressive NIfTI viewer', () => {
   test('renders the first and full volume of loose NIfTI and gzip images', async function () {
     this.timeout(60000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-nifti-host-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     const first = gunzipSync(niftiFixture());
@@ -205,7 +206,7 @@ suite('Progressive NIfTI viewer', () => {
 
 suite('Empty NIfTI placeholders', () => {
   test('shows an immediate explanation without loading NiiVue or fetching empty image bytes; repeat opens reuse the panel', async () => {
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-empty-nifti-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     try {

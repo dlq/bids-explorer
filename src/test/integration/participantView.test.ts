@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { setTimeout } from 'node:timers/promises';
@@ -9,9 +10,7 @@ import type { DirectoryEntry } from '../../core/directory';
 
 suite('Participant derivatives view', () => {
   test('shows raw sessions once and participant derivative pipelines with original resources, retaining the dataset pipeline view', async () => {
-    const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>(
-      'bids-explorer-dev.bids-explorer',
-    )!;
+    const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>(extensionId)!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-participant-view-host-'));
     let root: DirectoryEntry | undefined;

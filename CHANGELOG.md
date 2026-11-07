@@ -4,7 +4,7 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
-- Add hosted CodeQL analysis and a tagged-release Marketplace publishing workflow using OIDC Trusted Publishing; upgrade the development-only packaging tool to support it. Publisher account setup remains required.
+- Add hosted CodeQL analysis and a tagged-release Marketplace publishing workflow using OIDC Trusted Publishing; upgrade the development-only packaging tool to support it. Use the confirmed `MCIN-dlq` publisher and derive integration-test extension identity from the manifest; its repository/workflow/environment trust policy is active. The production extension has a new VS Code identity; disable the development copy and recreate extension-owned registrations if needed.
 
 - License BIDS Explorer under MIT, include the license in future packages and retain third-party notices.
 

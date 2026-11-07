@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -16,7 +17,7 @@ suite('Logical acquisition browsing', () => {
     test(`${format} acquisitions expose source-backed children and inherited metadata`, async function () {
       this.timeout(30000);
       const { provider } = await vscode.extensions
-        .getExtension<{ provider: DatasetTreeProvider }>('bids-explorer-dev.bids-explorer')!
+        .getExtension<{ provider: DatasetTreeProvider }>(extensionId)!
         .activate();
       const folder = await mkdtemp(join(tmpdir(), 'bids-acquisition-'));
       let root: DirectoryEntry | undefined;
@@ -126,7 +127,7 @@ suite('Logical acquisition browsing', () => {
     test(`${format} multi-echo collections preserve shared events, per-echo metadata and parents`, async function () {
       this.timeout(30000);
       const { provider } = await vscode.extensions
-        .getExtension<{ provider: DatasetTreeProvider }>('bids-explorer-dev.bids-explorer')!
+        .getExtension<{ provider: DatasetTreeProvider }>(extensionId)!
         .activate();
       const folder = await mkdtemp(join(tmpdir(), 'bids-echoes-'));
       let root: DirectoryEntry | undefined;
@@ -281,7 +282,7 @@ suite('Logical acquisition browsing', () => {
 suite('Logical metadata-first ordering', () => {
   test('metadata precedes session, modality and acquisition subtrees while scans retain semantic order', async () => {
     const { provider } = await vscode.extensions
-      .getExtension<{ provider: DatasetTreeProvider }>('bids-explorer-dev.bids-explorer')!
+      .getExtension<{ provider: DatasetTreeProvider }>(extensionId)!
       .activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-logical-order-'));
     let root: DirectoryEntry | undefined;

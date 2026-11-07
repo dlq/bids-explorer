@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, writeFile, readFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -65,7 +66,7 @@ async function waitText(uri: vscode.Uri): Promise<void> {
 suite('Read-only participant tables', () => {
   test('tree opens a paged literal table, preserves IDs and raw text access, and retains snapshots after failed reload', async function () {
     this.timeout(30000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-table-host-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     let panel: vscode.WebviewPanel | undefined;
@@ -178,7 +179,7 @@ suite('Read-only participant tables', () => {
   test('table manager coalesces opens, cancels pending reads, isolates physical sources and falls back to raw for unusable tables', async function () {
     this.timeout(20000);
     const folder = await mkdtemp(join(tmpdir(), 'bids-table-life-'));
-    const extension = vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!;
+    const extension = vscode.extensions.getExtension(extensionId)!;
     await extension.activate();
     const manager = new TablePreviewManager(extension.extensionUri);
     try {
@@ -248,7 +249,7 @@ suite('Read-only participant tables', () => {
     test(`${kind} tables use scoped dictionary inheritance, correct IDs and source-bound raw actions`, async function () {
       this.timeout(25000);
       const extension = vscode.extensions.getExtension<{ provider: DatasetTreeProvider }>(
-        'bids-explorer-dev.bids-explorer',
+        extensionId,
       )!;
       const { provider } = await extension.activate();
       const folder = await mkdtemp(join(tmpdir(), 'bids-summary-host-'));

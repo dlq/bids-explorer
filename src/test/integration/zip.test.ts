@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { waitForArchivePreview } from './waitForArchivePreview';
 import { niftiFixture } from '../niftiFixture';
 import { entryArchiveUri, parseArchiveUri, archiveResourceUri } from '../../core/archiveUri';
@@ -28,7 +29,7 @@ suite('Archive URI platform boundary', () => {
 suite('ZIP index entry point', () => {
   test('explicit command inspects a ZIP at a deeper physical path, bounds its report and preserves source bytes', async function () {
     this.timeout(15000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-zip-command-'));
     try {
       const nested = join(folder, 'sub-01', 'ses-02');
@@ -75,7 +76,7 @@ suite('ZIP-backed dataset tree', () => {
     this.timeout(15000);
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-zip-navigation-'));
     let root: import('../../core/directory').DirectoryEntry | undefined;
@@ -220,7 +221,7 @@ suite('Declared descriptorless collections', () => {
     this.timeout(15000);
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-declared-collection-'));
     const uri = vscode.Uri.file(folder);
@@ -286,7 +287,7 @@ suite('Archive metadata viewing', () => {
     this.timeout(30000);
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const api = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-archive-previews-'));
     let root: import('../../core/directory').DirectoryEntry | undefined;
@@ -400,9 +401,10 @@ suite('Archive metadata viewing', () => {
 
 suite('Saved archive placements', () => {
   test('workspace settings place a ZIP subtree and preserve the member URI', async () => {
-    const extension = vscode.extensions.getExtension<
-      ReturnType<typeof import('../../extension').activate>
-    >('bids-explorer-dev.bids-explorer')!;
+    const extension =
+      vscode.extensions.getExtension<ReturnType<typeof import('../../extension').activate>>(
+        extensionId,
+      )!;
     const { provider } = await extension.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-saved-placement-'));
     const settings = vscode.workspace.getConfiguration('bidsExplorer');

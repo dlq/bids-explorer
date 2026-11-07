@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { waitForArchivePreview } from './waitForArchivePreview';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -10,7 +11,7 @@ import { tarFixture, tarRecord } from '../tarFixture';
 
 suite('Tar inventory command', () => {
   test('inspects a gzip tarball and publishes a bounded report without extracting it', async () => {
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-tar-command-'));
     try {
       const uri = vscode.Uri.file(join(folder, 'sample.tar.gz'));
@@ -48,7 +49,7 @@ suite('Tar logical browsing', () => {
   const verify = async (folder: string, real: boolean) => {
     const extension = vscode.extensions.getExtension<{
       provider: import('../../ui/datasetTreeProvider').DatasetTreeProvider;
-    }>('bids-explorer-dev.bids-explorer')!;
+    }>(extensionId)!;
     const { provider } = await extension.activate();
     const root = await vscode.commands.executeCommand<
       import('../../core/directory').DirectoryEntry

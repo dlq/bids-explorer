@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import { strict as assert } from 'node:assert';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -11,7 +12,7 @@ import { InheritanceInspector } from '../../ui/inheritanceInspector';
 suite('Inherited metadata inspection', () => {
   test('explicit tree inspection shows inherited values and companion sources without changing default opening or files', async function () {
     this.timeout(20000);
-    await vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.activate();
+    await vscode.extensions.getExtension(extensionId)!.activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-inheritance-host-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));
     try {
@@ -83,7 +84,7 @@ suite('Inherited metadata inspection', () => {
       assert.equal(await readFile(join(folder, 'dwi.json'), 'utf8'), '{"Shared":1,"Override":2}');
       // Exercise inspector lifetime/cancellation independently of the command's shared instance.
       const inspector = new InheritanceInspector(
-        vscode.extensions.getExtension('bids-explorer-dev.bids-explorer')!.extensionUri,
+        vscode.extensions.getExtension(extensionId)!.extensionUri,
       );
       const pending = inspector.open(element.entry);
       inspector.cancelPending();

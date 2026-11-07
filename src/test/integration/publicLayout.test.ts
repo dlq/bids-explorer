@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -43,7 +44,7 @@ suite('Opt-in public logical-layout examples', () => {
     assert.equal(manifest.derivatives, 'ds007661');
     assert.equal(manifest.officialExample, 'bids-examples/ds000117');
     const { provider } = await vscode.extensions
-      .getExtension<ReturnType<typeof activate>>('bids-explorer-dev.bids-explorer')!
+      .getExtension<ReturnType<typeof activate>>(extensionId)!
       .activate();
     const settings = vscode.workspace.getConfiguration('bidsExplorer');
     const previous = settings.inspect('derivativeDatasets')?.workspaceValue;

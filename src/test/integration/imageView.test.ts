@@ -1,3 +1,4 @@
+import { extensionId } from '../extensionId';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -14,7 +15,7 @@ suite('Native Image view', () => {
   test('renders source-backed metadata, controls the selected image and follows selection/disposal without losing focus', async function () {
     this.timeout(45000);
     const { imageView } = await vscode.extensions
-      .getExtension<{ imageView: ImageView }>('bids-explorer-dev.bids-explorer')!
+      .getExtension<{ imageView: ImageView }>(extensionId)!
       .activate();
     const folder = await mkdtemp(join(tmpdir(), 'bids-imageview-'));
     const provider = new DatasetTreeProvider(new DatasetBrowser(new LocalDirectorySource()));

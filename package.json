@@ -3,7 +3,7 @@
   "displayName": "BIDS Explorer",
   "description": "Browse BIDS studies, preview metadata and open NIfTI images locally or over SSH.",
   "version": "1.0.0",
-  "publisher": "bids-explorer-dev",
+  "publisher": "MCIN-dlq",
   "private": true,
   "engines": {
     "vscode": "^1.96.0"
@@ -281,7 +281,7 @@
           "default": "",
           "maxLength": 200,
           "scope": "resource",
-          "description": "Column in the participant’s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
+          "description": "Column in the participant\u2019s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
         },
         "bidsExplorer.derivativeDatasets": {
           "type": "object",

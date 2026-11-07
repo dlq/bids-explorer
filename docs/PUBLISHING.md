@@ -6,8 +6,8 @@ Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-ex
 
 ## One-time publisher setup
 
-1. Sign in to [Marketplace publisher management](https://marketplace.visualstudio.com/manage). Create or select a publisher you control. The requested publisher ID is `dlq`, subject to availability; the GitHub username does not reserve that Marketplace ID. Complete any account agreements yourself.
-2. Once ownership is confirmed, replace `bids-explorer-dev` in `package.json` with the actual publisher ID. Set the repository variable `MARKETPLACE_PUBLISHER` to the same value if it differs from `dlq`. The publisher is part of the installed extension identifier, so settle it before the first Marketplace release.
+1. Sign in to [Marketplace publisher management](https://marketplace.visualstudio.com/manage). Create or select a publisher you control. The confirmed existing publisher is `MCIN-dlq`, owned by Darcy Quesnel. GitHub user `dlq` and Marketplace publisher `MCIN-dlq` are separate identities. Complete any account agreements yourself.
+2. The manifest and repository variable `MARKETPLACE_PUBLISHER` use `MCIN-dlq`. Integration tests derive the extension identifier from the manifest. The publisher is part of the installed extension identifier, so settle it before the first Marketplace release.
 3. In that publisher's **Trusted Publishing** settings, create this policy:
 
    | Setting          | Value           |
@@ -19,7 +19,11 @@ Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-ex
 
 4. Keep the GitHub environment named `marketplace`. Only the publishing job requests an OIDC token; test and package jobs cannot obtain publishing credentials. Do not add a `VSCE_PAT` secret for this workflow.
 
-The workflow is prepared, but publishing is not operational until the actual publisher and Marketplace trust policy are configured. The development publisher remains in the manifest until ownership is confirmed.
+Publisher ownership is confirmed and the manifest uses `MCIN-dlq`. The policy above was created and shown as Active on November 7, 2026. No actual Marketplace publish or OIDC token exchange has been exercised yet. Review the initial CodeQL findings and prepare a new authorized release before the first publication.
+
+## Moving from the development VSIX
+
+The production extension identifier is `MCIN-dlq.bids-explorer`; older development packages used `bids-explorer-dev.bids-explorer`. VS Code treats them as separate extensions. Before installing the Marketplace copy, remove or disable the development copy to avoid duplicate views and commands. Do not assume extension-owned registrations, placements or caches migrate between these identities; record manual registrations first and re-add them if needed. Settings under `bidsExplorer` retain the same namespace, and ordinary workspace dataset roots can be recognized again. Dataset files are unaffected.
 
 ## Release workflow
 
@@ -40,3 +44,7 @@ A successful CodeQL job means analysis completed; it does not mean the alert lis
 CodeQL scans JavaScript/TypeScript on pushes and pull requests to `main`, weekly, and during release verification. It complements the local Semgrep rules. Dependabot already checks npm dependencies and GitHub Actions weekly, with development dependencies grouped. Dependabot alerts and security updates are enabled in repository settings; review its PRs and their CI results before merging.
 
 Official actions in the new workflows are pinned to commit SHAs with version comments, which Dependabot can update. Publishing runs only for a stable GitHub Release or an explicit publish request, never for an ordinary push or pull request. Keep datasets, credentials and private test data outside CI.
+
+## Initial CodeQL findings
+
+The first extended scan reported ten alerts: six webview message-origin checks, one guarded archive-open race warning, and three test/fixture warnings. They remain open for review; successful analysis is not a clean security review. Triage these before the first Marketplace release.
