@@ -1,6 +1,6 @@
 # Security
 
-BIDS Explorer supports read-only exploration of directories, ZIP archives, supported tarballs and SquashFS images. It bundles NiiVue for NIfTI rendering. The current release is `1.0.1`; the [compatibility matrix](docs/COMPATIBILITY.md) records the tested formats, hosts and recovery cases.
+BIDS Explorer supports read-only exploration of directories, ZIP archives, supported tarballs and SquashFS images. It bundles NiiVue for NIfTI rendering. The current release is `1.0.2`; the [compatibility matrix](docs/COMPATIBILITY.md) records the tested formats, hosts and recovery cases.
 
 ## Data handling for researchers
 

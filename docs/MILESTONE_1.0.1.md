@@ -27,3 +27,5 @@ The 13 MB sample is a documented anatomical subset, not a complete BIDS study or
 The Marketplace returned version **1.0.1**, publisher **MCIN-dlq**, and SHA-256 `d13466575fb83c7515a7f38999b5b69393e99b544648ceab0a1085b35d4a7274`, matching the tested artifact. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.1) contains that VSIX, the separate sample ZIP and `SHA256SUMS`. The original `v1.0.0` tag/artifact was preserved.
 
 The publisher dashboard showed **Verifying 1.0.1** with **Public** availability after upload. The public listing returned 404 during verification. A successful `vsce publish` and version metadata do not establish that the public listing is already available. GitHub VSIX installation is available while Microsoft verification completes.
+
+Subsequent check on November 7, 2026: the public listing returned HTTP 200, confirming completion of the initial verification period.

@@ -95,7 +95,7 @@ Run `npm run security` (requires uv) and `npm audit --audit-level=high` alongsid
 
 ## Versioning
 
-The current manifest version is `1.0.1`, released as `v1.0.1` with public source at [dlq/bids-explorer](https://github.com/dlq/bids-explorer) and Marketplace automation configured. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-1.0.1.vsix` and release tags such as `v1.0.1`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
+The current manifest version is `1.0.2`, the `v1.0.2` icon patch with public source at [dlq/bids-explorer](https://github.com/dlq/bids-explorer) and Marketplace automation configured. [PLANS.md](../PLANS.md) assigns proposed minor milestones through `1.0.0`; [VERSIONING.md](../VERSIONING.md) defines release conventions. The manifest version determines VSIX filenames such as `bids-explorer-1.0.2.vsix` and release tags such as `v1.0.2`. Ordinary development stays in the changelog's Unreleased section until an actual release is prepared.
 
 ## Public dataset smoke tests
 

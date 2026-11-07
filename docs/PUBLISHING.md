@@ -19,7 +19,7 @@ Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-ex
 
 4. Keep the GitHub environment named `marketplace`. Only the publishing job requests an OIDC token; test and package jobs cannot obtain publishing credentials. Do not add a `VSCE_PAT` secret for this workflow.
 
-Publisher ownership is confirmed and the manifest uses `MCIN-dlq`. The policy above was created and shown as Active on November 7, 2026. The first actual OIDC publication succeeded for version 1.0.1 on November 7, 2026, in [run 42418383488](https://github.com/dlq/bids-explorer/actions/runs/42418383488). The Marketplace metadata independently confirmed the tested VSIX checksum. This confirms upload acceptance, not completed public availability: the publisher dashboard still showed **Verifying 1.0.1**, and the public page returned 404 while Microsoft verification was pending. The initial CodeQL findings have been reviewed and resolved.
+Publisher ownership is confirmed and the manifest uses `MCIN-dlq`. The policy above was created and shown as Active on November 7, 2026. The first actual OIDC publication succeeded for version 1.0.1 on November 7, 2026, in [run 42418383488](https://github.com/dlq/bids-explorer/actions/runs/42418383488). The Marketplace metadata independently confirmed the tested VSIX checksum. The public listing initially returned 404 while Microsoft verification was pending; it was subsequently confirmed publicly accessible. A successful upload alone does not establish public availability. The initial CodeQL findings have been reviewed and resolved.
 
 ## Moving from the development VSIX
 
@@ -27,7 +27,7 @@ The production extension identifier is `MCIN-dlq.bids-explorer`; older developme
 
 ## Release workflow
 
-Version 1.0.1 is the first Marketplace submission, awaiting Microsoft verification and containing the MIT license, production publisher and workflow setup. Keep the existing `v1.0.0` tag and development-publisher artifact unchanged.
+Version 1.0.1 is the first public Marketplace release, containing the MIT license, production publisher and workflow setup. Keep the existing `v1.0.0` tag and development-publisher artifact unchanged.
 
 1. Follow [VERSIONING.md](../VERSIONING.md): update the manifest and lockfile together, update release notes, test and create an authorized `vX.Y.Z` tag on `main`.
 2. Publish a stable GitHub Release for that tag. This starts **Marketplace release**. Publishing a prerelease is deliberately rejected until a separate preview-channel policy is adopted.
@@ -52,3 +52,7 @@ The first extended scan reported ten alerts. The [review record](CODEQL_REVIEW.m
 ## Marketplace page content
 
 `package.json` configures `vsce.readmePath` as `docs/MARKETPLACE.md`. That getting-started guide becomes the VSIX `extension/readme.md` and the Marketplace description; the shorter root README remains the GitHub landing page. Its links and image use public HTTPS URLs. Inspect the packaged README before releasing. Marketplace changes take effect when a new package is published; editing GitHub alone does not update an existing listing.
+
+## Extension icon
+
+The manifest’s `icon` field points to `media/icon.png`. Keep the editable SVG in Git and the 256 × 256 PNG in the VSIX; inspect both the manifest and packaged image before publication. The icon appears in Marketplace and VS Code extension listings after the new version finishes Microsoft verification. Editing repository artwork alone does not update a published listing. See [artwork and colour sources](BRANDING.md).
