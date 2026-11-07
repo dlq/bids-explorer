@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Update CI actions and the test-runner patch, and separate routine Dependabot updates from major toolchain changes while preserving the supported API/type baselines.
+
 - Reject foreign-origin messages in all six metadata, table, gradient and image clients. Add real-webview sender regressions, deterministic tar path-replacement checks, and a recorded review of the initial CodeQL alerts.
 
 - Bundle a dedicated Marketplace getting-started guide covering local/SSH setup, archives, imaging, metadata, availability, accessibility and troubleshooting; keep the GitHub README concise.

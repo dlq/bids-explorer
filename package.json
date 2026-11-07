@@ -383,7 +383,7 @@
     "@types/node": "^22.0.0",
     "@types/vscode": "1.96.0",
     "@types/yauzl": "3.4.0",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^2.5.0",
     "@vscode/vsce": "4.1.0",
     "c8": "^10.1.3",

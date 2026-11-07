@@ -114,3 +114,9 @@ Use synthetic studies for keyboard and theme checks. Verify the installed packag
 The [usability record](USABILITY.md) lists checked workflows and the limits of the sampled usability evidence. Keep user instructions in the README and Explorer reference, with study terminology and exact visible action labels.
 
 See [Publishing](PUBLISHING.md) for CodeQL, Dependabot and tagged-release Marketplace automation.
+
+## Dependency updates
+
+Dependabot groups development-tool minor/patch updates and routine action minor/patch updates separately. Major toolchain changes and production-library changes remain individual reviews; there is no blanket auto-merge. Keep `@types/vscode` at the minimum supported API version (`1.96.0`) until `engines.vscode` is deliberately raised, and keep Node types on the selected Node 22 toolchain. TypeScript versions `>=6.1.0` are temporarily excluded because the current `typescript-eslint` peer range ends below 6.1; revise that exclusion alongside a compatible parser/toolchain.
+
+The reviewed maintenance update uses the official v7 checkout, setup-node, setup-python and upload-artifact actions, pinned to commit SHAs, and updates `@vscode/test-cli` from 0.0.12 to 0.0.15 (Node 22 or newer). TypeScript 7, ESLint 10, c8 12 and test-electron 3 are not part of this combined update. Require clean installation, coverage, integration, security, packaging and hosted CodeQL/CI before merging.
