@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Publish the source repository at `dlq/bids-explorer` and add contributor and security-reporting links.
+
 ## [1.0.0] - 2026-11-07
 
 - Prioritize scan dimensions, voxel size and inherited acquisition parameters above image controls. Display TE in milliseconds and JSON strings as text, preserve exact values in provenance, group fields beneath each source file, collapse voxel-position buttons, hide single-volume navigation and completed loading actions, and shorten intensity limits without changing their internal precision.

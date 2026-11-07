@@ -1,6 +1,6 @@
 # Security
 
-BIDS Explorer supports read-only exploration of directories, ZIP archives, supported tarballs and SquashFS images. It bundles NiiVue for NIfTI rendering. The current local release is `0.9.0`; the [compatibility matrix](docs/COMPATIBILITY.md) records the tested formats, hosts and recovery cases.
+BIDS Explorer supports read-only exploration of directories, ZIP archives, supported tarballs and SquashFS images. It bundles NiiVue for NIfTI rendering. The current release is `1.0.0`; the [compatibility matrix](docs/COMPATIBILITY.md) records the tested formats, hosts and recovery cases.
 
 ## Data handling for researchers
 
@@ -10,7 +10,7 @@ Remote access uses the VS Code Remote SSH connection. A remote image must reach 
 
 Treat unfamiliar studies as untrusted content. VS Code Workspace Trust is required by the extension manifest. A development host can run in Restricted Mode during tests; this does not establish support for installed extensions in untrusted workspaces. Use **Manage Workspace Trust** only for folders you trust.
 
-For help or vulnerability reports, share the error and extension version first. Dataset paths, participant identifiers and metadata can contain sensitive research information. Check screenshots and logs before sharing them. A public repository and private vulnerability-reporting channel still need to be configured before distribution.
+For help or vulnerability reports, share the error and extension version first. Dataset paths, participant identifiers and metadata can contain sensitive research information. Check screenshots and logs before sharing them. Report ordinary bugs at https://github.com/dlq/bids-explorer/issues. Report suspected vulnerabilities privately at https://github.com/dlq/bids-explorer/security/advisories/new; do not include sensitive dataset content in public issues.
 
 ## Development checks
 
@@ -44,7 +44,7 @@ See TESTING.md for behavior and regression-test expectations. No real SSH connec
 
 ## GitHub setup and reporting
 
-When creating the GitHub repository, enable available secret scanning and push protection, private vulnerability reporting, Dependabot alerts/security updates and required CI/security checks on the default branch. Availability depends on repository/account settings; these controls have not been enabled by local configuration. Review action pinning and dependency updates before wider distribution.
+The public repository has secret scanning, push protection, private vulnerability reporting and Dependabot alerts/security updates enabled. Required CI/security checks are configured on `main`; administrators retain an override. Availability depends on repository/account settings. Review action pinning and dependency updates before wider distribution.
 
 There is no public release or reporting channel yet. Once private vulnerability reporting is enabled, use the repository's Security tab for vulnerabilities. Do not put credentials, private datasets or exploit details exposing sensitive information in public issues.
 

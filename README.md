@@ -47,3 +47,7 @@ Previews follow the VS Code theme. Representative keyboard and VoiceOver workflo
 ## More help
 
 Browsing is read-only. Saving changes in a regular editor is a separate action. For supported archive formats, large-file limits, and linking raw and derivative datasets stored separately, see `docs/EXPLORER_REFERENCE.md` and `docs/COMPATIBILITY.md` in the source checkout. The contributor guide is `docs/DEVELOPMENT.md`.
+
+## Source and feedback
+
+Source code and issue tracking are at [dlq/bids-explorer](https://github.com/dlq/bids-explorer). See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute and [SECURITY.md](SECURITY.md) for private vulnerability reporting. A project license has not yet been selected. Marketplace publication remains separate.

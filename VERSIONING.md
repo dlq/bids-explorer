@@ -2,7 +2,7 @@
 
 ## Version source and status
 
-`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.0`, tagged locally as `v1.0.0`; there is no Marketplace or GitHub publication. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
+`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.0`, tagged locally as `v1.0.0`; the source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer), without Marketplace publication. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
 
 Use three numeric components: `major.minor.patch`. Do not bump the version for every commit. Node, TypeScript, archive tool and `engines.vscode` versions are separate compatibility/development requirements; they do not track the extension version.
 

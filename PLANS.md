@@ -12,7 +12,7 @@ Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and so
 
 ## Version targets
 
-The manifest is `1.0.0`, released locally as `v1.0.0`. There is no Marketplace or GitHub publication. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is `1.0.0`, released locally as `v1.0.0`. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); Marketplace publication remains separate. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |

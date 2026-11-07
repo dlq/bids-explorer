@@ -61,4 +61,4 @@ Keep public sample data and large caches in their existing locations until a con
 
 ## Version and release direction
 
-The current manifest is `1.0.0`, released locally as `v1.0.0`. It has not been published to the Marketplace or GitHub. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
+The current manifest is `1.0.0`, released locally as `v1.0.0`. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); it has not been published to the Marketplace. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
