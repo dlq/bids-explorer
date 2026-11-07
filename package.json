@@ -2,8 +2,9 @@
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
   "description": "Browse BIDS studies, preview metadata and open NIfTI images locally or over SSH.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "MCIN-dlq",
+  "icon": "media/icon.png",
   "private": true,
   "engines": {
     "vscode": "^1.96.0"

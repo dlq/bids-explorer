@@ -6,13 +6,13 @@ Working plan, November 3, 2026. Update this as implementation reveals constraint
 
 Make a VS Code extension for exploring BIDS datasets locally and over SSH, in ordinary directories, ZIP archives, tarballs and SquashFS images. Navigation and dataset context are the product; visualization is optional.
 
-The implementation supports read-only exploration of ordinary directories, ZIP, POSIX ustar/gzip tarballs and SquashFS with documented compression limits, locally and through VS Code Remote SSH. Logical browsing preserves physical source identity, explicit raw/derivative links and partial coverage. Selected-file metadata inheritance, bounded tables and gradients, persistent ZIP/tar inventories and SquashFS availability snapshots are implemented. The built-in progressive NIfTI viewer and native Image sidebar use the packaged NiiVue library. Broader image relationships, additional codecs, offline recovery and Marketplace distribution remain separate work. The source and original 1.0.0 VSIX are public on GitHub; hosted CI has passed. The project uses the MIT license, while dependencies retain their own licenses.
+The implementation supports read-only exploration of ordinary directories, ZIP, POSIX ustar/gzip tarballs and SquashFS with documented compression limits, locally and through VS Code Remote SSH. Logical browsing preserves physical source identity, explicit raw/derivative links and partial coverage. Selected-file metadata inheritance, bounded tables and gradients, persistent ZIP/tar inventories and SquashFS availability snapshots are implemented. The built-in progressive NIfTI viewer and native Image sidebar use the packaged NiiVue library. Broader image relationships, additional codecs, offline recovery remain separate work. Marketplace distribution is configured. The source and original 1.0.0 VSIX are public on GitHub; hosted CI has passed. The project uses the MIT license, while dependencies retain their own licenses.
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) for exploration and source references before implementing. Strata is reference material, not an implementation to copy wholesale.
 
 ## Version targets
 
-The manifest is `1.0.1`, released on GitHub and uploaded for the first Marketplace release (verification pending) after the local `v1.0.0` milestone. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
+The manifest is `1.0.2`, the icon update following the published `v1.0.1` Marketplace release. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. Proposed releases below are milestones, not dates or implemented features. Move scope or add another `0.x` minor release if readiness checks reveal more work. Do not bump versions for ordinary commits or reserve future versions in the changelog.
 
 | Target  | Intended outcome                                       |
 | ------- | ------------------------------------------------------ |
@@ -179,7 +179,7 @@ Commit to documented behavior for registering, browsing, inspecting and opening 
 - Automated formatting, type checking, linting, coverage, integration, security and packaging checks pass; remaining limitations and accepted lower-severity dependency findings are documented.
 - Source identities, metadata/absence semantics, resource lifetime and refresh/cancellation behavior are tested and documented.
 - Configuration, persisted registration and cache compatibility policies are documented; migrations or explicit rebuild paths exist where needed.
-- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. The production publisher is `MCIN-dlq`, and version 1.0.1 has been uploaded and awaits Microsoft verification. A local tag alone does not publish an extension.
+- Installation, dependencies, troubleshooting and local release provenance are documented. The public repository, MIT license and private security-reporting channel are configured. The production publisher is `MCIN-dlq`, and version 1.0.1 is publicly available on the Marketplace. A local tag alone does not publish an extension.
 
 Derivative image overlays and rich comparison scenes, external clinical joins and processing execution are not 1.0 requirements.
 

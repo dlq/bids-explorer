@@ -44,3 +44,6 @@ README.md
 
 # Citation metadata is available through the public repository.
 CITATION.cff
+
+# Keep the editable icon source in Git; ship the Marketplace PNG.
+media/icon.svg

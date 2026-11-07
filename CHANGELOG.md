@@ -4,6 +4,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.0.2] - 2026-11-07
+
+- Add a Marketplace and Extensions-view icon combining logical dataset branches, imaging and metadata, using colours from the BIDS website.
+
 ## [1.0.1] - 2026-11-07
 
 - Add a five-minute public-data walkthrough, a separately downloadable 13 MB anatomical sample with upstream attribution/provenance, troubleshooting, citation metadata, a pull-request template and scoped roadmap issues.
