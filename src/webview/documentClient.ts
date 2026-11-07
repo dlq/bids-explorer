@@ -25,9 +25,23 @@ function render(): void {
     pre.textContent = record.text;
     detail.textContent = record.detail ?? '';
     detail.className = 'source-path';
-    card.append(title, pre, detail);
+    card.append(title, pre);
+    if (record.detail) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'Source details';
+      details.append(summary, detail);
+      card.append(details);
+    }
     node('records').append(card);
   }
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.textContent = 'No matching records.';
+    node('records').append(empty);
+  }
+  node('previous').hidden = rows.length <= 20;
+  node('next').hidden = rows.length <= 20;
   node('page').textContent =
     `${rows.length ? page * 20 + 1 : 0}–${Math.min(rows.length, (page + 1) * 20)} of ${rows.length}`;
   node<HTMLButtonElement>('previous').disabled = page === 0;
@@ -60,6 +74,8 @@ function report(): void {
       firstTitle: node('records').querySelector('h2')?.textContent,
       firstText: node('records').querySelector('pre')?.textContent,
       sourceCount: data.sources.length,
+      sourceDetailsCount: node('records').querySelectorAll('details').length,
+      expandedSourceDetails: node('records').querySelectorAll('details[open]').length,
       actions: data.actions.map((action) => action.id),
       error: node('error').hidden ? '' : node('error').textContent,
     });

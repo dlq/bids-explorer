@@ -62,3 +62,7 @@ The clean source passed formatting, type checking, lint, coverage and all 157 un
 ## 0.9.0 release artifact
 
 The local release VSIX is `bids-explorer-0.9.0.vsix`, SHA-256 `44f81550f8f7fe3fd2c4d7c3763fe130de7a428587bfd8eaa3c34bc021f3bcaa`. Its 390 packaged runtime files matched the candidate byte for byte. The installed release passed the seven NIfTI cases and all five metadata source cases on VS Code 1.96.0 and 1.145.2. The release source passed 157 unit tests and 44 extension-host tests on each VS Code version, with one opt-in test pending on each. Semgrep passed. The dependency audit found no runtime, high or critical findings. Rorqual verified the release checksum and reran the synthetic host read and stale ZIP recovery checks successfully. The Remote SSH rendering and reconnect evidence above used the runtime-identical candidate.
+
+## Usability follow-up
+
+The November 7, 2026 [usability record](USABILITY.md) adds development-host checks of gradient and inherited-metadata previews in dark and high-contrast themes, named image controls, keyboard frame selection and dataset-history opening. The follow-up adds user-assisted VoiceOver announcements, reload recovery and keyboard-accessibility fixes. It distinguishes manual observations, automated checks and installed-package verification.

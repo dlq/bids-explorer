@@ -109,3 +109,56 @@ export async function participantPipelines(
   signal.throwIfAborted();
   return { pipelines, issues };
 }
+
+export interface ParticipantDerivativeLayout {
+  readonly sessions: ReadonlyMap<string, readonly { name: string; branch: DirectoryEntry }[]>;
+  readonly sessionless: readonly { name: string; branch: DirectoryEntry }[];
+  readonly issues: readonly string[];
+}
+
+/** One shallow listing per matched participant. Session identifiers match exactly, without normalization. */
+export async function participantDerivativeLayout(
+  source: DirectorySource,
+  root: DirectoryEntry,
+  participant: DirectoryEntry,
+  signal: AbortSignal,
+  linked: readonly DirectoryEntry[] = [],
+): Promise<ParticipantDerivativeLayout> {
+  const found = await participantPipelines(source, root, participant, signal, linked);
+  const sessions = new Map<string, { name: string; branch: DirectoryEntry }[]>();
+  const sessionless: { name: string; branch: DirectoryEntry }[] = [];
+  const issues = [...found.issues];
+  for (const pipeline of found.pipelines) {
+    signal.throwIfAborted();
+    try {
+      const children = await source.children(pipeline.participant, signal);
+      if (
+        children.some(
+          (entry) =>
+            entry.paging && (entry.paging.next || entry.paging.page > 1 || entry.paging.failures),
+        )
+      )
+        issues.push(
+          `Some sessions in ${pipeline.name} were not inspected. Browse the dataset-level derivative tree for complete source navigation.`,
+        );
+      for (const child of children) {
+        if (child.logical?.kind !== 'session' || !child.logical.session) continue;
+        const rows = sessions.get(child.logical.session) ?? [];
+        rows.push({ name: pipeline.name, branch: child });
+        sessions.set(child.logical.session, rows);
+      }
+      if (
+        children.some(
+          (entry) =>
+            !entry.paging && entry.logical?.kind !== 'session' && isRecognizedBidsEntry(entry),
+        )
+      )
+        sessionless.push({ name: pipeline.name, branch: pipeline.participant });
+    } catch {
+      signal.throwIfAborted();
+      issues.push(`Could not inspect sessions in ${pipeline.name}.`);
+    }
+  }
+  signal.throwIfAborted();
+  return { sessions, sessionless, issues };
+}

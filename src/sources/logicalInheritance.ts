@@ -67,17 +67,21 @@ export async function loadLogicalInheritance(
       else await track(current);
     }
     if (path === boundary || path.startsWith(boundary ? boundary + '/' : '')) {
-      const markers = entries.filter(
+      const physicalEntries = entries.flatMap((entry) => entry.metadataVersions ?? [entry]);
+      const markers = physicalEntries.filter(
         (entry) => entry.name === 'dataset_description.json' && entry.kind === 'file',
       );
       if (markers.length) levels.length = 0;
       if (markers.length > 1)
         incomplete ??= 'Multiple dataset descriptions at the same logical level.';
-      if (entries.some((entry) => entry.paging || entry.archive?.format === 'squashfs'))
-        incomplete ??= 'SquashFS metadata coverage is incomplete.';
-      const candidates = entries.filter(
-        (entry) => entry.archive?.format !== 'squashfs' && /\.(json|bval|bvec)$/.test(entry.name),
-      );
+      if (
+        entries.some(
+          (entry) =>
+            entry.paging && (entry.paging.next || entry.paging.page > 1 || entry.paging.failures),
+        )
+      )
+        incomplete ??= 'Paged metadata coverage is incomplete.';
+      const candidates = physicalEntries.filter((entry) => /\.(json|bval|bvec)$/.test(entry.name));
       levels.push({
         relativePath: path,
         coverage: incomplete ? 'incomplete' : 'complete',

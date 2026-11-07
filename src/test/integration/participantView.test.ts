@@ -7,8 +7,8 @@ import * as vscode from 'vscode';
 import type { activate } from '../../extension';
 import type { DirectoryEntry } from '../../core/directory';
 
-suite('Participant Data view', () => {
-  test('shows raw and pipeline branches with original resources and keeps the physical derivatives tree', async () => {
+suite('Participant derivatives view', () => {
+  test('shows raw sessions once and participant derivative pipelines with original resources, retaining the dataset pipeline view', async () => {
     const extension = vscode.extensions.getExtension<ReturnType<typeof activate>>(
       'bids-explorer-dev.bids-explorer',
     )!;
@@ -33,21 +33,42 @@ suite('Participant Data view', () => {
       const subject = roots.find((row) => row.type === 'entry' && row.entry.name === 'sub-01');
       assert.ok(subject);
       const subjectChildren = await api.provider.getChildren(subject);
-      const overview = subjectChildren.find((row) => row.type === 'overview');
-      assert.ok(overview);
-      assert.equal(api.provider.getTreeItem(overview).label, 'Participant Data');
-      assert(subjectChildren.some((row) => row.type === 'entry' && row.entry.name === 'ses-1'));
+      assert.ok(!subjectChildren.some((row) => row.type === 'overview'));
+      const rawSession = subjectChildren.find(
+        (row) => row.type === 'entry' && row.entry.name === 'ses-1',
+      )!;
+      const derivedSession = subjectChildren.find(
+        (row) => row.type === 'entry' && row.entry.name === 'ses-2',
+      )!;
+      assert.ok(derivedSession.type === 'entry' && derivedSession.derivativeOnly);
+      assert.match(
+        String(api.provider.getTreeItem(derivedSession).description),
+        /derivative sources/,
+      );
+      const [overview] = await api.provider.getChildren(derivedSession);
+      assert.equal(api.provider.getTreeItem(overview).label, 'Derivatives');
+      assert.equal(
+        api.provider.getTreeItem(overview).accessibilityInformation?.label,
+        'Derivatives for session 2',
+      );
       const groups = await api.provider.getChildren(overview);
       assert.deepEqual(
         groups.map((row) => api.provider.getTreeItem(row).label),
-        ['Raw', 'Pipeline: pipeline-a'],
+        ['pipeline-a'],
       );
-      assert.notEqual(api.provider.getTreeItem(groups[0]).id, api.provider.getTreeItem(subject).id);
-      const [rawSession] = await api.provider.getChildren(groups[0]);
-      const [derivedSession] = await api.provider.getChildren(groups[1]);
-      assert.equal(api.provider.getTreeItem(rawSession).label, 'ses-1');
-      assert.equal(api.provider.getTreeItem(derivedSession).label, 'ses-2');
-      const [anat] = await api.provider.getChildren(derivedSession);
+      assert.equal(api.provider.getParent(overview), derivedSession);
+      assert.equal(api.provider.getParent(groups[0]), overview);
+      assert.equal(api.provider.getTreeItem(groups[0]).description, 'Pipeline');
+      assert.equal(api.provider.getTreeItem(rawSession).label, '1');
+      assert.equal(api.provider.getTreeItem(derivedSession).label, '2');
+      assert.equal(
+        subjectChildren.filter((row) => row.type === 'entry' && row.entry.name === 'ses-1').length,
+        1,
+      );
+      assert.ok(
+        !(await api.provider.getChildren(rawSession)).some((row) => row.type === 'overview'),
+      );
+      const [anat] = await api.provider.getChildren(groups[0]);
       const [metadata] = await api.provider.getChildren(anat);
       const item = api.provider.getTreeItem(metadata);
       assert.equal(item.resourceUri?.fsPath, join(folder, paths[1], 'sub-01_ses-2_T1w.json'));
@@ -65,6 +86,15 @@ suite('Participant Data view', () => {
         await writeFile(join(path, `sub-${participant}_ses-${session}_T1w.nii`), '');
       }
       api.provider.refresh();
+      const refreshed = await api.provider.getChildren(subject);
+      const matchedSession = refreshed.find(
+        (row) => row.type === 'entry' && row.entry.name === 'ses-2',
+      )!;
+      assert.ok(matchedSession.type === 'entry' && !matchedSession.derivativeOnly);
+      const matchedChildren = await api.provider.getChildren(matchedSession);
+      assert.ok(matchedChildren.some((row) => row.type === 'entry' && row.entry.name === 'anat'));
+      assert.ok(matchedChildren.some((row) => row.type === 'overview'));
+      assert.ok(!refreshed.some((row) => row.type === 'overview'));
       const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
         'bidsExplorer.showAvailability',
         api.provider.element(root),
@@ -106,6 +136,8 @@ suite('Participant Data view', () => {
       const externalAnat = join(externalPath, 'sub-01', 'anat');
       await mkdir(externalAnat, { recursive: true });
       await writeFile(join(externalAnat, 'sub-01_T1w.nii'), '');
+      await mkdir(join(externalPath, 'sub-01', 'ses-1', 'anat'), { recursive: true });
+      await writeFile(join(externalPath, 'sub-01', 'ses-1', 'anat', 'sub-01_ses-1_T1w.nii'), '');
       const external = await vscode.commands.executeCommand<DirectoryEntry>(
         'bidsExplorer.addDataset',
         vscode.Uri.file(externalPath),
@@ -117,11 +149,24 @@ suite('Participant Data view', () => {
           { [root.datasetUri]: [external.datasetUri] },
           vscode.ConfigurationTarget.Workspace,
         );
-        const linked = (await api.provider.getChildren(overview)).find(
+        const linkedOverview = (await api.provider.getChildren(subject)).find(
+          (row) => row.type === 'overview',
+        )!;
+        assert.equal(
+          api.provider.getTreeItem(linkedOverview).label,
+          'Derivatives without a session',
+        );
+        const linked = (await api.provider.getChildren(linkedOverview)).find(
           (row) => row.type === 'entry' && row.entry.datasetUri === external.datasetUri,
         );
         assert.ok(linked);
-        const [linkedAnat] = await api.provider.getChildren(linked);
+        const sessionlessChildren = await api.provider.getChildren(linked);
+        assert.ok(
+          !sessionlessChildren.some(
+            (row) => row.type === 'entry' && row.entry.logical?.kind === 'session',
+          ),
+        );
+        const [linkedAnat] = sessionlessChildren;
         const [image] = await api.provider.getChildren(linkedAnat);
         assert.equal(
           api.provider.getTreeItem(image).resourceUri?.fsPath,
@@ -146,7 +191,7 @@ suite('Participant Data view', () => {
         }
         await settings.update(setting, {}, vscode.ConfigurationTarget.Workspace);
         assert(
-          !(await api.provider.getChildren(overview)).some(
+          !(await api.provider.getChildren(linkedOverview)).some(
             (row) => row.type === 'entry' && row.entry.datasetUri === external.datasetUri,
           ),
         );

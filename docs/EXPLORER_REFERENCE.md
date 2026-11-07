@@ -2,9 +2,56 @@
 
 See [the quick start](../README.md) for everyday browsing. This reference covers advanced settings, preview limits and source behavior.
 
+## Logical file labels
+
+The tree leads with recognizable content: **BOLD**, **T1-weighted**, **Diffusion**, **Events** and other explicitly mapped BIDS suffixes. Task, acquisition, run, direction and other recorded distinctions follow as row descriptions, then the content type. For example, `sub-001_ses-02_task-rest_acq-fast_run-01_bold.nii.gz` under participant 001/session 02 appears as **BOLD · Task rest · Acquisition fast · Run 01 · NIfTI image**.
+
+Values retain their spelling and leading zeros. Participant/session tokens disappear only when they match the containing branches. Unfamiliar suffixes retain their exact spelling while their recognized entities still receive readable labels. Names with unparsed pieces keep their original stem. If a label, acquisition details and type would be identical for two siblings, their full filenames distinguish them. Tooltips and **Show Source Details** retain original names and provenance. This presentation does not validate or modify the study.
+
+Entity labels follow the [BIDS entity definitions](https://bids-specification.readthedocs.io/en/stable/appendices/entities.html). Run and Echo indices keep leading zeros. Flip angle and Inversion **indices** are not measured angles or times. Phase encoding retains the recorded label without inferring its physical direction. Recognized `part-mag`/`part-imag` values display as magnitude/imaginary, and `hemi-L`/`hemi-R` as left/right. Reconstruction, recording, split, chunk, tracer, sample, staining, processing, space and other recognized entities also receive readable labels; custom values remain literal.
+
+## Acquisitions and related resources
+
+Within a completely inspected directory, an unambiguous NIfTI becomes an expandable acquisition. Click its label to open the image; expand it for **Image**, **Acquisition metadata**, and matching original resources. Exact sibling JSON and diffusion companions match the same suffix and entity values. An events table or dictionary joins a BOLD acquisition only when its entities identify that acquisition unambiguously. Images differing only in a numeric echo index form one multi-echo acquisition. Expand it for exactly matching shared Events/JSON followed by numerically ordered **Echo 1**, **Echo 2**, etc.; expand each echo for its image and echo-specific metadata. Shared resources belong to the collection, never to an arbitrary echo. Runs, parts, reconstructions, spaces and other entity differences remain separate. Duplicate echo indices or conflicting sources keep individual rows. Task-wide events without a run, and more general sidecars, remain at their recorded scope. **Acquisition metadata** uses the existing inheritance resolver to explain effective values and their sources.
+
+Grouping does not read image bytes or recursively inspect descendants. Partial/paged directory listings keep their resources flat until coverage is complete. Conflicting image sources remain separate choices. Acquisitions sort by content and recorded entity details, including numeric runs, while participant identifiers retain leading zeros. Anatomical, Functional and Diffusion branches use their readable names. Derivative pipeline branches retain pipeline names; description, space, resolution and hemisphere entities remain in the scan descriptions. Storage format information stays in tooltips and source details unless it distinguishes conflicting sources.
+
+Expanding an acquisition starts a separate cancellable metadata-summary queue (two active reads, 32 waiting, 512 cached states). Resolved numeric RepetitionTime, EchoTime and AcquisitionDuration become TR in seconds, TE in milliseconds and duration in seconds. Sources and exact recorded values remain in **Show Source Details**. Missing/ambiguous values are omitted; cancellation, branch refresh and source changes follow the metadata snapshot rules. No duration is inferred from TR, and image dimensions, voxel spacing and diffusion-shell summaries are not yet collected for tree rows.
+
+SquashFS metadata participates when the inspected logical ancestors are complete. Paged ancestor coverage or multiple applicable shard sidecars withholds effective values, even when a selected original JSON file can be previewed. Expanding a small modality directory does not imply complete study-wide metadata coverage.
+
+Metadata and other file entries precede subtrees at every logical level, including within participants, sessions and modalities. Expandable acquisitions count as subtrees, and grouped shard metadata counts as metadata. Semantic and numeric sorting applies within each section.
+
+Participant expansion performs bounded discovery of matched derivative pipelines and one shallow listing per matched participant. It does not read acquisition files or recursively index sessions. The result is cached for the window until refresh or link changes. Cancellation and partial listings remain visible; derivative sources beyond an uninspected page are not assumed absent. The dataset-level derivative tree retains its ordinary source/paging navigation.
+
+## Keyboard navigation
+
+Open the Command Palette with **Cmd+Shift+P** on macOS or **Ctrl+Shift+P** on Windows/Linux. Run **Explorer: Focus on BIDS View** to enter the study tree. Use the arrow keys to move between entries and expand folders, then **Enter** to open a file. **Shift+F10** opens the selected entry’s context menu.
+
+Inside a preview, use **Tab** and **Shift+Tab** to move between filters, source controls and expandable sections. In the gradient preview, the sphere accepts arrow keys to rotate and the b-value plot accepts left/right arrows to select a volume. The **Volume** field and **Numeric table** offer another way to select a volume. In a loaded 4D NIfTI, focus **Frame** and use left/right arrows to change frames.
+
+Choose **Image controls** in the built-in viewer, then Tab to the X, Y and Z buttons in the native **Image** view. Enter moves the crosshair one voxel and updates the announced voxel coordinates. Tables have a named scrolling region: Tab into it and use arrow keys to reveal additional columns. Expand **Source details** to inspect acquisition-field provenance.
+
+See the [usability record](USABILITY.md) for the sampled keyboard, theme and user-assisted VoiceOver checks and their limits.
+
+The built-in viewer reuses a panel for an already-open image URI, preserving its frame and crosshair instead of reading it again. Close the viewer and reopen the image to reread changed contents. Empty (0-byte) image files display **No image data** without fetching image bytes or starting NiiVue; some lightweight BIDS examples deliberately contain these placeholders.
+
+## When something looks missing
+
+| What you see                                    | What to try                                                                                                                                               |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No study in BIDS Explorer                       | Expand the BIDS section, then choose **Add Dataset** and select the study folder. Automatic recognition requires a root-level `dataset_description.json`. |
+| An extension unavailable in a Remote SSH window | In Extensions, install BIDS Explorer on the connected SSH host. Complete SSH/MFA prompts shown by VS Code before retrying.                                |
+| A preview shows old values                      | Use **Reload snapshot** in the preview. Refresh the dataset or branch to update its tree entries.                                                         |
+| Missing or Not checked in availability          | **Missing** refers to the inspected branch. **Not checked** means the check is incomplete. Refresh the availability snapshot to retry failed reads.       |
+| Unsupported SquashFS compression                | Check the format support in [Compatibility](COMPATIBILITY.md). Other readable shards may still be available with partial coverage.                        |
+| An image is taking time to open                 | Archived images must be prepared first, and tar reads are sequential. A 4D frame selector becomes available after the full image loads.                   |
+| Extracted image cache is full                   | Close the workspace’s viewers and editor tabs in every window using it, then run **BIDS Explorer: Clear Extracted Image Cache**.                          |
+| Some files are absent from the logical tree     | Use **Show Dataset in File Explorer** for the physical file tree, including administrative and unfamiliar files.                                          |
+
 ## Link separate raw and derivative datasets
 
-Register both dataset folders, then add the derivative dataset paths to the raw dataset’s entry in the workspace setting `bidsExplorer.derivativeDatasets`. Use file URIs on the machine where the datasets live. **Participant Data** and **Show Participant Availability** use those links.
+Register both dataset folders, then add the derivative dataset paths to the raw dataset’s entry in the workspace setting `bidsExplorer.derivativeDatasets`. Use file URIs on the machine where the datasets live. Session-level **Derivatives** branches and **Show Participant Availability** use those links. Pipeline outputs join sessions by exact recorded session labels: `01` and `1` remain distinct. Sessions found only in derivatives also appear, labelled as derivative sources. Outputs without a session identifier remain under **Derivatives without a session** at participant level. Raw sessions and modalities are not repeated inside Derivatives. The dataset-level **Derivatives** branch provides the complementary pipeline-centred view.
 
 ```json
 {
@@ -137,12 +184,24 @@ ZIP member reading supports unencrypted stored/Deflate members and rejects links
 
 Use desktop **VS Code 1.96 or newer** with a trusted, non-virtual workspace. The directory adapter accepts `file:` URIs on the workspace host. The compatibility matrix records tested VS Code versions, hosts, archive formats and recovery cases. Browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported. The runtime uses bundled archive readers and can render NIfTI without the standalone NiiVue extension. See [Compatibility](COMPATIBILITY.md).
 
-Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. SquashFS availability snapshots persist in private extension storage on the workspace host. Completed selected ZIP images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. No separate SSH transport or dataset download is initiated by the extension.
+Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. SquashFS availability snapshots persist in private extension storage on the workspace host. Completed selected archive images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. No separate SSH transport or dataset download is initiated by the extension.
 
 Opening other files or using the preview’s Open as text buttons hands them to another VS Code editor; saving changes in that editor is a separate user action. Explorer does not make that editor read-only or control a third-party viewer's behavior.
 
-See [0.1.0 validation](MILESTONE_0.1.0.md) for tested environments, Remote SSH/MRI observations, cache behavior and performance limits. Listings are cached in memory on the workspace host; image transfer/display uses VS Code and the selected editor. Selected ZIP images use a bounded workspace-host extraction cache. Persistent remote metadata indexing remains planned.
+See [Compatibility](COMPATIBILITY.md) for current release checks, Remote SSH recovery and scale measurements. ZIP and tar inventories and SquashFS availability indexes can be reused across reconnects. Other directory listings remain in memory until refresh or window closure.
 
 ## Inspecting a tar archive
 
 Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the native Explorer context menu to list a `.tar`, `.tar.gz` or `.tgz` file on the workspace host. The command scans sequentially and reports the first 200 members and the total count. Gzip tarballs must be decompressed through the end for a complete inventory. The scan is cancellable and supports POSIX ustar headers. For logical browsing, use **Add Dataset** on the directory containing the tarball. The tree can show the archive’s subjects, sessions, modalities and files alongside loose and ZIP sources. Select a tar file row for its metadata preview or to open the selected MRI in the built-in viewer. **Show Source Details** displays the original member path. Tar reads scan the archive sequentially and can take longer than ZIP reads.
+
+## Native Image view
+
+The viewer's **Image controls** button opens a standard VS Code webview view. Move the **BIDS Image** activity icon to **Secondary Side Bar** using its **Move To** menu for a right-hand panel. The stable API supported by VS Code 1.96 does not assign a secondary-sidebar default; the workbench remembers your placement. The view is resizable, movable and hideable through normal VS Code controls.
+
+The view follows the most recently selected built-in image and retains that selection while you operate its controls or inspect metadata. Selecting another image updates the context, controls and sources together. Closing the selected image selects another visible image or shows the empty state. Empty image placeholders have no enabled image controls.
+
+The default **Three planes + 3D** layout uses four quadrants for axial, coronal, sagittal and volume rendering, separated by four CSS pixels, with an eight-CSS-pixel black inset inside the image pane and the existing eight-CSS-pixel outer UI margin (scaled for display density). **Reset display** returns to this layout. Viewing controls also offer three-plane, individual axial/coronal/sagittal and 3D-only layouts, grayscale/viridis/hot colour maps, a finite minimum/maximum intensity window, crosshair visibility and single-voxel position buttons, frame selection after all frames arrive, and reset of these display settings. Changes affect the in-memory viewer only. The first decoded frame remains usable while the same image request finishes in the background; display window/colour map and crosshair position are retained when the full image replaces the preview.
+
+**Image information** comes from the loaded NIfTI header: voxel dimensions, spacing with recorded units, frame count, frame interval with temporal units and voxel data type. A header frame interval is not presented as a BIDS JSON RepetitionTime. **BIDS metadata** independently uses the existing bounded, archive-aware inheritance resolver. The initial summary includes recorded TR/TE (seconds), flip angle (degrees), phase encoding, task name, duration, manufacturer and field strength when resolved. Use **Inspect all metadata** for other fields and override histories. Missing, failed and incomplete metadata remain explicit. Header and JSON reads are independent snapshots.
+
+**Related files** currently lists applicable JSON and unambiguous diffusion companions, opened through the usual read-only preview actions. Events and other acquisition resources remain accessible in the BIDS tree. **Source details** retains the original loose/archive identity and each summarized JSON value's source/pointer. Metadata reads start only when the view is visible and never write to the dataset.

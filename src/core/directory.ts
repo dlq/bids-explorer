@@ -106,11 +106,12 @@ export async function orderEntries(
   entries: readonly DirectoryEntry[],
   signal: AbortSignal,
   filesFirst = false,
+  compareContent?: (a: DirectoryEntry, b: DirectoryEntry) => number,
 ): Promise<readonly DirectoryEntry[]> {
   const collator = new Intl.Collator('en', { numeric: true });
   const compare = (a: DirectoryEntry, b: DirectoryEntry): number =>
     (Number(b.kind === 'directory') - Number(a.kind === 'directory')) * (filesFirst ? -1 : 1) ||
-    collator.compare(a.name, b.name);
+    (compareContent?.(a, b) ?? collator.compare(a.name, b.name));
   let runs: DirectoryEntry[][] = [];
   for (let i = 0; i < entries.length; i += 256) {
     signal.throwIfAborted();

@@ -165,9 +165,9 @@ ${
 </form>
 <div role="group" aria-label="Availability view">${viewButtons}</div>
 ${view === 'sessions' ? '' : `<p><label>${view === 'modality' ? 'Browse modality' : 'Browse pipeline'} <select id="browse-focus">${choices(browseChoices(), focus)}</select></label></p>`}
-<p role="status">${matches.length.toLocaleString()} confirmed matches among ${report.participants.length.toLocaleString()} indexed participants.</p>
+<p role="status">${matches.length.toLocaleString()} confirmed ${matches.length === 1 ? 'match' : 'matches'} among ${report.participants.length.toLocaleString()} indexed ${report.participants.length === 1 ? 'participant' : 'participants'}.</p>
 ${pagination}
-${rows ? `<div class="grid"><table><thead><tr><th scope="col">Participant</th>${headers.map((name) => `<th scope="col">${escape(name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+${rows ? `<div class="grid" tabindex="0" role="region" aria-label="Participant availability table. Use arrow keys to scroll."><table aria-label="Participant availability"><thead><tr><th scope="col">Participant</th>${headers.map((name) => `<th scope="col">${escape(name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>` : ''}
 <p>Missing means the inspected branch had no matching data. Not checked marks incomplete coverage.</p>`);
   };
   const renderDocument = (
@@ -232,7 +232,7 @@ window.addEventListener('message', ({ data }) => {
       if (view !== 'sessions' && !available.length) view = 'sessions';
       if (!available.includes(focus)) focus = available[0] ?? '';
       updateMatches(next);
-      status = `Snapshot ready. ${next.participants.length.toLocaleString()} participants indexed.`;
+      status = `Snapshot ready. ${next.participants.length.toLocaleString()} ${next.participants.length === 1 ? 'participant' : 'participants'} indexed.`;
     } catch {
       status = controller.signal.aborted ? 'Scan cancelled.' : 'Scan failed. Try refreshing.';
       if (snapshot) status += ' Showing the previous snapshot.';

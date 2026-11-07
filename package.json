@@ -110,7 +110,15 @@
       "explorer": [
         {
           "id": "bidsExplorer.datasets",
-          "name": "BIDS Explorer"
+          "name": "BIDS"
+        }
+      ],
+      "bidsExplorer-image": [
+        {
+          "id": "bidsExplorer.imageControls",
+          "name": "Image",
+          "type": "webview",
+          "icon": "media/icons/imaging-dark.svg"
         }
       ]
     },
@@ -273,7 +281,7 @@
           "default": "",
           "maxLength": 200,
           "scope": "resource",
-          "description": "Column in the participant’s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
+          "description": "Column in the participant\u2019s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
         },
         "bidsExplorer.derivativeDatasets": {
           "type": "object",
@@ -287,7 +295,7 @@
               "pattern": "^file:"
             }
           },
-          "description": "Explicit Participant Data links. Each key is the registered raw dataset's file URI, and its value lists registered derivative dataset file URIs on the workspace host."
+          "description": "Explicit participant derivative links. Each key is the registered raw dataset's file URI, and its value lists registered derivative dataset file URIs on the workspace host."
         },
         "bidsExplorer.archivePlacements": {
           "type": "object",
@@ -332,6 +340,15 @@
           "description": "Explicit file: URIs of workspace roots to explore as collections without requiring dataset_description.json. Paths refer to the workspace host. Sources within each declared root share its logical BIDS tree; no dataset files are changed."
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "bidsExplorer-image",
+          "title": "BIDS Image",
+          "icon": "media/icons/imaging-dark.svg"
+        }
+      ]
     }
   },
   "capabilities": {

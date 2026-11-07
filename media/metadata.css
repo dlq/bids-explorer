@@ -58,3 +58,6 @@
   font-size: 12px;
   color: var(--vscode-descriptionForeground);
 }
+.metadata-field details .source-path {
+  white-space: pre-wrap;
+}

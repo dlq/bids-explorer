@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-07",
+  "scope": "Public run subsets and pinned metadata-only examples; local development-host API/rendering checks, not a scientific validation or first-paint benchmark.",
+  "minimumVSCode": "1.96.0",
+  "currentVSCode": "1.145.2",
+  "bidsExamplesCommit": "5e00d47b6f1db106dda1b776d5243eb41b4cb95b",
+  "downloadedFiles": 47,
+  "exampleFiles": 2448,
+  "publicPayloadBytes": 1017085952,
+  "results": {
+    "minimum": {
+      "imagesRequested": true,
+      "fieldMapDeclaredTargets": [
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-01_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-02_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-03_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-04_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-05_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-06_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-07_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-08_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-09_bold.nii.gz"
+      ],
+      "echoes": [
+        "sub-01_task-handgrasp_run-1_echo-1_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-2_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-3_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-4_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-5_bold.nii.gz"
+      ],
+      "sharedEvents": "sub-01_task-handgrasp_events.tsv",
+      "derivative": "sub-01_task-handgrasp_run-1_space-T1w_desc-preproc_bold.nii.gz",
+      "fieldMaps": [
+        "sub-01_ses-mri_magnitude1.nii",
+        "sub-01_ses-mri_magnitude2.nii",
+        "sub-01_ses-mri_phasediff.nii"
+      ],
+      "viewer": [
+        {
+          "file": "sub-01_task-handgrasp_run-1_echo-1_bold.nii.gz",
+          "previewFrames": 210,
+          "loadedFrames": 210,
+          "status": "210 frames loaded.",
+          "position": "Voxel position X 42, Y 42, Z 36.",
+          "navigationEnabled": true,
+          "elapsedMs": 1969
+        },
+        {
+          "file": "sub-01_task-handgrasp_run-1_space-T1w_desc-preproc_bold.nii.gz",
+          "previewFrames": 210,
+          "loadedFrames": 210,
+          "status": "210 frames loaded.",
+          "position": "Voxel position X 30, Y 33, Z 33.",
+          "navigationEnabled": true,
+          "elapsedMs": 2379
+        }
+      ],
+      "sourcesUnchanged": true
+    },
+    "current": {
+      "imagesRequested": true,
+      "fieldMapDeclaredTargets": [
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-01_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-02_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-03_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-04_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-05_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-06_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-07_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-08_bold.nii.gz",
+        "ses-mri/func/sub-01_ses-mri_task-facerecognition_run-09_bold.nii.gz"
+      ],
+      "echoes": [
+        "sub-01_task-handgrasp_run-1_echo-1_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-2_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-3_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-4_bold.nii.gz",
+        "sub-01_task-handgrasp_run-1_echo-5_bold.nii.gz"
+      ],
+      "sharedEvents": "sub-01_task-handgrasp_events.tsv",
+      "derivative": "sub-01_task-handgrasp_run-1_space-T1w_desc-preproc_bold.nii.gz",
+      "fieldMaps": [
+        "sub-01_ses-mri_magnitude1.nii",
+        "sub-01_ses-mri_magnitude2.nii",
+        "sub-01_ses-mri_phasediff.nii"
+      ],
+      "viewer": [
+        {
+          "file": "sub-01_task-handgrasp_run-1_echo-1_bold.nii.gz",
+          "previewFrames": 210,
+          "loadedFrames": 210,
+          "status": "210 frames loaded.",
+          "position": "Voxel position X 42, Y 42, Z 36.",
+          "navigationEnabled": true,
+          "elapsedMs": 1406
+        },
+        {
+          "file": "sub-01_task-handgrasp_run-1_space-T1w_desc-preproc_bold.nii.gz",
+          "previewFrames": 210,
+          "loadedFrames": 210,
+          "status": "210 frames loaded.",
+          "position": "Voxel position X 30, Y 33, Z 33.",
+          "navigationEnabled": true,
+          "elapsedMs": 1340
+        }
+      ],
+      "sourcesUnchanged": true
+    }
+  }
+}

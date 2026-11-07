@@ -1,3 +1,4 @@
+import { acquisitionSummary } from './core/acquisitions';
 import * as vscode from 'vscode';
 import { entryArchiveUri, resourcePath } from './core/archiveUri';
 import { datasetAvailability } from './core/availability';
@@ -24,9 +25,10 @@ import { openDatasetDescriptionComparison } from './ui/datasetDescriptionCompari
 import { DatasetTreeProvider, type TreeElement } from './ui/datasetTreeProvider';
 import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
 import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
+import { ImageView } from './ui/imageView';
 import { InheritanceInspector } from './ui/inheritanceInspector';
 import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
-import { isNiftiFileName, openProgressiveNifti, progressiveNiftiViewType } from './ui/niftiPreview';
+import { isNiftiFileName, NiftiPreviewManager, progressiveNiftiViewType } from './ui/niftiPreview';
 import { TablePreviewManager, isSummaryTable } from './ui/tablePreview';
 import { WorkspaceFolderHandoff } from './ui/workspaceFolderHandoff';
 
@@ -36,6 +38,7 @@ const registrationsKey = 'bidsExplorer.datasets.v1';
 export function activate(context: vscode.ExtensionContext): {
   provider: DatasetTreeProvider;
   ready: Promise<void>;
+  imageView: ImageView;
 } {
   const imageCache = new ArchiveImageCache(
     vscode.Uri.joinPath(context.storageUri ?? context.globalStorageUri, 'extracted-images-v1')
@@ -100,6 +103,15 @@ export function activate(context: vscode.ExtensionContext): {
     new ZipDirectorySource(undefined, undefined, inventoryCache),
     configuredPlacements,
   );
+  const imageView = new ImageView(context.extensionUri, (entry, signal) =>
+    loadLogicalInheritance(source, entry, signal),
+  );
+  const niftiPreviews = new NiftiPreviewManager(context.extensionUri, imageView);
+  context.subscriptions.push(
+    imageView,
+    niftiPreviews,
+    vscode.window.registerWebviewViewProvider('bidsExplorer.imageControls', imageView),
+  );
   const inheritance = new InheritanceInspector(context.extensionUri, gradients, (entry, signal) =>
     loadLogicalInheritance(source, entry, signal),
   );
@@ -142,6 +154,8 @@ export function activate(context: vscode.ExtensionContext): {
     descriptionEligible,
     context.extensionUri,
     derivativeLinks,
+    async (entry, signal) =>
+      acquisitionSummary(await loadLogicalInheritance(source, entry, signal)),
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -196,11 +210,12 @@ export function activate(context: vscode.ExtensionContext): {
     vscode.commands.registerCommand(name, action);
 
   let pendingArchiveImageOpens = 0;
-  let openArchiveImagePanels = 0;
+  const openArchiveImagePanels = new Set<vscode.WebviewPanel>();
   let imageCacheLease: Promise<() => Promise<void>> | undefined;
   const hasTabs = () => vscode.window.tabGroups.all.some((group) => group.tabs.length);
   const releaseUnusedImages = async () => {
-    if (pendingArchiveImageOpens || openArchiveImagePanels || hasTabs() || !imageCacheLease) return;
+    if (pendingArchiveImageOpens || openArchiveImagePanels.size || hasTabs() || !imageCacheLease)
+      return;
     const lease = imageCacheLease;
     imageCacheLease = undefined;
     try {
@@ -218,8 +233,7 @@ export function activate(context: vscode.ExtensionContext): {
   const openImage = async (entry: DirectoryEntry, editor = progressiveNiftiViewType) => {
     const uri = entryUri(entry);
     const open = async (target: vscode.Uri) => {
-      if (editor === progressiveNiftiViewType)
-        return openProgressiveNifti(context.extensionUri, target);
+      if (editor === progressiveNiftiViewType) return niftiPreviews.open(target, entry);
       if (editor) await vscode.commands.executeCommand('vscode.openWith', target, editor);
       else await vscode.commands.executeCommand('vscode.open', target);
     };
@@ -249,10 +263,10 @@ export function activate(context: vscode.ExtensionContext): {
         );
         controller.signal.throwIfAborted();
         const panel = await open(vscode.Uri.parse(extracted));
-        if (panel) {
-          openArchiveImagePanels++;
+        if (panel && !openArchiveImagePanels.has(panel)) {
+          openArchiveImagePanels.add(panel);
           panel.onDidDispose(() => {
-            openArchiveImagePanels--;
+            openArchiveImagePanels.delete(panel);
             void releaseUnusedImages();
           });
         }
@@ -530,12 +544,6 @@ export function activate(context: vscode.ExtensionContext): {
         );
         return undefined;
       }
-      if (element.entry.archive?.format === 'squashfs') {
-        void vscode.window.showInformationMessage(
-          'SquashFS member previews are not available yet.',
-        );
-        return undefined;
-      }
       return inheritance.open(element.entry);
     }),
     command('bidsExplorer.nextPage', async (arg) => {
@@ -672,8 +680,9 @@ export function activate(context: vscode.ExtensionContext): {
             ...provider.descriptionSnapshot(entry),
             eligible: descriptionEligible(entry),
           },
+          acquisitionSummary: provider.summaries?.snapshot(entry),
           treeDescriptionNote:
-            'Descriptions are bounded background snapshots, not a recursive metadata index. Up to 2 jobs run at once, 32 wait and 512 results/states are retained. Unloaded entries have no attached metadata description. Refresh the relevant branch to reread sources; global Refresh also retries unloaded descriptions.',
+            'Descriptions and acquisition summaries are bounded background snapshots, not a recursive metadata index. Each queue runs up to 2 jobs at once, with 32 waiting jobs and 512 retained results/states. Acquisition summaries start on expansion and use resolved, recorded timing fields. Unloaded entries have no attached metadata description. Refresh the relevant branch to reread sources; global Refresh also retries unloaded descriptions.',
           interpretationNote:
             'Entity interpretation records lexical folder/filename evidence only. Conflicts and duplicate filename entities remain unresolved; index strings are not normalized. Inherited metadata descriptions are reported separately in treeDescription. No BIDS conformance validation or source changes.',
           kind: entry.kind,
@@ -724,5 +733,5 @@ export function activate(context: vscode.ExtensionContext): {
     }),
   );
   const ready = discover();
-  return { provider, ready };
+  return { provider, ready, imageView };
 }

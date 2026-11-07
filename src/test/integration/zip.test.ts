@@ -112,7 +112,7 @@ suite('ZIP-backed dataset tree', () => {
         (row) => row.type === 'entry',
       );
       assert.equal(sessions.length, 1);
-      assert.equal(api.provider.getTreeItem(sessions[0]).label, 'ses-2');
+      assert.equal(api.provider.getTreeItem(sessions[0]).label, '2');
       assert.equal(
         (api.provider.getTreeItem(sessions[0]).iconPath as vscode.ThemeIcon).id,
         'calendar',
@@ -126,7 +126,7 @@ suite('ZIP-backed dataset tree', () => {
       const icon = imageItem.iconPath;
       assert.ok(icon && typeof icon === 'object' && 'dark' in icon);
       assert.match(icon.dark.path, /imaging-dark\.svg$/);
-      assert.match(String(imageItem.description), /MRI/);
+      assert.match(String(imageItem.description), /NIfTI image/);
       assert.equal(images[0].type, 'entry');
       if (images[0].type !== 'entry') throw new Error('Expected archive member');
       assert.equal(
@@ -149,6 +149,26 @@ suite('ZIP-backed dataset tree', () => {
       );
       assert.ok(extracted?.startsWith('file:'));
       assert.deepEqual(await readFile(vscode.Uri.parse(extracted).fsPath), niftiFixture());
+      const builtInTabs = () =>
+        vscode.window.tabGroups.all
+          .flatMap((group) => group.tabs)
+          .filter(
+            (tab) =>
+              tab.input instanceof vscode.TabInputWebview &&
+              tab.input.viewType.includes('bidsExplorer.progressiveNifti'),
+          ).length;
+      const tabDeadline = Date.now() + 5000;
+      while (!builtInTabs()) {
+        assert.ok(Date.now() < tabDeadline, 'Built-in image tab must appear');
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      }
+      assert.equal(builtInTabs(), 1);
+      assert.equal(
+        await vscode.commands.executeCommand('bidsExplorer.openFile', images[0]),
+        extracted,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      assert.equal(builtInTabs(), 1, 'Reopening an archived image must reuse its viewer');
       const explicit = await vscode.commands.executeCommand<string>(
         'bidsExplorer.openImageWith',
         images[0],
@@ -399,7 +419,7 @@ suite('Saved archive placements', () => {
       );
       assert.ok(root);
       const dataset = provider.element(root);
-      assert.equal(provider.getTreeItem((await provider.getChildren(dataset))[0]).label, 'sub-99');
+      assert.equal(provider.getTreeItem((await provider.getChildren(dataset))[0]).label, '99');
       await settings.update(
         setting,
         {
@@ -410,7 +430,7 @@ suite('Saved archive placements', () => {
         vscode.ConfigurationTarget.Workspace,
       );
       const [subject] = await provider.getChildren(dataset);
-      assert.equal(provider.getTreeItem(subject).label, 'sub-01');
+      assert.equal(provider.getTreeItem(subject).label, '01');
       const [anat] = (await provider.getChildren(subject)).filter((row) => row.type === 'entry');
       const [sidecar] = await provider.getChildren(anat);
       assert.equal(sidecar.type, 'entry');

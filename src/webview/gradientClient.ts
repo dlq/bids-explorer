@@ -285,7 +285,7 @@ function regroup(): void {
   if (!table) return;
   grouping = groupGradients(table, lowB, tolerance);
   element('summary').textContent =
-    `${table.volumes.length} volumes · ${grouping.plottedIndices.length} plotted directions · ${grouping.lowBIndices.length} low-b volumes${grouping.zeroDirectionIndices.length ? ` · ${grouping.zeroDirectionIndices.length} other zero-length vectors` : ''}`;
+    `${table.volumes.length} ${table.volumes.length === 1 ? 'volume' : 'volumes'} · ${grouping.plottedIndices.length} plotted ${grouping.plottedIndices.length === 1 ? 'direction' : 'directions'} · ${grouping.lowBIndices.length} low-b ${grouping.lowBIndices.length === 1 ? 'volume' : 'volumes'}${grouping.zeroDirectionIndices.length ? ` · ${grouping.zeroDirectionIndices.length} other zero-length vectors` : ''}`;
   element<HTMLInputElement>('low-b').value = String(lowB);
   element<HTMLInputElement>('tolerance').value = String(tolerance);
   const legend = element('legend');

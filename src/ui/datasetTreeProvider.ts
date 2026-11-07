@@ -1,12 +1,24 @@
+import {
+  groupAcquisitions,
+  groupEchoCollections,
+  compareLogicalEntries,
+  type Acquisition,
+} from '../core/acquisitions';
 import { isNiftiFileName, niftiIcon } from './niftiPreview';
 import {
   isRootParticipant,
   linkedDerivativeDatasets,
-  participantPipelines,
+  participantDerivativeLayout,
+  type ParticipantDerivativeLayout,
 } from '../core/participantData';
 import { entryArchiveUri } from '../core/archiveUri';
 import * as vscode from 'vscode';
-import type { TreeDescription } from '../core/treeDescriptions';
+import {
+  displayEntryLabel,
+  displayFileDetails,
+  displayFileType,
+  type TreeDescription,
+} from '../core/treeDescriptions';
 import { isHistoryFile } from './historyPreview';
 import {
   DescriptionQueue,
@@ -17,7 +29,7 @@ import { isParticipantsTable, isSummaryTable } from './tablePreview';
 import { isJsonMetadata } from './metadataPreview';
 import { isGradientFile } from './gradientPreview';
 import { DatasetBrowser } from '../core/browser';
-import { describeEntry, entryKey, type DirectoryEntry } from '../core/directory';
+import { describeEntry, entryKey, orderEntries, type DirectoryEntry } from '../core/directory';
 
 // Use the same semantic labels as the tree description, with theme-aware built-in icons.
 const directoryIcons: Readonly<Record<string, string>> = {
@@ -45,6 +57,15 @@ export interface EntryElement {
   entry: DirectoryEntry;
   readonly inOverview?: true;
   readonly groupLabel?: string;
+  readonly overviewParent?: OverviewElement;
+  participantParent?: EntryElement;
+  derivativeOnly?: true;
+  sessionless?: true;
+  ambiguousLabel?: boolean;
+  acquisition?: Acquisition & { parent: EntryElement; expanded: boolean };
+  resourceLabel?: string;
+  metadataAction?: true;
+  acquisitionParent?: EntryElement;
 }
 export interface MessageElement {
   readonly type: 'message';
@@ -55,6 +76,8 @@ export interface MessageElement {
 interface OverviewElement {
   readonly type: 'overview';
   readonly parent: EntryElement;
+  readonly participant: EntryElement;
+  readonly session?: string;
 }
 export type TreeElement = EntryElement | MessageElement | OverviewElement;
 
@@ -68,10 +91,13 @@ export class DatasetTreeProvider
   private readonly overviewBrowser: DatasetBrowser;
   private readonly overviews = new Map<
     string,
-    { controller: AbortController; rows: Promise<TreeElement[]> }
+    { controller: AbortController; layout: Promise<ParticipantDerivativeLayout> }
   >();
 
   readonly descriptions?: DescriptionQueue;
+  readonly summaries?: DescriptionQueue;
+  private readonly acquisitions = new Map<string, EntryElement>();
+  private readonly projections = new Map<string, AbortController>();
   constructor(
     readonly browser: DatasetBrowser,
     loadDescription?: DescriptionLoader,
@@ -82,12 +108,22 @@ export class DatasetTreeProvider
       '..',
     ),
     private readonly derivativeLinks: () => unknown = () => undefined,
+    loadSummary?: DescriptionLoader,
   ) {
     this.overviewBrowser = new DatasetBrowser(browser.source);
+    if (loadSummary)
+      this.summaries = new DescriptionQueue(loadSummary, (entry) => {
+        for (const key of [entryKey(entry), 'participant:' + entryKey(entry)]) {
+          const row = this.acquisitions.get(key);
+          if (row) this.changes.fire(row);
+        }
+      });
     if (loadDescription)
       this.descriptions = new DescriptionQueue(loadDescription, (entry) => {
         const element = this.elements.get(entryKey(entry));
         if (element) this.changes.fire(element);
+        const acquisition = this.acquisitions.get(entryKey(entry));
+        if (acquisition) this.changes.fire(acquisition);
       });
   }
   descriptionSnapshot(entry: DirectoryEntry): DescriptionSnapshot | undefined {
@@ -95,6 +131,7 @@ export class DatasetTreeProvider
   }
   refreshDescriptions(): void {
     this.descriptions?.clear();
+    this.summaries?.clear();
     this.changes.fire(undefined);
   }
 
@@ -116,12 +153,26 @@ export class DatasetTreeProvider
   getTreeItem(element: TreeElement): vscode.TreeItem {
     if (element.type === 'overview') {
       const item = new vscode.TreeItem(
-        'Participant Data',
+        element.session === undefined ? 'Derivatives without a session' : 'Derivatives',
         vscode.TreeItemCollapsibleState.Collapsed,
       );
-      item.id = 'overview:' + entryKey(element.parent.entry);
+      item.id =
+        'overview:' +
+        entryKey(element.participant.entry) +
+        ':' +
+        JSON.stringify(element.session ?? null);
       item.contextValue = 'participantOverview';
-      item.iconPath = new vscode.ThemeIcon('person');
+      item.accessibilityInformation = {
+        label:
+          element.session === undefined
+            ? 'Derivatives without a session'
+            : `Derivatives for session ${element.session}`,
+      };
+      item.iconPath = new vscode.ThemeIcon('git-branch');
+      item.tooltip =
+        element.session === undefined
+          ? 'Processing outputs without a recorded session identifier, including explicitly linked derivative datasets.'
+          : 'Processing outputs with this exact session identifier, including explicitly linked derivative datasets.';
       return item;
     }
     if (element.type === 'message') {
@@ -148,19 +199,51 @@ export class DatasetTreeProvider
       return item;
     }
     const { entry } = element;
+    if (element.metadataAction) {
+      const item = new vscode.TreeItem('Acquisition metadata');
+      item.id = 'effective:' + this.itemKey(entry, element.inOverview);
+      item.iconPath = new vscode.ThemeIcon('info');
+      item.description = 'Including inherited values';
+      item.command = {
+        command: 'bidsExplorer.inspectMetadata',
+        title: 'Inspect Acquisition Metadata',
+        arguments: [element],
+      };
+      return item;
+    }
     const isDirectory = entry.kind === 'directory';
     const isNifti = entry.kind === 'file' && isNiftiFileName(entry.name);
+    const fileDetails = displayFileDetails(entry);
     const item = new vscode.TreeItem(
-      element.groupLabel ?? entry.name,
-      isDirectory
+      element.resourceLabel ??
+        element.groupLabel ??
+        (element.ambiguousLabel ? entry.name : displayEntryLabel(entry)),
+      isDirectory || element.acquisition
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
     );
-    item.id = this.itemKey(entry, element.inOverview);
+    item.id =
+      (element.derivativeOnly
+        ? 'derivative-session:' + entryKey(element.participantParent!.entry) + ':'
+        : '') +
+      (element.acquisition?.echoes
+        ? 'echo-collection:'
+        : element.acquisition
+          ? 'acquisition:'
+          : element.acquisitionParent
+            ? 'resource:'
+            : '') +
+      this.itemKey(entry, element.inOverview);
     if (entry.metadataVersions) {
       const description = entry.name === 'dataset_description.json';
       item.contextValue = description ? 'datasetDescriptionVersions' : 'metadataVersions';
-      item.description = `${entry.metadataVersions.length} shard sources`;
+      item.description = [
+        fileDetails,
+        displayFileType(entry) ?? 'Metadata',
+        `${entry.metadataVersions.length} shard sources`,
+      ]
+        .filter(Boolean)
+        .join(' · ');
       item.iconPath = new vscode.ThemeIcon('files');
       item.tooltip = description
         ? 'Open the combined dataset description or expand to inspect each shard.'
@@ -187,7 +270,7 @@ export class DatasetTreeProvider
       item.contextValue = 'participants';
     if (entry.kind === 'file' && isHistoryFile(item.resourceUri)) item.contextValue = 'history';
     if (entry.archive && isNifti) item.contextValue = 'archiveImage';
-    item.description = describeEntry(entry);
+    item.description = displayFileType(entry) ?? describeEntry(entry);
     item.tooltip = readableTooltip(entry);
     if (isDirectory)
       item.iconPath = new vscode.ThemeIcon(directoryIcons[describeEntry(entry)] ?? 'folder');
@@ -200,13 +283,11 @@ export class DatasetTreeProvider
       const tar = entry.archive.format === 'tar';
       const label = squashfs ? 'SquashFS' : tar ? 'Tar' : 'ZIP';
       if (entry.kind === 'file') {
+        const type = displayFileType(entry) ?? 'File';
         item.description =
-          entry.archive.conflict || entry.logical?.conflict
-            ? 'Archived file · source conflict'
-            : isNifti
-              ? `MRI · ${label} source`
-              : `Metadata · ${label} source`;
-        if (squashfs && entry.logical?.conflict) item.description = entry.archive.containerPath;
+          type + (entry.archive.conflict || entry.logical?.conflict ? ' · source conflict' : '');
+        if (squashfs && entry.logical?.conflict)
+          item.description = `${type} · ${entry.archive.containerPath}`;
         item.iconPath = new vscode.ThemeIcon('file');
       } else if (entry.archive.memberPath === '')
         item.description = `${label} · expand to index contents`;
@@ -221,6 +302,8 @@ export class DatasetTreeProvider
       );
     }
     if (isNifti) item.iconPath = niftiIcon(this.extensionUri);
+    else if (displayFileType(entry))
+      item.iconPath = new vscode.ThemeIcon(entry.name.endsWith('.json') ? 'json' : 'list-flat');
     if (entry.logical && entry.logical.kind !== 'resource') {
       item.description =
         describeEntry(entry) + (entry.logical.conflict ? ' · source conflict' : '');
@@ -233,28 +316,82 @@ export class DatasetTreeProvider
       );
     }
     if (!entry.archive && entry.logical?.conflict && entry.kind !== 'directory')
-      item.description = 'File · source conflict';
+      item.description = `${displayFileType(entry) ?? 'File'} · source conflict`;
     if (element.groupLabel) {
-      item.description = entry.name;
-      item.iconPath = new vscode.ThemeIcon(
-        element.groupLabel === 'Raw' ? 'folder' : 'settings-gear',
-      );
+      item.description = 'Pipeline';
+      item.iconPath = new vscode.ThemeIcon('settings-gear');
     }
-    if (!element.groupLabel && !entry.archive && this.acceptsDescription(entry)) {
+    if (
+      !element.groupLabel &&
+      !element.acquisitionParent &&
+      !entry.archive &&
+      this.acceptsDescription(entry)
+    ) {
       const metadata = this.descriptions?.request(entry);
       if (metadata?.description) {
         item.description =
           entry.relativePath === ''
             ? metadata.description.text
-            : `${describeEntry(entry)} · ${metadata.description.text}`;
+            : `${displayFileType(entry) ?? describeEntry(entry)} · ${metadata.description.text}`;
         item.tooltip = readableTooltip(entry, metadata.description);
+      }
+    }
+    if (
+      fileDetails &&
+      !element.resourceLabel &&
+      !element.groupLabel &&
+      !element.ambiguousLabel &&
+      !element.acquisitionParent
+    )
+      item.description = `${fileDetails} · ${item.description}`;
+    const tableType = displayFileType(entry);
+    if (
+      typeof item.label === 'string' &&
+      tableType === item.label + ' table' &&
+      typeof item.description === 'string'
+    )
+      item.description = item.description.replace(tableType, 'Table');
+    if (isDirectory && item.label === item.description) item.description = undefined;
+    if (element.derivativeOnly) item.description = 'Session · derivative sources';
+    if (element.acquisition?.echoes) {
+      item.command = undefined;
+      item.resourceUri = undefined;
+      item.contextValue = 'echoCollection';
+      item.description = [
+        displayFileDetails(entry, ['echo']),
+        `${element.acquisition.echoes.length} echoes`,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      item.iconPath = new vscode.ThemeIcon('folder');
+      item.tooltip = new vscode.MarkdownString('', false);
+      item.tooltip.appendText(
+        'Multi-echo acquisition. Shared resources apply to the collection; expand each echo for its own image and metadata.',
+      );
+      for (const echo of element.acquisition.echoes)
+        item.tooltip.appendText('\n\n' + echo.image.name + '\n' + echo.image.uri);
+    } else if (element.acquisition) {
+      item.contextValue = isNifti && entry.archive ? 'archiveImage' : 'file';
+      const summary = element.acquisition.expanded ? this.summaries?.request(entry) : undefined;
+      if (summary?.description) {
+        item.description = `${item.description} · ${summary.description.text}`;
+        const tooltip = item.tooltip;
+        tooltip.appendText('\n\nAcquisition summary: ' + summary.description.text);
+        for (const source of summary.description.evidence)
+          tooltip.appendText('\n' + source.field + ' from ' + source.sourceUri);
       }
     }
     return item;
   }
 
   getParent(element: TreeElement): TreeElement | undefined {
-    if (element.type !== 'entry' || element.inOverview || !isRootParticipant(element.entry)) return;
+    if (element.type === 'overview') return element.parent;
+    if (element.type !== 'entry') return;
+    if (element.overviewParent) return element.overviewParent;
+    if (element.participantParent) return element.participantParent;
+    if (element.acquisitionParent) return element.acquisitionParent;
+    if (element.acquisition) return element.acquisition.parent;
+    if (element.inOverview || !isRootParticipant(element.entry)) return;
     const root = this.browser
       .datasets()
       .find((entry) => entry.datasetUri === element.entry.datasetUri);
@@ -263,11 +400,77 @@ export class DatasetTreeProvider
 
   async getChildren(element?: TreeElement): Promise<TreeElement[]> {
     if (!element) return this.browser.datasets().map((entry) => this.element(entry));
-    if (element.type === 'overview') return this.overview(element.parent);
+    if (element.type === 'overview') return this.overview(element);
+    if (element.type === 'entry' && element.derivativeOnly)
+      return [
+        {
+          type: 'overview',
+          parent: element,
+          participant: element.participantParent!,
+          session: element.entry.logical!.session,
+        },
+      ];
+    if (element.type === 'entry' && element.acquisition?.echoes) {
+      const shared: EntryElement[] = element.acquisition.members.map((entry) => ({
+        type: 'entry',
+        entry,
+        inOverview: element.inOverview,
+        acquisitionParent: element,
+      }));
+      const echoes: EntryElement[] = element.acquisition.echoes.map((acquisition) => {
+        const key = this.itemKey(acquisition.image, element.inOverview);
+        let row = this.acquisitions.get(key);
+        if (!row) {
+          row = { type: 'entry', entry: acquisition.image, inOverview: element.inOverview };
+          this.acquisitions.set(key, row);
+        }
+        row.entry = acquisition.image;
+        row.ambiguousLabel = false;
+        row.acquisition = {
+          ...acquisition,
+          parent: element,
+          expanded: row.acquisition?.expanded ?? false,
+        };
+        row.resourceLabel = displayFileDetails(acquisition.image)
+          .split(' · ')
+          .find((value) => value.startsWith('Echo '));
+        return row;
+      });
+      return [...shared, ...echoes];
+    }
+    if (element.type === 'entry' && element.acquisition) {
+      element.acquisition.expanded = true;
+      this.summaries?.request(element.entry);
+      const child = (entry: DirectoryEntry, label: string): EntryElement => ({
+        type: 'entry',
+        entry,
+        inOverview: element.inOverview,
+        resourceLabel: label,
+        acquisitionParent: element,
+      });
+      return [
+        child(element.entry, 'Image'),
+        { ...child(element.entry, 'Acquisition metadata'), metadataAction: true },
+        ...element.acquisition.members.map((entry) =>
+          child(
+            entry,
+            entry.name.endsWith('_events.json')
+              ? 'Event definitions'
+              : entry.name.endsWith('.json')
+                ? 'Original JSON'
+                : entry.name.endsWith('.bval')
+                  ? 'B-values'
+                  : entry.name.endsWith('.bvec')
+                    ? 'B-vectors'
+                    : 'Events',
+          ),
+        ),
+      ];
+    }
     if (element.type !== 'entry' || element.entry.kind !== 'directory') return [];
     const entry = element.entry;
     const browser = element.inOverview ? this.overviewBrowser : this.browser;
-    const children = await vscode.window.withProgress(
+    const listed = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Window,
         title: `BIDS Explorer: ${entry.name}`,
@@ -275,14 +478,172 @@ export class DatasetTreeProvider
       },
       () => browser.children(entry),
     );
-    const result: TreeElement[] = children.map((child) => this.element(child, element.inOverview));
+    const children = element.sessionless
+      ? listed.filter((child) => child.logical?.kind !== 'session')
+      : listed;
+    const labels = new Map<string, number>();
+    const labelKey = (child: DirectoryEntry) =>
+      JSON.stringify([
+        displayEntryLabel(child),
+        displayFileDetails(child),
+        displayFileType(child) ?? describeEntry(child),
+      ]);
+    for (const child of children) {
+      const key = labelKey(child);
+      labels.set(key, (labels.get(key) ?? 0) + 1);
+    }
     const snapshot = browser.snapshot(entry);
+    const controller = new AbortController();
+    const projectionKey = this.itemKey(entry, element.inOverview);
+    this.projections.get(projectionKey)?.abort();
+    this.projections.set(projectionKey, controller);
+    let ordered: readonly (DirectoryEntry | Acquisition)[];
+    try {
+      const projected =
+        snapshot.coverage === 'complete'
+          ? await groupEchoCollections(
+              await groupAcquisitions(children, controller.signal),
+              controller.signal,
+            )
+          : children;
+      const byKey = new Map(
+        projected.map((row) => [entryKey('image' in row ? row.image : row), row]),
+      );
+      const anchors = projected.map((row) =>
+        'image' in row
+          ? { ...row.image, kind: 'directory' as const }
+          : row.metadataVersions
+            ? { ...row, kind: 'file' as const }
+            : row,
+      );
+      const original = (anchor: DirectoryEntry): DirectoryEntry => {
+        const row = byKey.get(entryKey(anchor))!;
+        return 'image' in row ? row.image : row;
+      };
+      ordered = (
+        await orderEntries(anchors, controller.signal, true, (a, b) =>
+          compareLogicalEntries(original(a), original(b)),
+        )
+      ).map((row) => byKey.get(entryKey(row))!);
+    } catch (error) {
+      if (!controller.signal.aborted) throw error;
+      ordered = children;
+    } finally {
+      if (this.projections.get(projectionKey) === controller)
+        this.projections.delete(projectionKey);
+    }
+    const result: TreeElement[] = ordered.map((child) => {
+      if ('image' in child) {
+        const key =
+          (child.echoes ? 'echo-collection:' : '') + this.itemKey(child.image, element.inOverview);
+        let row = this.acquisitions.get(key);
+        if (!row) {
+          row = { type: 'entry', entry: child.image, inOverview: element.inOverview };
+          this.acquisitions.set(key, row);
+        }
+        row.entry = child.image;
+        delete row.resourceLabel;
+        row.ambiguousLabel = labels.get(labelKey(child.image))! > 1;
+        row.acquisition = {
+          ...child,
+          parent: element,
+          expanded: row.acquisition?.expanded ?? false,
+        };
+        return row;
+      }
+      const row = this.element(child, element.inOverview);
+      row.ambiguousLabel = labels.get(labelKey(child))! > 1;
+      return row;
+    });
     if (
       !element.inOverview &&
       isRootParticipant(entry) &&
       this.browser.datasets().some((root) => root.datasetUri === entry.datasetUri)
-    )
-      result.push({ type: 'overview', parent: element });
+    ) {
+      try {
+        const layout = await this.derivativeLayout(element);
+        const rawSessions = new Set<string>();
+        for (const row of result)
+          if (
+            row.type === 'entry' &&
+            row.entry.logical?.kind === 'session' &&
+            row.entry.logical.session
+          ) {
+            row.participantParent = element;
+            rawSessions.add(row.entry.logical.session);
+          }
+        for (const [session, pipelines] of layout.sessions)
+          if (!rawSessions.has(session)) {
+            result.push({
+              type: 'entry',
+              entry: pipelines[0].branch,
+              participantParent: element,
+              derivativeOnly: true,
+            });
+          }
+        const leaves = result.filter(
+          (row) =>
+            row.type !== 'entry' ||
+            !!row.entry.metadataVersions ||
+            (row.entry.kind !== 'directory' && !row.acquisition),
+        );
+        const branches = result.filter(
+          (row): row is EntryElement =>
+            row.type === 'entry' &&
+            !row.entry.metadataVersions &&
+            (row.entry.kind === 'directory' || !!row.acquisition),
+        );
+        const byKey = new Map(branches.map((row) => [entryKey(row.entry), row]));
+        const sorted = await orderEntries(
+          branches.map((row) =>
+            row.acquisition ? { ...row.entry, kind: 'directory' as const } : row.entry,
+          ),
+          controller.signal,
+          true,
+          (a, b) =>
+            compareLogicalEntries(byKey.get(entryKey(a))!.entry, byKey.get(entryKey(b))!.entry),
+        );
+        result.splice(
+          0,
+          result.length,
+          ...leaves,
+          ...sorted.map((entry) => byKey.get(entryKey(entry))!),
+        );
+        if (layout.sessionless.length)
+          result.push({ type: 'overview', parent: element, participant: element });
+        for (const issue of layout.issues)
+          result.push({ type: 'message', action: 'coverage', parent: element, message: issue });
+      } catch (error) {
+        result.push({
+          type: 'message',
+          action: 'retry',
+          parent: element,
+          message:
+            'Derivative session lookup interrupted or unavailable. Click to retry. ' +
+            String(error),
+        });
+      }
+    } else if (element.participantParent && entry.logical?.session) {
+      try {
+        const layout = await this.derivativeLayout(element.participantParent);
+        if (layout.sessions.has(entry.logical.session))
+          result.push({
+            type: 'overview',
+            parent: element,
+            participant: element.participantParent,
+            session: entry.logical.session,
+          });
+      } catch (error) {
+        result.push({
+          type: 'message',
+          action: 'retry',
+          parent: element,
+          message:
+            'Derivative session lookup interrupted or unavailable. Click to retry. ' +
+            String(error),
+        });
+      }
+    }
     if (snapshot.error)
       result.push({
         type: 'message',
@@ -336,70 +697,64 @@ export class DatasetTreeProvider
     return result;
   }
 
-  private overview(parent: EntryElement): Promise<TreeElement[]> {
-    const entry = parent.entry;
+  private derivativeLayout(participant: EntryElement): Promise<ParticipantDerivativeLayout> {
+    const entry = participant.entry;
     const root = this.browser.datasets().find((dataset) => dataset.datasetUri === entry.datasetUri);
-    if (!root) return Promise.resolve([]);
+    if (!root) return Promise.resolve({ sessions: new Map(), sessionless: [], issues: [] });
     const key = entryKey(entry);
     const existing = this.overviews.get(key);
-    if (existing) return existing.rows;
+    if (existing) return existing.layout;
     const controller = new AbortController();
-    const group = (source: DirectoryEntry, groupLabel: string): EntryElement => ({
-      type: 'entry',
-      entry: source,
-      inOverview: true,
-      groupLabel,
-    });
-    const notice = (
-      message: string,
-      action: MessageElement['action'] = 'coverage',
-    ): MessageElement => ({ type: 'message', action, parent, message });
-    const rows = vscode.window.withProgress(
+    const layout = vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Window,
-        title: `BIDS Explorer: Finding pipelines for ${entry.name}`,
+        title: `BIDS Explorer: Finding derivative sessions for ${entry.name}`,
       },
-      async (): Promise<TreeElement[]> => {
-        const raw = group(entry, 'Raw');
-        try {
-          const links = linkedDerivativeDatasets(
-            root,
-            this.browser.datasets(),
-            this.derivativeLinks(),
-          );
-          const result = await participantPipelines(
-            this.browser.source,
-            root,
-            entry,
-            controller.signal,
-            links.roots,
-          );
-          const { pipelines } = result;
-          const issues = [...links.issues, ...result.issues];
-          return [
-            raw,
-            ...pipelines.map(({ name, participant }) => group(participant, `Pipeline: ${name}`)),
-            ...issues.map((issue) => notice(issue)),
-            ...(!pipelines.length && !issues.length
-              ? [notice('No matching participant in the inspected pipelines.')]
-              : []),
-          ];
-        } catch (error) {
-          return [
-            raw,
-            notice(
-              controller.signal.aborted
-                ? 'Pipeline lookup canceled. Click to retry.'
-                : String(error),
-              'retry',
-            ),
-          ];
-        }
+      async () => {
+        const links = linkedDerivativeDatasets(
+          root,
+          this.browser.datasets(),
+          this.derivativeLinks(),
+        );
+        const result = await participantDerivativeLayout(
+          this.browser.source,
+          root,
+          entry,
+          controller.signal,
+          links.roots,
+        );
+        return { ...result, issues: [...links.issues, ...result.issues] };
       },
     );
-    const result = Promise.resolve(rows);
-    this.overviews.set(key, { controller, rows: result });
-    return result;
+    this.overviews.set(key, { controller, layout: Promise.resolve(layout) });
+    return Promise.resolve(layout);
+  }
+
+  private async overview(element: OverviewElement): Promise<TreeElement[]> {
+    try {
+      const layout = await this.derivativeLayout(element.participant);
+      const pipelines =
+        element.session === undefined
+          ? layout.sessionless
+          : (layout.sessions.get(element.session) ?? []);
+      return pipelines.map(({ name, branch }) => ({
+        type: 'entry',
+        entry: branch,
+        inOverview: true,
+        groupLabel: name,
+        overviewParent: element,
+        sessionless: element.session === undefined ? true : undefined,
+      }));
+    } catch (error) {
+      return [
+        {
+          type: 'message',
+          action: 'retry',
+          parent: element.participant,
+          message: 'Could not inspect derivative sessions. Click to retry. ' + String(error),
+        },
+      ];
+    }
   }
 
   private clearOverviews(): boolean {
@@ -427,7 +782,17 @@ export class DatasetTreeProvider
   refresh(element?: TreeElement): void {
     const target =
       element?.type === 'message' || element?.type === 'overview' ? element.parent : element;
+    if (target?.acquisition) {
+      this.refresh(target.acquisition.parent);
+      return;
+    }
+    if (target?.acquisitionParent) {
+      this.refresh(target.acquisitionParent.acquisition!.parent);
+      return;
+    }
+    for (const controller of this.projections.values()) controller.abort();
     this.descriptions?.clear(target?.entry);
+    this.summaries?.clear(target?.entry);
     if (target?.inOverview) {
       this.overviewBrowser.refresh(target.entry);
       this.changes.fire(target);
@@ -447,7 +812,10 @@ export class DatasetTreeProvider
         removed.set(element.entry.datasetUri, element.entry);
         this.elements.delete(key);
       }
+    for (const [key, row] of this.acquisitions)
+      if (!datasets.has(row.entry.datasetUri)) this.acquisitions.delete(key);
     for (const entry of removed.values()) {
+      this.summaries?.clear({ ...entry, relativePath: '' });
       this.descriptions?.clear({ ...entry, relativePath: '' });
       this.overviewBrowser.remove(entry);
     }
@@ -456,17 +824,23 @@ export class DatasetTreeProvider
   }
 
   cancelPending(): void {
+    for (const controller of this.projections.values()) controller.abort();
     for (const work of this.overviews.values()) work.controller.abort();
     this.overviewBrowser.cancel();
     this.browser.cancel();
     this.descriptions?.cancel();
+    this.summaries?.cancel();
   }
 
   dispose(): void {
+    for (const controller of this.projections.values()) controller.abort();
+    this.projections.clear();
     this.clearOverviews();
     this.overviewBrowser.cancel();
     this.browser.cancel();
     this.descriptions?.clear();
+    this.summaries?.clear();
+    this.acquisitions.clear();
     this.elements.clear();
     this.changes.dispose();
   }

@@ -1,3 +1,4 @@
+import { squashfsFiles } from '../squashfsFixture';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
@@ -549,4 +550,60 @@ void test('saved placement declarations reject unsafe, duplicate and incomplete 
       /Unsafe/,
     );
   assert.throws(() => savedArchivePlacements({ [uri]: [valid, valid] }, uri), /only once/);
+});
+
+void test('complete SquashFS ancestors support inherited metadata; partial inventories withhold effective fields', async () => {
+  await fixture(async (folder) => {
+    await mkdir(join(folder, 'sub-01/func'), { recursive: true });
+    await writeFile(join(folder, 'task-rest_bold.json'), '{"RepetitionTime":2}');
+    await writeFile(
+      join(folder, 'sub-01/func/scans.sqfs'),
+      squashfsFiles([
+        { name: 'sub-01_task-rest_bold.json', text: '{"TaskName":"Resting state"}' },
+        { name: 'sub-01_task-rest_bold.nii', text: 'fixture' },
+      ]),
+    );
+    const source = new LogicalDirectorySource();
+    const root = await source.root(pathToFileURL(folder).href);
+    const subject = (await source.children(root, signal())).find(
+      (entry) => entry.name === 'sub-01',
+    )!;
+    const [modality] = await source.children(subject, signal());
+    const image = (await source.children(modality, signal())).find((entry) =>
+      entry.name.endsWith('.nii'),
+    )!;
+    const result = await loadLogicalInheritance(source, image, signal());
+    assert.equal(result.status, 'resolved', result.issues.join());
+    assert.equal(result.coverage, 'complete');
+    assert.deepEqual(
+      result.fields.map((field) => field.key),
+      ['RepetitionTime', 'TaskName'],
+    );
+    assert.ok(result.sources.some((source) => source.entry.uri.startsWith('bids-squashfs:')));
+    const children = source.children.bind(source);
+    source.children = async (entry, abort) => {
+      const rows = await children(entry, abort);
+      return entry.relativePath === ''
+        ? [...rows, { ...root, name: 'page marker', paging: { page: 2, failures: 0 } }]
+        : rows;
+    };
+    const partial = await loadLogicalInheritance(source, image, signal());
+    assert.equal(partial.coverage, 'incomplete');
+    assert.equal(partial.status, 'unresolved');
+    assert.deepEqual(partial.fields, []);
+    assert.match(partial.issues.join(), /Paged metadata coverage/);
+    source.children = children;
+    await writeFile(
+      join(folder, 'sub-01/func/other.sqfs'),
+      squashfsFiles([
+        { name: 'sub-01_task-rest_bold.json', text: '{"TaskName":"Conflicting name"}' },
+      ]),
+    );
+    source.refresh(root);
+    const ambiguous = await loadLogicalInheritance(source, image, signal());
+    assert.equal(ambiguous.status, 'unresolved');
+    assert.deepEqual(ambiguous.fields, []);
+    assert.equal(ambiguous.sources.length, 3);
+    assert.match(ambiguous.issues.join(), /Ambiguous JSON/);
+  });
 });

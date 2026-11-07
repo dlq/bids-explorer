@@ -74,7 +74,11 @@ suite('Metadata-based tree descriptions', () => {
       assert.equal(provider.getTreeItem(subject).description, 'Participant');
       assert.equal(provider.descriptionSnapshot(subject.entry)?.status, 'unloaded');
       await described(task, 'Resting state');
-      assert.equal(provider.getTreeItem(task).label, 'sub-001_task-rest_bold.nii.gz');
+      assert.equal(provider.getTreeItem(task).label, 'BOLD');
+      assert.match(
+        String(provider.getTreeItem(task).description),
+        /^Task rest · NIfTI image · Resting state$/,
+      );
       const tooltip = provider.getTreeItem(task).tooltip;
       assert.ok(tooltip instanceof vscode.MarkdownString);
       assert.equal(tooltip.isTrusted, false);
@@ -88,7 +92,7 @@ suite('Metadata-based tree descriptions', () => {
       await config.update('sessionLabelColumn', 'label', vscode.ConfigurationTarget.Workspace);
       await described(subject, 'Alice');
       await described(session, 'Follow-up');
-      assert.equal(provider.getTreeItem(subject).label, 'sub-001');
+      assert.equal(provider.getTreeItem(subject).label, '001');
       await vscode.commands.executeCommand('bidsExplorer.showDetails', subject);
       const details = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as {
         treeDescription: {

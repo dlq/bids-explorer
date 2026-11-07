@@ -272,7 +272,8 @@ suite('BIDS Explorer directory workflows', () => {
       ) as EntryElement;
       assert.equal(provider.getTreeItem(a).description, 'Participant');
       assert.equal((provider.getTreeItem(a).iconPath as vscode.ThemeIcon).id, 'person');
-      assert.equal(provider.getTreeItem(derivatives).description, 'Derivatives');
+      assert.equal(provider.getTreeItem(derivatives).label, 'Derivatives');
+      assert.equal(provider.getTreeItem(derivatives).description, undefined);
       assert.equal(
         (provider.getTreeItem(derivatives).iconPath as vscode.ThemeIcon).id,
         'git-branch',
@@ -285,16 +286,60 @@ suite('BIDS Explorer directory workflows', () => {
       );
       assert.equal(browser.snapshot(a.entry).coverage, 'unknown');
       const anatomy = (await provider.getChildren(a))[0] as EntryElement;
-      assert.equal(provider.getTreeItem(anatomy).description, 'Anatomical');
+      assert.equal(provider.getTreeItem(anatomy).label, 'Anatomical');
+      assert.equal(provider.getTreeItem(anatomy).description, undefined);
       assert.equal((provider.getTreeItem(anatomy).iconPath as vscode.ThemeIcon).id, 'layers');
       const session = (await provider.getChildren(b))[0] as EntryElement;
       assert.equal(provider.getTreeItem(session).description, 'Session');
+      assert.equal(provider.getTreeItem(session).label, 'test');
+      assert.equal(session.entry.name, 'ses-test');
       assert.equal((provider.getTreeItem(session).iconPath as vscode.ThemeIcon).id, 'calendar');
       const functional = (await provider.getChildren(session))[0] as EntryElement;
-      assert.equal(provider.getTreeItem(functional).description, 'Functional');
+      assert.equal(provider.getTreeItem(functional).label, 'Functional');
+      assert.equal(provider.getTreeItem(functional).description, undefined);
       assert.equal((provider.getTreeItem(functional).iconPath as vscode.ThemeIcon).id, 'pulse');
       const file = (await provider.getChildren(anatomy))[0] as EntryElement;
       assert.equal(provider.getTreeItem(file).command?.command, 'bidsExplorer.openFile');
+      assert.equal(provider.getTreeItem(file).label, 'T1-weighted');
+      assert.equal(provider.getTreeItem(file).description, 'JSON metadata');
+      assert.ok(
+        (provider.getTreeItem(file).tooltip as vscode.MarkdownString).value.includes(
+          new vscode.MarkdownString().appendText(file.entry.name).value,
+        ),
+      );
+      await writeFile(join(folder, 'sub-01', 'anat', 'sub-01_T1w.nii'), 'fixture');
+      await writeFile(join(folder, 'sub-01', 'anat', 'sub-01_T1w.nii.gz'), 'fixture');
+      browser.refresh(anatomy.entry);
+      const images = (await provider.getChildren(anatomy)).filter(
+        (row): row is EntryElement => row.type === 'entry' && row.entry.name.includes('.nii'),
+      );
+      assert.deepEqual(
+        images.map((row) => provider.getTreeItem(row).label),
+        ['sub-01_T1w.nii', 'sub-01_T1w.nii.gz'],
+      );
+      assert.ok(images.every((row) => provider.getTreeItem(row).description === 'NIfTI image'));
+      assert.notEqual(provider.getTreeItem(images[0]).id, provider.getTreeItem(images[1]).id);
+      for (const run of ['01', '02'])
+        await writeFile(
+          join(folder, 'sub-01', 'anat', `sub-01_acq-highres_run-${run}_T1w.json`),
+          '{}',
+        );
+      provider.refresh(anatomy);
+      const runs = (await provider.getChildren(anatomy)).filter(
+        (row): row is EntryElement => row.type === 'entry' && row.entry.name.includes('_run-'),
+      );
+      assert.deepEqual(
+        runs.map((row) => provider.getTreeItem(row).label),
+        ['T1-weighted', 'T1-weighted'],
+      );
+      assert.deepEqual(
+        runs.map((row) => provider.getTreeItem(row).description),
+        [
+          'Acquisition highres · Run 01 · JSON metadata',
+          'Acquisition highres · Run 02 · JSON metadata',
+        ],
+      );
+
       assert.deepEqual(await provider.getChildren(file), []);
       const events: unknown[] = [];
       const subscription = provider.onDidChangeTreeData((e) => events.push(e));
@@ -303,7 +348,7 @@ suite('BIDS Explorer directory workflows', () => {
       assert.equal(browser.snapshot(a.entry).coverage, 'unknown');
       assert.equal(browser.snapshot(b.entry).coverage, 'complete');
       const before = provider.getTreeItem(a).id;
-      assert.equal(provider.getTreeItem(a).label, 'sub-01');
+      assert.equal(provider.getTreeItem(a).label, '01');
       await provider.getChildren(a);
       assert.equal(provider.getTreeItem(a).id, before);
       assert.ok(!children.some((e) => e.type === 'entry' && e.entry.name === 'notes'));

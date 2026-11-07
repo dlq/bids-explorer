@@ -4,6 +4,39 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Separate image quadrants with a four-pixel display gap and add eight pixels of padding around the image canvas, without doubling the top gap below the toolbar. Add a separate eight-pixel black inset inside the image pane.
+
+- Default the built-in image viewer to four quadrants: axial, coronal, sagittal and a 3D volume rendering. Retain three-plane, individual-plane and 3D-only choices in the native Image view; Reset display restores the four-quadrant layout.
+
+- Add a movable native **Image** view with selected-acquisition context, frame/layout/colour-map/intensity/crosshair controls, NIfTI header information, inherited BIDS parameters and collapsed related-source/provenance sections. Use **Image controls** in the viewer to open it; move **BIDS Image** to the Secondary Side Bar for a right-hand layout.
+
+- Group matching multi-echo images into one logical acquisition with shared events/JSON and ordered per-echo image/metadata branches. Keep different runs, parts, source conflicts and incomplete listings distinct. Expand readable entity labels across the BIDS vocabulary while preserving indices and original identifiers.
+
+- Explain empty NIfTI placeholders before starting the image renderer, and reuse existing image viewers on repeated opens to avoid duplicate tabs, requests and graphics contexts. Preserve archive-cache protection for shared viewers.
+
+- Add an opt-in public-data logical-layout walkthrough and regression test using a real five-echo run, matching separately stored fMRIPrep outputs and pinned lightweight field-map examples, all stored outside the repository.
+
+- Present metadata and other file entries before subtrees at every logical level, including grouped metadata and expandable acquisitions. Preserve semantic content and numeric run sorting within each section.
+
+- Replace the redundant **Participant Data → Raw** view with session-level **Derivatives** branches matched by exact session identifiers. Include derivative-only sessions and a participant-level **Derivatives without a session** branch, support explicitly linked datasets, and retain the dataset-level pipeline view.
+
+- Group unambiguous NIfTI acquisitions with their exact sibling JSON, events and diffusion-gradient resources. Keep inherited metadata one action away, preserve shared/uncertain resources separately and retain flat rows for partial listings.
+- Use readable modality branches and semantic numeric sorting. Keep archive format details in provenance, while preserving visible source conflicts and derivative entity distinctions.
+- Load source-backed TR, TE and recorded duration summaries in a bounded background queue when an acquisition expands. Support SquashFS inheritance when all inspected ancestors are complete; withhold effective values for paged coverage or conflicting shard metadata.
+
+- Lead logical file rows with readable BIDS content labels such as **BOLD**, **T1-weighted**, **Diffusion** and **Events**. Show task, acquisition, run and other recorded distinctions beside the label, followed by the file type; keep unfamiliar suffixes and original source identity intact.
+
+- Shorten logical file labels by hiding known file extensions and matching participant/session entities already supplied by the containing branches. Show readable content types, preserve acquisition/task/run distinctions and retain full filenames when shortened entries would be ambiguous. Present root dataset descriptions and participant metadata with readable names.
+
+- Show participant and session labels without `sub-` and `ses-` in the logical tree, preserving leading zeros and original identifiers in source details and metadata.
+
+- Shorten the Explorer sidebar section title to **BIDS**; the extension remains **BIDS Explorer**.
+
+- Add keyboard-accessible image-position controls and announced voxel coordinates in the built-in viewer.
+- Make table scrolling keyboard-focusable, wrap long metadata values, collapse repeated acquisition source paths and improve singular summary labels.
+
+- Add keyboard navigation and troubleshooting guidance for neuroimaging users, update security and development documentation for the current archive readers and built-in viewer, and record the sampled 1.0 usability checks, including user-assisted VoiceOver verification.
+
 ## [0.9.0] - 2026-11-06
 
 - Make dataset metadata, participant and events tables, and dataset history easier to read. Show event time units, explain recorded column definitions, and keep source details and original files available.

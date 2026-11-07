@@ -1,0 +1,118 @@
+body {
+  margin: 0;
+  padding: 12px;
+  color: var(--vscode-foreground);
+  background: var(--vscode-sideBar-background);
+  font: var(--vscode-font-size, 13px) var(--vscode-font-family, sans-serif);
+}
+[hidden] {
+  display: none !important;
+}
+section,
+details {
+  margin-bottom: 18px;
+}
+h2 {
+  font-size: 1em;
+  margin: 0 0 8px;
+}
+p {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.hint {
+  color: var(--vscode-descriptionForeground);
+}
+label {
+  display: block;
+  margin: 8px 0;
+}
+select,
+input[type='number'] {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 4px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  padding: 4px;
+  font: inherit;
+}
+input[type='range'] {
+  width: 100%;
+}
+button {
+  font: inherit;
+  padding: 4px 8px;
+  margin: 4px 0;
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  border: 1px solid var(--vscode-contrastBorder, transparent);
+  cursor: pointer;
+}
+button:disabled,
+fieldset:disabled {
+  opacity: 0.55;
+}
+:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 8px 0;
+  border: 0;
+}
+fieldset fieldset {
+  border: 1px solid var(--vscode-panel-border);
+  padding: 6px;
+}
+legend {
+  padding: 0 3px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.axis-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+output {
+  display: block;
+  margin: 6px 0;
+}
+#frame-value {
+  display: inline;
+}
+dl {
+  margin: 8px 0;
+}
+dt {
+  color: var(--vscode-descriptionForeground);
+  margin-top: 8px;
+}
+dd {
+  margin: 2px 0 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

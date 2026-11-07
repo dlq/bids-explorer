@@ -90,6 +90,8 @@ suite('History and metadata document previews', () => {
       assert.equal(initial.recordCount, 26);
       assert.equal(initial.firstTitle, 'Unparsed source text');
       assert.match(String(initial.firstText), /<img>/);
+      assert.ok(Number(initial.sourceDetailsCount) > 0);
+      assert.equal(initial.expandedSourceDetails, 0);
       assert.equal(await manager.open(uri), panel);
       assert.ok(!panel.webview.html.includes('Unstructured <img>'));
       await panel.webview.postMessage({ type: 'testControl', id: 'next' });

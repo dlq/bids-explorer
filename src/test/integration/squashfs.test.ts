@@ -115,7 +115,7 @@ suite('SquashFS member opening', () => {
       );
       assert.ok(root);
       const [row] = await provider.getChildren(provider.element(root));
-      assert.equal(provider.getTreeItem(row).label, 'dataset_description.json');
+      assert.equal(provider.getTreeItem(row).label, 'Dataset description');
       assert.equal((await provider.getChildren(row)).length, 2);
       const panel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
         'bidsExplorer.openFile',

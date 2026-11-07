@@ -154,7 +154,7 @@ function tableHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <label>Filter rows <input id="filter" type="search" placeholder="Text in any cell"></label>
 
 <div class="paging" id="column-paging" hidden><button id="left">Previous columns</button><span id="columns"></span><button id="right">Next columns</button></div>
-<div class="table-scroll"><table aria-label="Recorded table data"><thead id="head"></thead><tbody id="rows"></tbody></table></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Table data. Use arrow keys to scroll."><table aria-label="Recorded table data"><thead id="head"></thead><tbody id="rows"></tbody></table></div>
 <div class="paging" id="row-paging"><button id="previous">Previous page</button><span id="page" aria-live="polite"></span><button id="next">Next page</button></div>
 <section><h2>Column dictionary</h2><p id="dictionary-status"></p><div id="dictionary"></div></section>
 <footer><button id="raw">Open original TSV</button> <button id="reload">Reload snapshot</button><details><summary>Source details</summary><p id="source" class="source-path"></p><p id="revision" class="note"></p><label id="dictionary-source-label" hidden>Dictionary source <select id="dictionary-source"></select></label><button id="dictionary-raw" hidden>Open dictionary as JSON text</button></details></footer>

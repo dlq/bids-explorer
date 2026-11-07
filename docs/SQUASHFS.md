@@ -17,3 +17,7 @@ The compiled logical reader ran twice on Rorqual against the published UKB colle
 Repeated README, JSON and TSV members at the same logical path share an expandable row. The children open the individual shard versions. Select the grouped dataset description or use its inline open action to compare recorded field values and their sources. The comparison reads the descriptions on demand and reports unreadable sources.
 
 During 0.6.0 development, three fresh reader processes on Rorqual listed the first merged UKB page in 781, 40 and 42 ms. A sampled participant branch with two sessions took 364, 2 and 2 ms. These are host-side directory reads with uncontrolled filesystem cache state. Together with the slower first branch observed during 0.5.0, they point to measuring individual cold branches before introducing persistent SquashFS indexes. Browsing continues to read pages on demand.
+
+## Logical acquisition metadata
+
+Acquisition resource groups use exact sibling entities and preserve original source choices. The inherited-metadata inspector can read SquashFS JSON when all inspected logical ancestors have complete inventories. Paged coverage and conflicting shard sidecars withhold effective values and tree timing summaries. Original member previews remain independently available. This does not index every subject to resolve a single acquisition.

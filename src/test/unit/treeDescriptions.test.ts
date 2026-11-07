@@ -2,6 +2,9 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
   descriptionPlan,
+  displayEntryLabel,
+  displayFileType,
+  displayFileDetails,
   displayDescription,
   jsonDescription,
   tableDescription,
@@ -123,4 +126,152 @@ void test('mapped table descriptions require exact unique IDs, headers and recta
       (await parseJsonMetadata(snapshot('{"label":{}}'), signal())).fields,
     ),
   );
+});
+
+void test('logical tree labels preserve entity values and leave source identities untouched', () => {
+  for (const [path, expected] of [
+    ['sub-001', '001'],
+    ['sub-001/ses-baseline', 'baseline'],
+    ['sub-001/ses-002', '002'],
+    ['sub-001_ses-002', '001 / 002'],
+    ['derivatives/sub-001', 'sub-001'],
+    ['sub-001/anat', 'Anatomical'],
+    ['', ''],
+  ]) {
+    const source = entry(path);
+    const before = { ...source };
+    assert.equal(displayEntryLabel(source), expected);
+    assert.deepEqual(source, before);
+  }
+  assert.equal(displayEntryLabel(entry('sub-001_T1w.nii.gz', 'file')), 'T1-weighted');
+});
+
+void test('file labels remove only resolved containing entities and retain acquisition distinctions', () => {
+  for (const [path, label, type] of [
+    ['sub-001/ses-02/func/sub-001_ses-02_task-rest_run-01_bold.nii.gz', 'BOLD', 'NIfTI image'],
+    ['sub-001/ses-02/func/sub-001_ses-02_task-rest_run-02_bold.nii', 'BOLD', 'NIfTI image'],
+    ['sub-001/ses-02/func/sub-001_ses-02_task-rest_bold.json', 'BOLD', 'JSON metadata'],
+    ['sub-001/ses-02/func/sub-001_ses-02_task-rest_events.tsv', 'Events', 'Events table'],
+    ['sub-001/ses-02/dwi/sub-001_ses-02_dwi.bval', 'Diffusion', 'B-values'],
+    ['sub-001/ses-02/dwi/sub-001_ses-02_dwi.bvec', 'Diffusion', 'B-vectors'],
+    ['sub-001/sub-001_sessions.tsv', 'Sessions', 'Sessions table'],
+    ['sub-001/ses-02/sub-001_ses-02_scans.tsv', 'Scans', 'Scans table'],
+    ['participants.tsv', 'Participants', 'Participants table'],
+    ['participants.json', 'Participants', 'JSON metadata'],
+    ['dataset_description.json', 'Dataset description', 'JSON metadata'],
+    ['task-rest_bold.json', 'BOLD', 'JSON metadata'],
+    ['phenotype/scores.tsv', 'scores', 'TSV table'],
+    ['sub-001/ses-02/func/sub-999_ses-03_bold.json', 'BOLD', 'JSON metadata'],
+    ['sub-001/func/sub-001_ses-03_bold.json', 'BOLD', 'JSON metadata'],
+    ['sub-001/func/sub-001_sub-001_bold.json', 'BOLD', 'JSON metadata'],
+    ['derivatives/sub-001/sub-001_bold.json', 'BOLD', 'JSON metadata'],
+    ['sub-001/sub-001.json', 'sub-001', 'JSON metadata'],
+    ['README', 'README', undefined],
+    ['sub-001/sub-001_photo.png', 'sub-001_photo.png', undefined],
+  ]) {
+    const source = entry(path!, 'file');
+    const before = { ...source };
+    assert.equal(displayEntryLabel(source), label, path);
+    assert.equal(displayFileType(source), type, path);
+    assert.deepEqual(source, before);
+  }
+  assert.equal(displayFileType(entry('sub-001')), undefined);
+  const grouped = { ...entry('dataset_description.json'), metadataVersions: [] };
+  assert.equal(displayEntryLabel(grouped), 'Dataset description');
+  assert.equal(displayFileType(grouped), 'JSON metadata');
+});
+
+void test('readable suffixes keep exact task, acquisition, run and other distinctions beside the label', () => {
+  const source = entry(
+    'sub-001/ses-02/func/sub-001_ses-02_task-rest_acq-fast_run-001_dir-AP_echo-02_space-MNI_desc-preproc_bold.nii.gz',
+    'file',
+  );
+  assert.equal(displayEntryLabel(source), 'BOLD');
+  assert.equal(
+    displayFileDetails(source),
+    'Task rest · Acquisition fast · Run 001 · Phase encoding AP · Echo 02 · Space MNI · Description preproc',
+  );
+  assert.equal(
+    displayFileDetails(entry('sub-001/ses-02/func/sub-999_ses-03_bold.json', 'file')),
+    'sub-999 · ses-03',
+  );
+  assert.equal(
+    displayFileDetails(entry('sub-001/func/sub-001_sub-001_bold.json', 'file')),
+    'sub-001 · sub-001',
+  );
+  assert.equal(
+    displayEntryLabel(entry('sub-001/anat/sub-001_acq-highres_T2w.nii', 'file')),
+    'T2-weighted',
+  );
+  assert.equal(
+    displayFileDetails(entry('sub-001/anat/sub-001_acq-highres_T2w.nii', 'file')),
+    'Acquisition highres',
+  );
+  assert.equal(displayFileDetails(entry('sub-001/anat/sub-001_T1w.json', 'file')), '');
+  assert.equal(displayFileDetails(entry('participants.tsv', 'file')), '');
+  assert.equal(displayFileDetails(entry('dataset_description.json', 'file')), '');
+  assert.equal(displayFileDetails(entry('sub-001')), '');
+  // New suffixes, unparsed tokens, unknown keys and entity values stay verbatim.
+  for (const [name, label, details] of [
+    ['task-rest_newSuffix.json', 'newSuffix', 'Task rest'],
+    ['task-rest_unknown_T1w.json', 'task-rest_unknown_T1w', ''],
+    ['task-rest_foo-special_T1w.json', 'T1-weighted', 'Task rest · foo-special'],
+    ['task-rest_acq-rest_T1w.json', 'T1-weighted', 'Task rest · Acquisition rest'],
+    ['task-rest_task-other_bold.json', 'BOLD', 'Task rest · Task other'],
+    ['task-rest_T1W.json', 'T1W', 'Task rest'],
+    ['constructor.json', 'constructor', ''],
+  ]) {
+    const file = entry(name, 'file');
+    assert.equal(displayEntryLabel(file), label);
+    assert.equal(displayFileDetails(file), details);
+  }
+  const grouped = { ...source, kind: 'directory' as const, metadataVersions: [source] };
+  assert.equal(displayEntryLabel(grouped), 'BOLD');
+  assert.equal(displayFileDetails(grouped), displayFileDetails(source));
+});
+
+void test('logical entity vocabulary preserves indices and custom labels without inventing measurements', () => {
+  const labels = [
+    ['run-001', 'Run 001'],
+    ['echo-02', 'Echo 02'],
+    ['flip-03', 'Flip angle index 03'],
+    ['inv-04', 'Inversion index 04'],
+    ['dir-custom', 'Phase encoding custom'],
+    ['part-mag', 'Part magnitude'],
+    ['part-imag', 'Part imaginary'],
+    ['part-real', 'Part real'],
+    ['part-phase', 'Part phase'],
+    ['part-custom', 'Part custom'],
+    ['hemi-L', 'Hemisphere left'],
+    ['hemi-R', 'Hemisphere right'],
+    ['mt-off', 'Magnetization transfer off'],
+    ['ce-Gd', 'Contrast agent Gd'],
+    ['mod-T1w', 'Corresponding modality T1w'],
+    ['recording-cardiac', 'Recording cardiac'],
+    ['split-01', 'Split 01'],
+    ['chunk-01', 'Chunk 01'],
+    ['sample-01', 'Sample 01'],
+    ['stain-Nissl', 'Staining Nissl'],
+    ['trc-FDG', 'Tracer FDG'],
+    ['nuc-1H', 'Nucleus 1H'],
+    ['voi-PCC', 'Volume of interest PCC'],
+    ['proc-clean', 'Processing clean'],
+    ['tracksys-camera', 'Tracking system camera'],
+    ['atlas-custom', 'Atlas custom'],
+    ['cohort-01', 'Cohort 01'],
+    ['label-GM', 'Label GM'],
+    ['seg-custom', 'Segmentation custom'],
+    ['scale-01', 'Scale 01'],
+    ['tpl-custom', 'Template custom'],
+    ['rec-MoCo', 'Reconstruction MoCo'],
+    ['res-high', 'Resolution high'],
+    ['den-32k', 'Density 32k'],
+  ];
+  for (const [token, expected] of labels) {
+    const source = entry(`sub-001/anat/sub-001_${token}_FLASH.nii.gz`, 'file');
+    const before = JSON.stringify(source);
+    assert.equal(displayEntryLabel(source), 'FLASH');
+    assert.equal(displayFileDetails(source), expected);
+    assert.equal(JSON.stringify(source), before);
+  }
 });

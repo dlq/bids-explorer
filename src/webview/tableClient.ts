@@ -32,6 +32,7 @@ function report(): void {
     columnLabels: Array.from(element('head').querySelectorAll('th')).map(
       (header) => header.textContent,
     ),
+    tableRegionTabIndex: document.querySelector<HTMLElement>('.table-scroll')?.tabIndex,
     hasColumnPaging: !element('column-paging').hidden,
     hasRowPaging: !element('next').hidden,
     dictionaryLabels: Array.from(element('dictionary').querySelectorAll('dt')).map(

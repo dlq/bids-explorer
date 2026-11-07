@@ -116,6 +116,7 @@ suite('Read-only participant tables', () => {
         ...values.slice(0, 9),
       ]);
       assert.equal(result.displayedColumns, 12);
+      assert.equal(result.tableRegionTabIndex, 0);
       assert.equal(result.firstCell, 'sub-001');
       assert.equal(result.dictionaryStatus, 'loaded');
       assert.match(panel.webview.html, /connect-src 'none'/);

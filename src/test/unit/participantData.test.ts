@@ -10,6 +10,7 @@ import {
   isRootParticipant,
   linkedDerivativeDatasets,
   participantPipelines,
+  participantDerivativeLayout,
 } from '../../core/participantData';
 import { LogicalDirectorySource } from '../../sources/logicalDirectory';
 import { zipFixture } from '../zipFixture';
@@ -171,6 +172,67 @@ void test('separate derivative roots require an explicit registered link and pre
     assert.equal(
       (await source.children(anat, signal))[0].uri,
       pathToFileURL(join(derived, 'sub-01/anat/sub-01_T1w.nii')).href,
+    );
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
+void test('derivative session layout matches exact labels, retains sessionless outputs and performs only shallow participant reads', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'bids-derivative-sessions-'));
+  try {
+    for (const path of [
+      'sub-01/ses-01/anat',
+      'derivatives/pipeline/sub-01/ses-01/anat',
+      'derivatives/pipeline/sub-01/ses-1/anat',
+      'derivatives/pipeline/sub-01/ses-03/func',
+      'derivatives/pipeline/sub-01/anat',
+    ])
+      await mkdir(join(folder, path), { recursive: true });
+    const source = new LogicalDirectorySource();
+    const root = await source.root(pathToFileURL(folder).href);
+    const participant = (await source.children(root, signal)).find(isRootParticipant)!;
+    const children = source.children.bind(source);
+    const seen: string[] = [];
+    source.children = (entry, abort) => {
+      seen.push(entry.relativePath);
+      return children(entry, abort);
+    };
+    const layout = await participantDerivativeLayout(source, root, participant, signal);
+    assert.deepEqual([...layout.sessions.keys()], ['01', '1', '03']);
+    assert.equal(layout.sessionless.length, 1);
+    assert.equal(
+      layout.sessions.get('03')![0].branch.relativePath,
+      'derivatives/pipeline/sub-01/ses-03',
+    );
+    assert.equal(layout.sessions.get('01')![0].branch.name, 'ses-01');
+    assert.ok(!seen.some((path) => /ses-|anat|func/.test(path)));
+    assert.deepEqual(layout.issues, []);
+    source.children = async (entry, abort) => {
+      const rows = await children(entry, abort);
+      return entry.relativePath === 'derivatives/pipeline/sub-01'
+        ? [...rows, { ...participant, paging: { page: 1, failures: 1 } }]
+        : rows;
+    };
+    const partial = await participantDerivativeLayout(source, root, participant, signal);
+    assert.equal(partial.sessions.size, 3);
+    assert.match(partial.issues.join(), /Some sessions.*not inspected/);
+    source.children = (entry, abort) =>
+      entry.relativePath === 'derivatives/pipeline/sub-01'
+        ? Promise.reject(new Error('denied'))
+        : children(entry, abort);
+    const failed = await participantDerivativeLayout(source, root, participant, signal);
+    assert.equal(failed.sessions.size, 0);
+    assert.match(failed.issues.join(), /Could not inspect sessions/);
+    const controller = new AbortController();
+    source.children = async (entry, abort) => {
+      const rows = await children(entry, abort);
+      if (entry.relativePath === 'derivatives/pipeline/sub-01') controller.abort();
+      return rows;
+    };
+    await assert.rejects(
+      participantDerivativeLayout(source, root, participant, controller.signal),
+      /abort/i,
     );
   } finally {
     await rm(folder, { recursive: true, force: true });
