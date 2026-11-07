@@ -1,0 +1,40 @@
+name: Report a problem
+description: Tell us what happened while exploring a study.
+body:
+  - type: markdown
+    attributes:
+      value: Do not share private participant identifiers, sensitive metadata or credentials. Use private security reporting for vulnerabilities.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: What were you trying to do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we reproduce it?
+      description: Include steps and, if possible, a small synthetic or public example. Remove private paths from logs and screenshots.
+  - type: input
+    id: versions
+    attributes:
+      label: Extension and VS Code versions
+    validations:
+      required: true
+  - type: dropdown
+    id: storage
+    attributes:
+      label: Where is the data?
+      multiple: true
+      options:
+        - Local folder
+        - SSH server
+        - ZIP
+        - Tar or gzip tarball
+        - SquashFS
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system
+      description: Include the server operating system if using SSH.

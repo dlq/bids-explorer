@@ -401,5 +401,13 @@
   "dependencies": {
     "@niivue/niivue": "0.69.0",
     "yauzl": "3.4.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dlq/bids-explorer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dlq/bids-explorer/issues"
+  },
+  "homepage": "https://github.com/dlq/bids-explorer#readme"
 }
