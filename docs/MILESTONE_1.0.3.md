@@ -4,7 +4,7 @@ Prepared November 8, 2026. This maintenance release includes the shared-window i
 
 All windows sharing the cache must reload onto the updated extension to participate in the new queue. Foreign-host reservations are not expired by age. The queue requires coherent directory reads and atomic rename semantics; synthetic testing does not establish behavior on every HPC filesystem.
 
-Release checks and publication evidence will be recorded below as they complete. Earlier release tags and artifacts remain unchanged.
+Release checks and publication evidence are recorded below. Earlier release tags and artifacts remain unchanged.
 
 ## Clean snapshot checks
 
@@ -22,4 +22,8 @@ A fresh isolated VS Code Remote SSH client timed out before the viewer/metadata 
 
 [PR #33](https://github.com/dlq/bids-explorer/pull/33) carries the changes. Its initial [CI run](https://github.com/dlq/bids-explorer/actions/runs/42505699134) and [CodeQL run](https://github.com/dlq/bids-explorer/actions/runs/42505699099) passed; the open CodeQL alert list was empty afterward. The remaining Dependabot advisory concerns development-only minimatch and is included in the reviewed lower-severity tooling findings.
 
-The authorized stable [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.3) triggers the existing OIDC workflow. Attach the exact hosted workflow-built VSIX and SHA256SUMS after verification; Marketplace validation/public availability must be checked separately from upload acceptance.
+The stable [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.3) and immutable tag point to `b2cb105fecbd6a42d9efe2b39c5b192b1c127e53`. Final-head PR [CI](https://github.com/dlq/bids-explorer/actions/runs/42506459764) and [CodeQL](https://github.com/dlq/bids-explorer/actions/runs/42506460017) passed before merge.
+
+[Release run 42506668593](https://github.com/dlq/bids-explorer/actions/runs/42506668593) passed verification, CodeQL and OIDC publication. The upload was accepted November 8 at 17:51:37 UTC. The GitHub release contains that exact hosted VSIX and matching SHA256SUMS. VSIX SHA-256: `e3cba6a466267cee24207817ae0667deaee19a4c9eaa073f7c88ecb6dbcd2b57` (2,221,086 bytes). All 406 packaged file contents match the clean local candidate byte for byte; only ZIP container metadata differs. GitHub’s uploaded-asset digest independently matches this checksum. No native .node files are included, and the icon remains the approved PNG.
+
+Marketplace upload acceptance is confirmed. At the initial post-upload check on November 8 around 17:52 UTC, the public gallery still reported 1.0.2; public validation of 1.0.3 had not yet been observed. Upload acceptance and public validation are tracked separately.
