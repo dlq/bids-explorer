@@ -1,5 +1,21 @@
 # Compatibility and stabilization evidence
 
+## Current supported scope
+
+Use desktop VS Code 1.96 or newer in a trusted, non-virtual workspace with ordinary file access on the workspace host. Remote SSH uses the remote workspace host's filesystem. Archive readers ship with the extension. No external Python or system archive tools are required, and the standalone NiiVue extension is optional. Browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported.
+
+| Source            | Supported scope                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Directory         | Ordinary directories and regular files through workspace-host `file:` URIs                                                                      |
+| ZIP               | Unencrypted stored or Deflate members within the limits in [ZIP.md](ZIP.md)                                                                     |
+| Tar               | POSIX ustar headers in `.tar`, `.tar.gz`, or `.tgz`. Inventory and member scans are sequential. See [TAR.md](TAR.md).                           |
+| SquashFS          | SquashFS 4.0 with uncompressed or gzip metadata and data blocks. Unsupported shards can yield partial coverage. See [SQUASHFS.md](SQUASHFS.md). |
+| Progressive NIfTI | `.nii` and `.nii.gz`, up to 1 GiB decoded. The first-frame budget is 128 MiB. Archive extraction is limited to 512 MiB per selected member.     |
+
+Interactive installed-package testing covers macOS arm64 clients and Rorqual Linux x64 over Remote SSH. Hosted Linux CI exercises synthetic extension-host workflows on minimum/current stable VS Code with software WebGL; it is not equivalent to a full Linux desktop usability pass. Windows clients and other SSH hosts remain unverified. Dated records below describe the specific versions, fixtures and limits of each check.
+
+## Historical 0.8.0 installed-package pass
+
 The November 6, 2026 pass used a fresh source export of `v0.8.0` (`0b98c8b`), a locked dependency install, and one newly built VSIX. The test cases used synthetic BIDS-like data. These results describe the configurations exercised in this pass.
 
 | Source             | macOS arm64, VS Code 1.96.0         | macOS arm64, VS Code 1.145.2        | Rorqual Linux x64, Remote SSH 1.145.2 |
@@ -12,19 +28,9 @@ The November 6, 2026 pass used a fresh source export of `v0.8.0` (`0b98c8b`), a 
 
 Both local profiles installed the VSIX in isolated extension directories. The viewer checks observed the first-frame status and both loaded frames. For archive cases, the harness also compared extracted bytes with the fixture. Rorqual host checks used the compiled extension code from the checksum-matched VSIX in two independent SSH sessions. They compared decoded fixture bytes and exercised ZIP replacement and refresh.
 
-Use desktop VS Code 1.96 or newer in a trusted, non-virtual workspace with ordinary file access on the workspace host. Remote SSH uses the remote workspace host's filesystem. Archive readers ship with the extension. Python, system archive tools, and the standalone NiiVue extension are optional for these workflows. Windows, Linux desktop clients, and other SSH hosts were outside this pass.
-
-| Source            | Supported scope                                                                                                                                 |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Directory         | Ordinary directories and regular files through workspace-host `file:` URIs                                                                      |
-| ZIP               | Unencrypted stored or Deflate members within the limits in [ZIP.md](ZIP.md)                                                                     |
-| Tar               | POSIX ustar headers in `.tar`, `.tar.gz`, or `.tgz`. Inventory and member scans are sequential. See [TAR.md](TAR.md).                           |
-| SquashFS          | SquashFS 4.0 with uncompressed or gzip metadata and data blocks. Unsupported shards can yield partial coverage. See [SQUASHFS.md](SQUASHFS.md). |
-| Progressive NIfTI | `.nii` and `.nii.gz`, up to 1 GiB decoded. The first-frame budget is 128 MiB. Archive extraction is limited to 512 MiB per selected member.     |
-
 ## Scale and recovery
 
-A synthetic directory held 5,000 participants with one session and an anatomical folder each. The host probe measured the immediate logical dataset listing, a repeat from the in-memory snapshot, and one participant expansion. It added a participant, refreshed, cancelled the next listing, verified the old 5,000-row snapshot remained visible, and retried successfully with 5,001 rows.
+In the same November 6 0.8.0-source pass, a synthetic directory held 5,000 participants with one session and an anatomical folder each. The host probe measured the immediate logical dataset listing, a repeat from the in-memory snapshot, and one participant expansion. It added a participant, refreshed, cancelled the next listing, verified the old 5,000-row snapshot remained visible, and retried successfully with 5,001 rows.
 
 | Host              | Initial listing | Cached listing | Participant expansion | Refresh retry |
 | ----------------- | --------------: | -------------: | --------------------: | ------------: |
@@ -37,7 +43,7 @@ In two separate Rorqual SSH sessions, the baseline read all five sources. After 
 
 ## Build and security
 
-The clean snapshot passed the 157 unit tests, packaging and Semgrep. Both VS Code versions passed 43 integration tests, with one opt-in test pending in each run. The dependency audit reported zero runtime findings and no high or critical findings overall. The full audit reported 13 moderate and one low finding in development tooling.
+That 0.8.0-source snapshot passed the 157 unit tests, packaging and Semgrep. Both VS Code versions passed 43 integration tests, with one opt-in test pending in each run. The dependency audit reported zero runtime findings and no high or critical findings overall. The full audit reported 13 moderate and one low finding in development tooling.
 
 ## 0.9.0 candidate pass
 
@@ -72,3 +78,11 @@ The November 7, 2026 [usability record](USABILITY.md) adds development-host chec
 The fresh locked source snapshot passed 169 unit tests and all 58 extension-host tests on each of VS Code 1.96.0 and 1.145.2, including the public tarball and logical-layout image fixtures. The installed 1.0.0 package passed all seven NIfTI cases and JSON previews for directory, ZIP, ustar, gzip ustar and SquashFS on both versions. Image sidebar and four-quadrant rendering states were checked as well.
 
 The checksum-matched package passed the same synthetic image, metadata and sidebar checks in a Rorqual Remote SSH workspace before and after an isolated client reconnect. The final package preserves all 394 candidate runtime files byte for byte; documentation and release metadata are the only packaging changes. Semgrep passed; the audit found zero runtime vulnerabilities and 13 moderate plus one low development-tooling finding. See the [release record](MILESTONE_1.0.0.md) for scope and limitations.
+
+## Published 1.0.1 and 1.0.2 patches
+
+[1.0.1 verification](MILESTONE_1.0.1.md) records the security hardening, installed sample/format checks and hosted minimum/current CI. [1.0.2 verification](MILESTONE_1.0.2.md) records the icon-only runtime-equivalent patch and the validated Marketplace artifact/icon. Historical test counts above are not current suite totals; consult the relevant release record and CI run.
+
+## 1.0.3 maintenance patch
+
+[1.0.3 verification](MILESTONE_1.0.3.md) records 178 unit tests, 58 local integration tests per VS Code version, artifact/security checks and seven separate-process cache tests using packaged code on Rorqual’s shared home filesystem. A fresh interactive Remote SSH viewer check was blocked by connection timeouts; the user explicitly authorized release with that limitation. This does not extend the historical interactive SSH or Windows compatibility claims.

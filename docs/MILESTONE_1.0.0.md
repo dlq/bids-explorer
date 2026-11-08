@@ -1,6 +1,6 @@
 # 1.0.0 local release
 
-Released locally on November 7, 2026, as `v1.0.0`. No Marketplace publication or GitHub push was performed. The source manifest and lockfile use `1.0.0`; `npm run package` derives `dist/bids-explorer-1.0.0.vsix` from the manifest.
+Released locally on November 7, 2026, as `v1.0.0`. No Marketplace publication or GitHub push was performed during this local closeout; GitHub hosting followed separately, and Marketplace distribution began with 1.0.1. The source manifest and lockfile use `1.0.0`; `npm run package` derives `dist/bids-explorer-1.0.0.vsix` from the manifest.
 
 ## Release checks
 

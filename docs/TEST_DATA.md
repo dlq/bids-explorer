@@ -7,11 +7,11 @@
 | ds000003 | Anatomical subset: 2 subjects, 4 images                         | 13 MB            | Small directory browsing and anatomical file opening                |
 | ds000114 | Full public S3 inventory: 10 subjects, 20 subject/session pairs | 4.67 GB          | Multisession/multimodal navigation, inherited metadata and 4D files |
 
-Downloads are for manual and future opt-in tests, not ordinary CI. Both are stored outside the repository.
+Downloads support manual and explicit opt-in tests, not ordinary CI. Both are stored outside the repository.
 
 ## ds000003 — Anatomical subset
 
-An anatomical subset of [OpenNeuro ds000003, Rhyme judgment](https://openneuro.org/datasets/ds000003) was downloaded on November 3, 2026 for manual and future opt-in testing. The upstream [dataset repository](https://github.com/OpenNeuroDatasets/ds000003) contains its attribution and licensing information; its README is retained in the downloaded sample.
+An anatomical subset of [OpenNeuro ds000003, Rhyme judgment](https://openneuro.org/datasets/ds000003) was downloaded on November 3, 2026 for manual and explicit opt-in testing. The upstream [dataset repository](https://github.com/OpenNeuroDatasets/ds000003) contains its attribution and licensing information; its README is retained in the downloaded sample.
 
 The subset is about 13 MB (12,967,832 bytes), with eight files:
 
@@ -61,9 +61,9 @@ Use VS Code's ordinary **File: Open Folder** to inspect either downloaded direct
 
 Keep regular CI on tiny synthetic fixtures. Any automated use of downloaded images must be explicit opt-in and skip clearly when the sample is unavailable, with no automatic network download or SSH connection. Archive variants can later be generated outside Git from this sample when reader testing is authorized.
 
-## Candidate tarball fixture
+## Connectome Mapper tarball fixture
 
-Connectome Mapper 3 publishes `ds-sample.tar.gz` (182.1 MB, CC BY 4.0) as a BIDS test dataset. Its subject/session layout includes anatomical, diffusion and resting-state functional MRI. This is a candidate for whole-dataset gzip-tar browsing and selected MRI opening. Its single-subject sample has limited value for collection-scale or sharded tar tests. The archive is stored in the sibling `bids-explorer-test-data/connectome-mapper-3-v2.1/` directory. Its 182,060,400 bytes match Zenodo's published MD5 (`5b888b1702e070281d8883e34f4faad9`). [Zenodo dataset and archive listing](https://zenodo.org/records/5790821)
+Connectome Mapper 3 publishes `ds-sample.tar.gz` (182.1 MB, CC BY 4.0) as a BIDS test dataset. Its subject/session layout includes anatomical, diffusion and resting-state functional MRI. This is the adopted public fixture for whole-dataset gzip-tar browsing, metadata/gradient previews and selected MRI opening. Its single-subject sample has limited value for collection-scale or sharded tar tests. The archive is stored in the sibling `bids-explorer-test-data/connectome-mapper-3-v2.1/` directory. Its 182,060,400 bytes match Zenodo's published MD5 (`5b888b1702e070281d8883e34f4faad9`). [Zenodo dataset and archive listing](https://zenodo.org/records/5790821)
 
 A read-only member scan found 22 files and seven directories under the `ds-sample/` wrapper, including a dataset descriptor, `participants.tsv`, scan JSON sidecars, an events TSV and a DWI gradient pair. The three NIfTI headers show a 3D T1w image, 129 DWI volumes and 100 resting-state BOLD volumes. The descriptor declares BIDS 1.2.2. This archive is suitable for a first end-to-end test of wrapped dataset discovery, metadata previews and opening selected 3D and 4D images from a sequential gzip tarball. Use synthetic fixtures for malformed archives and multi-shard cases.
 

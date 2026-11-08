@@ -18,11 +18,11 @@ interface CachedArchive {
   readonly branches: ReadonlyMap<string, readonly DirectoryEntry[]>;
 }
 /** Archives remain separate physical branches. Only expanded archives are indexed, on the data host. */
-export class ZipDirectorySource implements DirectorySource {
+export class ArchiveDirectorySource implements DirectorySource {
   private readonly cache = new Map<string, CachedArchive>();
   constructor(
     private readonly directories: DirectorySource = new LocalDirectorySource(),
-    private readonly readIndex: typeof indexZip = indexZip,
+    private readonly readZip: typeof indexZip = indexZip,
     private readonly persistent?: ArchiveInventoryCache,
   ) {}
   root(uri: string): Promise<DirectoryEntry> {
@@ -108,7 +108,7 @@ export class ZipDirectorySource implements DirectorySource {
       const saved = fingerprint && (await this.persistent?.read(fingerprint, signal));
       const index =
         saved ??
-        (await (parent.archive!.format === 'tar' ? indexTar : this.readIndex)(sourceUri, signal));
+        (await (parent.archive!.format === 'tar' ? indexTar : this.readZip)(sourceUri, signal));
       const container: DirectoryEntry = { ...parent, relativePath: containerPath };
       const branches = await archiveTree(container, index, signal);
       if (fingerprint && (await archiveFingerprint(sourceUri)).stamp !== fingerprint.stamp)

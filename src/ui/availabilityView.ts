@@ -21,13 +21,17 @@ export function openAvailabilityView(
   reveal: (participant: DirectoryEntry) => Promise<void>,
 ): vscode.WebviewPanel {
   const mediaUri = vscode.Uri.joinPath(extensionUri, 'media');
+  const browserUri = vscode.Uri.joinPath(extensionUri, 'out', 'browser');
   const panel = vscode.window.createWebviewPanel(
     'bidsExplorer.availability',
     'BIDS Availability',
     vscode.ViewColumn.Active,
-    { enableScripts: true, localResourceRoots: [mediaUri] },
+    { enableScripts: true, localResourceRoots: [mediaUri, browserUri] },
   );
   const styles = panel.webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'gradients.css'));
+  const client = panel.webview.asWebviewUri(
+    vscode.Uri.joinPath(browserUri, 'webview', 'availabilityClient.js'),
+  );
   const nonce = randomBytes(16).toString('hex');
   const escape = (text: string) =>
     text
@@ -176,39 +180,8 @@ ${rows ? `<div class="grid" tabindex="0" role="region" aria-label="Participant a
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${panel.webview.cspSource} 'nonce-${nonce}';">
 <link rel="stylesheet" href="${styles.toString()}">
 <style nonce="${nonce}">table{border-collapse:collapse} th,td{padding:.5rem;border:1px solid var(--vscode-panel-border);text-align:left;vertical-align:top;white-space:nowrap} input[name="participant"]{width:min(240px, 100%)} input[type="checkbox"]{width:auto} fieldset{border:1px solid var(--vscode-panel-border);margin-block:8px} .grid{overflow:auto} td div+div{margin-top:.25rem} button[data-participant]{color:var(--vscode-textLink-foreground);background:none;text-decoration:underline;padding:0} button[aria-pressed="true"], button[type="submit"]{color:var(--vscode-button-foreground);background:var(--vscode-button-background)}</style></head>
-<body><main><h1>Participant availability</h1>${content}</main>
-<script nonce="${nonce}">
-const vscode = acquireVsCodeApi();
-document.getElementById('filters')?.addEventListener('submit', event => {
-  event.preventDefault();
-  const form = new FormData(event.target);
-  vscode.postMessage({
-    filter: {
-      participant: form.get('participant'),
-      raw: form.getAll('raw'),
-      requireOutput: form.has('requireOutput'),
-      pipeline: form.get('pipeline') || '',
-      session: form.get('session') || '',
-      modality: form.get('modality') || '',
-    },
-    revision: ${revision},
-  });
-});
-document.getElementById('browse-focus')?.addEventListener('change', event => {
-  vscode.postMessage({ focus: event.target.value, revision: ${revision} });
-});
-document.addEventListener('click', event => {
-  const button = event.target.closest('button');
-  if (button?.dataset.view) vscode.postMessage({ view: button.dataset.view, revision: ${revision} });
-  if (button?.id === 'scan') vscode.postMessage({ scan: true, revision: ${revision} });
-  if (button?.dataset.page !== undefined) vscode.postMessage({ page: Number(button.dataset.page), revision: ${revision} });
-  if (button?.dataset.participant !== undefined) vscode.postMessage({ index: Number(button.dataset.participant), revision: ${revision} });
-});
-window.addEventListener('message', ({ data }) => {
-  const progress = document.getElementById('scan-progress');
-  if (${!!active} && data.revision === ${revision} && progress) progress.textContent = data.progress;
-});
-</script></body></html>`;
+<body data-revision="${revision}" data-scanning="${!!active}"><main><h1>Participant availability</h1>${content}</main>
+<script type="module" nonce="${nonce}" src="${client.toString()}"></script></body></html>`;
 
   const scan = async (retryIncomplete = false) => {
     const controller = new AbortController();
@@ -250,6 +223,10 @@ window.addEventListener('message', ({ data }) => {
       message.revision !== revision
     )
       return;
+    if ('type' in message && message.type === 'ready') {
+      await panel.webview.postMessage({ progress: status, revision });
+      return;
+    }
     if ('scan' in message && message.scan === true) {
       if (active) active.abort();
       else void scan(true);

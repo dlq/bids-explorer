@@ -2,7 +2,7 @@
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
   "description": "Browse BIDS studies, preview metadata and open NIfTI images locally or over SSH.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "MCIN-dlq",
   "icon": "media/icon.png",
   "private": true,
@@ -282,7 +282,7 @@
           "default": "",
           "maxLength": 200,
           "scope": "resource",
-          "description": "Column in the participant\u2019s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
+          "description": "Column in the participant’s sessions.tsv file to show next to session IDs. Leave blank to show the standard labels. A value appears when the session row and column are unique."
         },
         "bidsExplorer.derivativeDatasets": {
           "type": "object",
@@ -354,10 +354,12 @@
   },
   "capabilities": {
     "untrustedWorkspaces": {
-      "supported": false
+      "supported": false,
+      "description": "%workspaceTrust.description%"
     },
     "virtualWorkspaces": {
-      "supported": false
+      "supported": false,
+      "description": "%virtualWorkspace.description%"
     }
   },
   "scripts": {
@@ -368,7 +370,8 @@
     "test:integration": "npm run build && vscode-test --coverage",
     "check": "npm run format:check && npm run typecheck && npm run lint && npm run test:coverage",
     "vscode:prepublish": "node -e \"require('node:fs').rmSync('out', { recursive: true, force: true })\" && npm run build",
-    "package": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true })\" && vsce package --out dist/",
+    "package": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true })\" && vsce package --out dist/ && npm run test:package",
+    "test:package": "node --test out/test/package.test.js",
     "test:coverage": "npm run build && c8 node --test out/test/unit/*.test.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

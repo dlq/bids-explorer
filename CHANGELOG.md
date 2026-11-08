@@ -4,6 +4,18 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.0.3] - 2026-11-08
+
+- Explain Workspace Trust and virtual-workspace restrictions in VS Code, close standalone availability/comparison panels on extension disposal, and add viewport metadata to image views.
+
+- Enforce shared archive-image cache byte and entry budgets across windows with cancellable filesystem reservations, conservative dead-owner recovery and cross-process regression tests.
+
+- Keep the displayed archive page and Previous/Next controls after a failed page read, so navigation and retry remain available.
+- Move Availability browser behavior into a type-checked packaged client, reject foreign/stale/malformed progress messages, and resynchronize progress when the client is ready.
+- Exclude unused native Rollup build bindings from portable VSIX packages and verify artifact contents, icon and preview clients during packaging.
+
+- Clarify current viewer, logical-tree, archive-table dictionary and shared-cache behavior; update publishing status and contributor guidance, and separate the active roadmap from historical validation records.
+
 ## [1.0.2] - 2026-11-07
 
 - Add a Marketplace and Extensions-view icon combining logical dataset branches, imaging and metadata, using colours from the BIDS website.

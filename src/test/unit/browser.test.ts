@@ -192,3 +192,41 @@ void test('synchronous adapter failures are retryable and immediate cancellation
   await pending;
   assert.equal(h.calls.length, count);
 });
+
+void test('a failed page keeps the displayed page and both navigation directions available', async () => {
+  const h = harness();
+  const root = entry();
+  let attempts = 0;
+  const third = () => {
+    if (++attempts === 1) return Promise.reject(new Error('Temporary page read failure'));
+    return Promise.resolve([entry('sub-03')]);
+  };
+  const first = (): Promise<readonly DirectoryEntry[]> =>
+    Promise.resolve([entry('sub-01'), { ...root, paging: { page: 1, failures: 0, next: second } }]);
+  const second = (): Promise<readonly DirectoryEntry[]> =>
+    Promise.resolve([
+      entry('sub-02'),
+      { ...root, paging: { page: 2, failures: 0, previous: first, next: third } },
+    ]);
+  h.respond(first);
+  await h.browser.children(root);
+  const displayed = await h.browser.nextPage(root);
+  const navigation = h.browser.snapshot(root).paging;
+  assert.equal(navigation?.page, 2);
+
+  assert.deepEqual(await h.browser.nextPage(root), displayed);
+  const failed = h.browser.snapshot(root);
+  assert.equal(failed.coverage, 'failed');
+  assert.equal(failed.stale, true);
+  assert.equal(failed.paging, navigation);
+  assert.match(failed.error!.message, /Temporary page read failure/);
+
+  assert.equal((await h.browser.nextPage(root, 'previous'))[0].name, 'sub-01');
+  assert.equal(h.browser.snapshot(root).paging?.page, 1);
+  await h.browser.nextPage(root);
+  assert.equal((await h.browser.nextPage(root))[0].name, 'sub-03');
+  assert.equal(attempts, 2);
+  assert.equal(h.browser.snapshot(root).coverage, 'complete');
+  assert.equal(h.browser.snapshot(root).error, undefined);
+  assert.deepEqual(h.calls, ['']);
+});

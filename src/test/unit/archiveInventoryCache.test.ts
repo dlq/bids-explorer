@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { ArchiveInventoryCache, archiveFingerprint } from '../../sources/archiveInventoryCache';
-import { ZipDirectorySource } from '../../sources/zipDirectory';
+import { ArchiveDirectorySource } from '../../sources/archiveDirectory';
 import { indexZip } from '../../sources/zipIndex';
 import { zipFixture } from '../zipFixture';
 import { tarFixture, tarRecord } from '../tarFixture';
@@ -49,7 +49,7 @@ void test('a new directory source reuses inventories and only rescans a replaced
     await utimes(first, stamp, stamp);
     let scans = 0;
     const source = () =>
-      new ZipDirectorySource(
+      new ArchiveDirectorySource(
         undefined,
         (...args) => {
           scans++;
@@ -57,7 +57,7 @@ void test('a new directory source reuses inventories and only rescans a replaced
         },
         new ArchiveInventoryCache(cache.root),
       );
-    const browse = async (reader: ZipDirectorySource) => {
+    const browse = async (reader: ArchiveDirectorySource) => {
       const root = await reader.root(uri(folder));
       const archives = (await reader.children(root, signal)).filter((entry) => entry.archive);
       return Promise.all(
@@ -93,7 +93,7 @@ void test('tar browsing publishes a complete reusable inventory and cache failur
   await fixture(async (folder, cache) => {
     const tar = join(folder, 'fixture.tar');
     await writeFile(tar, tarFixture(tarRecord('T1w.nii', Buffer.from('data'))));
-    const source = new ZipDirectorySource(undefined, undefined, cache);
+    const source = new ArchiveDirectorySource(undefined, undefined, cache);
     const root = await source.root(uri(folder));
     const [archive] = await source.children(root, signal);
     assert.equal((await source.children(archive, signal))[0].name, 'T1w.nii');

@@ -17,7 +17,7 @@ import { LogicalDirectorySource, savedArchivePlacements } from './sources/logica
 import { loadLogicalInheritance } from './sources/logicalInheritance';
 import { readTextSnapshot } from './sources/textSnapshotReader';
 import { loadTreeDescription } from './sources/treeDescriptionLoader';
-import { ZipDirectorySource } from './sources/zipDirectory';
+import { ArchiveDirectorySource } from './sources/archiveDirectory';
 import { ArchiveInspector } from './ui/archiveInspector';
 import { openAvailabilityView } from './ui/availabilityView';
 import { withCancellation } from './ui/cancellation';
@@ -30,6 +30,7 @@ import { InheritanceInspector } from './ui/inheritanceInspector';
 import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
 import { isNiftiFileName, NiftiPreviewManager, progressiveNiftiViewType } from './ui/niftiPreview';
 import { TablePreviewManager, isSummaryTable } from './ui/tablePreview';
+import { WebviewPanelStore } from './ui/webviewPanelStore';
 import { WorkspaceFolderHandoff } from './ui/workspaceFolderHandoff';
 
 const registrationsKey = 'bidsExplorer.datasets.v1';
@@ -44,6 +45,8 @@ export function activate(context: vscode.ExtensionContext): {
     vscode.Uri.joinPath(context.storageUri ?? context.globalStorageUri, 'extracted-images-v1')
       .fsPath,
   );
+  const panels = new WebviewPanelStore();
+  context.subscriptions.push(panels);
   const archiveWork = new Set<AbortController>();
   const trackArchiveWork = async <T>(controller: AbortController, read: () => PromiseLike<T>) => {
     archiveWork.add(controller);
@@ -100,7 +103,7 @@ export function activate(context: vscode.ExtensionContext): {
   const configuredPlacements = () =>
     vscode.workspace.getConfiguration('bidsExplorer').get<unknown>('archivePlacements');
   const source = new LogicalDirectorySource(
-    new ZipDirectorySource(undefined, undefined, inventoryCache),
+    new ArchiveDirectorySource(undefined, undefined, inventoryCache),
     configuredPlacements,
   );
   const imageView = new ImageView(context.extensionUri, (entry, signal) =>
@@ -361,49 +364,51 @@ export function activate(context: vscode.ExtensionContext): {
         .datasets()
         .find((dataset) => dataset.datasetUri === element.entry.datasetUri);
       if (!root) return;
-      return openAvailabilityView(
-        context.extensionUri,
-        (controller, progress, retryIncomplete) =>
-          trackArchiveWork(controller, async () => {
-            if (!browser.datasets().includes(root)) throw new Error('Dataset was removed');
-            const links = linkedDerivativeDatasets(root, browser.datasets(), derivativeLinks());
-            const scan = () =>
-              datasetAvailability(source, root, controller.signal, progress, links);
-            const placements = configuredPlacements();
-            if (
-              links.issues.length ||
-              [root, ...links.roots].some(
-                (entry) => savedArchivePlacements(placements, entry.datasetUri).length,
+      return panels.add(
+        openAvailabilityView(
+          context.extensionUri,
+          (controller, progress, retryIncomplete) =>
+            trackArchiveWork(controller, async () => {
+              if (!browser.datasets().includes(root)) throw new Error('Dataset was removed');
+              const links = linkedDerivativeDatasets(root, browser.datasets(), derivativeLinks());
+              const scan = () =>
+                datasetAvailability(source, root, controller.signal, progress, links);
+              const placements = configuredPlacements();
+              if (
+                links.issues.length ||
+                [root, ...links.roots].some(
+                  (entry) => savedArchivePlacements(placements, entry.datasetUri).length,
+                )
               )
-            )
-              return await scan();
-            return await availabilityCache.load(
-              root,
-              controller.signal,
-              scan,
-              retryIncomplete,
-              links.roots,
-            );
-          }),
-        async (participant) => {
-          const current = browser
-            .snapshot(root)
-            .children.find((row) => row.relativePath === participant.relativePath);
-          if (
-            current &&
-            browser.datasets().some((dataset) => dataset.datasetUri === root.datasetUri)
-          ) {
-            try {
-              await tree.reveal(provider.element(current), { select: true, focus: true });
-              return;
-            } catch {
-              // The page can change while VS Code resolves the tree item.
+                return await scan();
+              return await availabilityCache.load(
+                root,
+                controller.signal,
+                scan,
+                retryIncomplete,
+                links.roots,
+              );
+            }),
+          async (participant) => {
+            const current = browser
+              .snapshot(root)
+              .children.find((row) => row.relativePath === participant.relativePath);
+            if (
+              current &&
+              browser.datasets().some((dataset) => dataset.datasetUri === root.datasetUri)
+            ) {
+              try {
+                await tree.reveal(provider.element(current), { select: true, focus: true });
+                return;
+              } catch {
+                // The page can change while VS Code resolves the tree item.
+              }
             }
-          }
-          void vscode.window.showInformationMessage(
-            'Return to the participant’s page in BIDS Explorer, then try again.',
-          );
-        },
+            void vscode.window.showInformationMessage(
+              'Return to the participant’s page in BIDS Explorer, then try again.',
+            );
+          },
+        ),
       );
     }),
     command('bidsExplorer.refresh', async (arg) => {
@@ -569,8 +574,14 @@ export function activate(context: vscode.ExtensionContext): {
                 cancellable: true,
               },
               (_, token) =>
-                withCancellation(token, controller, (signal) =>
-                  openDatasetDescriptionComparison(metadataVersions, context.extensionUri, signal),
+                withCancellation(token, controller, async (signal) =>
+                  panels.add(
+                    await openDatasetDescriptionComparison(
+                      metadataVersions,
+                      context.extensionUri,
+                      signal,
+                    ),
+                  ),
                 ),
             ),
           );

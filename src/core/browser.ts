@@ -132,6 +132,7 @@ export class DatasetBrowser {
           coverage: 'failed',
           children: previous.children,
           physicalChildCount: previous.physicalChildCount,
+          paging: previous.paging,
           stale: previous.physicalChildCount !== undefined,
           error: Object.freeze({ code, message }),
         }),

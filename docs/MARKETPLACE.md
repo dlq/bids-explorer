@@ -68,6 +68,8 @@ Use **Reset display** to restore the default presentation. **Open Image With…*
 
 Opening a JSON file directly shows what that file records. The acquisition metadata view can also resolve applicable values inherited from broader dataset, participant or session scopes, with their sources. Conflicting or incomplete sources are explained rather than silently combined.
 
+A table inside an archive uses a JSON column dictionary next to it in the same archive. Use **Inspect Metadata and Related Files** to examine inherited metadata from other locations or sources.
+
 Use **Filter rows** in table previews and **Reload snapshot** when the source has changed. **Open original** opens the underlying resource in an editor; saving from a regular editor is a separate action that can change an ordinary source file.
 
 ## Find participants with the data you need

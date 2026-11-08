@@ -1,3 +1,13 @@
+BIDS Explorer third-party notices
+
+The built-in viewer packages NiiVue 0.69.0. Its license is reproduced below.
+Other bundled dependencies retain their own licenses; consult their package
+metadata and license files under node_modules in the VSIX. The extension's
+own MIT license does not replace dependency or dataset licenses.
+
+NiiVue license
+--------------
+
 BSD 2-Clause License
 
 Copyright (c) 2021, Niivue

@@ -1,0 +1,4 @@
+{
+  "workspaceTrust.description": "Dataset browsing and previews require Workspace Trust. Check the dataset source before enabling archive extraction and image rendering.",
+  "virtualWorkspace.description": "BIDS Explorer needs ordinary files on your computer or SSH server. Virtual file systems are not supported."
+}

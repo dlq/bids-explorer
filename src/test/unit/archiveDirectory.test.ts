@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ZipDirectorySource } from '../../sources/zipDirectory';
+import { ArchiveDirectorySource } from '../../sources/archiveDirectory';
 import { LocalDirectorySource } from '../../sources/localDirectory';
 import { indexZip } from '../../sources/zipIndex';
 import { DatasetBrowser } from '../../core/browser';
@@ -14,11 +14,11 @@ import { zipFixture } from '../zipFixture';
 const signal = (): AbortSignal => new AbortController().signal;
 
 async function fixture(
-  run: (folder: string, source: ZipDirectorySource) => Promise<void>,
+  run: (folder: string, source: ArchiveDirectorySource) => Promise<void>,
 ): Promise<void> {
   const folder = await mkdtemp(join(tmpdir(), 'bids-zip-tree-'));
   try {
-    await run(folder, new ZipDirectorySource());
+    await run(folder, new ArchiveDirectorySource());
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
@@ -40,7 +40,7 @@ void test('registered ZIP collection lists archives without indexing and browses
     await writeFile(zip, bytes);
     await writeFile(join(folder, 'notes.zip.link'), 'not a ZIP');
     let reads = 0;
-    const source = new ZipDirectorySource(new LocalDirectorySource(), async (...args) => {
+    const source = new ArchiveDirectorySource(new LocalDirectorySource(), async (...args) => {
       reads++;
       return indexZip(...args);
     });
@@ -122,7 +122,7 @@ void test('archive index cache has bounded retention, isolates registrations and
     for (let i = 0; i < 5; i++)
       await writeFile(join(folder, `part-${i}.zip`), zipFixture([{ name: 'sub-01/anat/a.nii' }]));
     let reads = 0;
-    const source = new ZipDirectorySource(new LocalDirectorySource(), async (...args) => {
+    const source = new ArchiveDirectorySource(new LocalDirectorySource(), async (...args) => {
       reads++;
       return indexZip(...args);
     });
@@ -138,7 +138,7 @@ void test('archive index cache has bounded retention, isolates registrations and
     await source.children(otherRoot, signal());
     assert.equal(reads, 7);
     const controller = new AbortController();
-    const canceling = new ZipDirectorySource(new LocalDirectorySource(), async (...args) => {
+    const canceling = new ArchiveDirectorySource(new LocalDirectorySource(), async (...args) => {
       const result = await indexZip(...args);
       controller.abort();
       return result;
