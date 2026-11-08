@@ -82,3 +82,7 @@ The checksum-matched package passed the same synthetic image, metadata and sideb
 ## Published 1.0.1 and 1.0.2 patches
 
 [1.0.1 verification](MILESTONE_1.0.1.md) records the security hardening, installed sample/format checks and hosted minimum/current CI. [1.0.2 verification](MILESTONE_1.0.2.md) records the icon-only runtime-equivalent patch and the validated Marketplace artifact/icon. Historical test counts above are not current suite totals; consult the relevant release record and CI run.
+
+## 1.0.3 maintenance patch
+
+[1.0.3 verification](MILESTONE_1.0.3.md) records 178 unit tests, 58 local integration tests per VS Code version, artifact/security checks and seven separate-process cache tests using packaged code on Rorqual’s shared home filesystem. A fresh interactive Remote SSH viewer check was blocked by connection timeouts; the user explicitly authorized release with that limitation. This does not extend the historical interactive SSH or Windows compatibility claims.
