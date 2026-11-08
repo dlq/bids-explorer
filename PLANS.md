@@ -6,7 +6,7 @@ Updated November 8, 2026. This document records direction, priorities and scope 
 
 Help neuroimaging practitioners explore studies through a readable logical BIDS tree, source-backed metadata, participant coverage and image viewing. Support ordinary directories and documented ZIP, tar/tarball and SquashFS variants, locally and through VS Code Remote SSH. Preserve access to the physical files and original identifiers.
 
-The supported core is established through 1.0; the manifest is currently 1.0.2. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
+The supported core is established through 1.0; the manifest is currently 1.0.3. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
 
 ## How we maintain the plan
 
@@ -29,14 +29,18 @@ Update this plan when direction or release scope changes. Update the issue while
 
 ## Release direction and priorities
 
-| Release line | Direction                                                                                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `1.0.x`      | Compatible fixes, usability/documentation and distribution maintenance for the supported core.                                                            |
-| `1.1.0`      | Next scoped compatible feature release; select a coherent subset of the themes below before assigning issues.                                             |
-| Later `1.x`  | Further independently useful improvements, with explicit validation preceding any rename/restructure preview and a separate design before applying edits. |
-| `2.0.0`      | Only a justified breaking change to documented commands/settings, registration, persisted identities or workflows, with migration guidance.               |
+| Release     | Outcome                                                   | Associated work                                                                                                                                                                                                                                                                                                 |
+| ----------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1.0.3`     | Maintenance and reliability; current release preparation. | Ship the completed shared-cache, paging, Availability, lifecycle, packaging and documentation fixes. Complete clean-build/artifact checks and a synthetic SSH smoke including cross-process cache budgets before publication.                                                                                   |
+| `1.0.4`     | Startup efficiency, conditional on measured benefit.      | [Profile activation and evaluate a production host bundle (#32)](https://github.com/dlq/bids-explorer/issues/32). Compare cold/warm activation and package contents. Publish a patch only if a worthwhile compatible improvement results; research alone does not require a release.                            |
+| `1.1.0`     | Navigate from recorded scans to their data.               | [Scans-table row navigation (#23)](https://github.com/dlq/bids-explorer/issues/23): reveal/open the recorded resource, preserve physical source choices, and distinguish missing, unchecked and ambiguous targets.                                                                                              |
+| `1.2.0`     | Browse large participant tables.                          | First implementation of [large-table support (#15)](https://github.com/dlq/bids-explorer/issues/15), starting with participants.tsv: bounded reading/indexing, paging, cancellable filtering and accurate coverage. Event tables follow as separately scoped work; this release need not close the whole issue. |
+| Later `1.x` | Further focused compatible improvements.                  | Prioritize field-map target navigation (#14) and additional acquisition collections (#22) after the sequence above. Select each scope explicitly.                                                                                                                                                               |
+| `2.0.0`     | A justified breaking change only.                         | Changes to documented commands/settings, registrations, persisted identities or workflows require migration guidance.                                                                                                                                                                                           |
 
-Correctness, data handling and usability defects take priority over optional capabilities. Candidate feature work should first improve study interpretation, cohort exploration and reliable access at scale. Viewer extensions remain optional investigations; validation and especially editing retain their separate boundaries. The former `1.1`/`1.2`/`1.3` validation sequence was illustrative, not a committed release schedule. No issue below is currently assigned a release or date. Follow [VERSIONING.md](VERSIONING.md) when selecting a release.
+This sequence is agreed; dates remain unset. The current task authorizes the 1.0.3 closeout; later releases still require explicit selection and publication authorization. Keep each feature release focused, with synthetic loose/ZIP/tar/SquashFS coverage, an authorized SSH smoke, user documentation and a short practitioner walkthrough. Readiness checks and individual acceptance criteria remain in TESTING.md, VERSIONING.md and the linked issues rather than a duplicated roadmap checklist.
+
+Correctness, data handling and usability defects take priority over optional capabilities. Keep overlays, plugins, clinical joins and validation outside these release scopes. Optional investigations and the remaining backlog below have no assigned release or date. Follow [VERSIONING.md](VERSIONING.md) when preparing each release.
 
 ## Metadata and study relationships
 
@@ -108,3 +112,5 @@ Historical implementation detail is kept out of the active backlog. Follow [CHAN
 | `0.9.0` — stabilization                               | [Release artifact and compatibility evidence](docs/COMPATIBILITY.md#090-release-artifact)             |
 | `1.0.0` — supported core                              | [Release validation](docs/MILESTONE_1.0.0.md), [usability evidence](docs/USABILITY.md)                |
 | `1.0.1` / `1.0.2` — distribution and icon             | [1.0.1 verification](docs/MILESTONE_1.0.1.md), [1.0.2 verification](docs/MILESTONE_1.0.2.md)          |
+
+The 1.0.3 verification record is [here](docs/MILESTONE_1.0.3.md).

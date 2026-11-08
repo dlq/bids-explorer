@@ -6,7 +6,7 @@ This walkthrough uses two participants and four real anatomical MRI images, abou
 
 Install desktop [VS Code](https://code.visualstudio.com/) 1.96 or newer. In its **Extensions** view, find **BIDS Explorer** by **Darcy Quesnel (`MCIN-dlq`)** and choose **Install**. You can also use the [Marketplace page](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer).
 
-For manual installation, download `bids-explorer-1.0.2.vsix` from the [1.0.2 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.2), then choose **Extensions → … → Install from VSIX…**. If an older development copy is installed under publisher `bids-explorer-dev`, disable or uninstall it first.
+For manual installation, download `bids-explorer-1.0.3.vsix` from the [1.0.3 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.3), then choose **Extensions → … → Install from VSIX…**. If an older development copy is installed under publisher `bids-explorer-dev`, disable or uninstall it first.
 
 ## 2. Download and open the small study
 

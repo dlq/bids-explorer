@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.0.3] - 2026-11-08
+
 - Explain Workspace Trust and virtual-workspace restrictions in VS Code, close standalone availability/comparison panels on extension disposal, and add viewport metadata to image views.
 
 - Enforce shared archive-image cache byte and entry budgets across windows with cancellable filesystem reservations, conservative dead-owner recovery and cross-process regression tests.
