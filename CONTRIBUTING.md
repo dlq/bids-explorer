@@ -8,6 +8,8 @@ Use [GitHub issues](https://github.com/dlq/bids-explorer/issues). Describe the e
 
 For suspected vulnerabilities, follow [SECURITY.md](SECURITY.md) and use private reporting instead of a public issue.
 
+For planned work, keep direction and release themes in [PLANS.md](PLANS.md), and put the specific problem, acceptance criteria or research deliverable, dependencies and progress in a GitHub issue. Check existing issues before creating one and link it to the relevant plan theme. Record findings in RESEARCH.md and link the implementation PR back to its issue. An open issue is not a scheduled release commitment.
+
 ## Develop and test
 
 Read [PROJECT.md](PROJECT.md), [RESEARCH.md](RESEARCH.md) and [PLANS.md](PLANS.md) before implementing features. Follow [development setup](docs/DEVELOPMENT.md), [TESTING.md](TESTING.md) and [SECURITY.md](SECURITY.md). Use the Node version in `.nvmrc` and install locked dependencies with `npm ci`.

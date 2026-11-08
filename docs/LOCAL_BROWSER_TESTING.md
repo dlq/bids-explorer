@@ -44,12 +44,12 @@ An initial UI-tool attachment selected the regular project window instead; rejec
 
 The integration runner uses a disposable `.code-workspace` file outside the repository. This lets native Explorer handoff add/remove fixture folders without reloading the runner or editing checked-in workspace fixtures. In normal use, converting a single-folder window to a workspace can reload VS Code; registrations remain workspace-scoped.
 
-## Remaining boundaries
+## Boundaries of the initial slice
 
-- Subsequent authorized Linux Remote SSH and public-MRI smoke tests are recorded in [0.1.0 validation](MILESTONE_0.1.0.md). Windows and full Linux CI remain unverified; hosted CI has not yet run.
+- Subsequent authorized Linux Remote SSH and public-MRI smoke tests are recorded in [0.1.0 validation](MILESTONE_0.1.0.md). Windows and full Linux CI had not been exercised in that slice. Later hosted Linux and installed-package evidence is in [Compatibility](COMPATIBILITY.md).
 - Symbolic-link entries are not followed; the local adapter is not a security sandbox against parent-path replacement races. See SECURITY.md.
 - Cancellation stops cooperative processing and publication, not an OS directory read already in progress.
-- Listings are in-memory snapshots refreshed manually; descendants remain unknown until expanded. There is no recursive availability index or metadata inheritance.
+- Listings are in-memory snapshots refreshed manually; descendants remain unknown until expanded. That initial slice had no dataset-wide availability index or metadata inheritance; both have later implementations with their documented limits.
 - File opening delegates to VS Code and installed editors. NIfTI rendering, read-only enforcement inside other editors and rich NiiVue integration were not established by this slice.
 
 ## Automatic root recognition

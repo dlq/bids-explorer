@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { LogicalDirectorySource, savedArchivePlacements } from '../../sources/logicalDirectory';
 import { loadLogicalInheritance } from '../../sources/logicalInheritance';
 import { loadInheritedGradientPair } from '../../sources/gradientFiles';
-import { ZipDirectorySource } from '../../sources/zipDirectory';
+import { ArchiveDirectorySource } from '../../sources/archiveDirectory';
 import { LocalDirectorySource } from '../../sources/localDirectory';
 import { indexZip } from '../../sources/zipIndex';
 import { DatasetBrowser } from '../../core/browser';
@@ -39,7 +39,7 @@ void test('ZIP sessions overlay under one subject without indexing the collectio
         ]),
       );
     let indexes = 0;
-    const physical = new ZipDirectorySource(new LocalDirectorySource(), async (...args) => {
+    const physical = new ArchiveDirectorySource(new LocalDirectorySource(), async (...args) => {
       indexes++;
       return indexZip(...args);
     });
@@ -159,8 +159,8 @@ void test('filename candidates disagreeing with actual subject/session members f
       ['sub-03_ses-4.zip', ['sub-03_ses-4/anat/a.nii', 'README'], /additional entries/],
     ] as const) {
       await writeFile(join(folder, name), zipFixture(paths.map((name) => ({ name }))));
-      const physical = await new ZipDirectorySource().root(pathToFileURL(folder).toString());
-      const archive = (await new ZipDirectorySource().children(physical, signal())).find(
+      const physical = await new ArchiveDirectorySource().root(pathToFileURL(folder).toString());
+      const archive = (await new ArchiveDirectorySource().children(physical, signal())).find(
         (e) => e.name === name,
       )!;
       const hint = layoutHint(archive)!;

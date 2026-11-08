@@ -1,64 +1,41 @@
 # Project context
 
-Created November 3, 2026, following the native Strata prototype in `/Users/dlq/Developer/macvdb`.
+BIDS Explorer is a VS Code extension for neuroimaging researchers and staff exploring studies on their computer or over Remote SSH. It presents ordinary folders, supported ZIP/tar archives and SquashFS collections through a logical BIDS tree, with original files and provenance accessible.
 
-## Handoff documents
+## Audience and presentation
 
-- [Exploration, options and source references](RESEARCH.md)
-- [Implementation plan](PLANS.md)
-- [Benchmark evidence snapshot](docs/evidence/niivue-vscode/REPORT.md)
+Users understand participants, sessions, modalities and derivatives, but may have little programming or VS Code experience. Lead with study context, readable acquisition labels, recorded values and units. Keep exact BIDS identifiers, filenames and source locations available in tooltips and source details. Distinguish what a dataset records from what the explorer infers or could validate.
 
-These documents distinguish agreed scope, historical observations and ideas that remain undecided.
+The BIDS sidebar section is a logical study view. Administrative and unfamiliar entries remain in native File Explorer; omitting them from BIDS is not a validation result. Recognize workspace roots through shallow checks for an ordinary root-level `dataset_description.json`, separately from recursive indexing. Manual registration and explicit collection declarations cover other roots.
 
-## Initial focus
+## Implemented core
 
-Build a VS Code extension for exploring BIDS datasets locally and over SSH, whether stored as ordinary directories, ZIP archives, tar archives (including compressed tarballs), or SquashFS images. Dataset exploration across these storage forms is the core purpose.
+- Read-only local and Remote SSH browsing of directories, supported ZIP and POSIX ustar/gzip tarballs, and SquashFS 4.0 uncompressed/gzip blocks. Format limits are explicit.
+- Logical participant/session/modality and derivative navigation, declared archive/shard overlays, saved ZIP/tar placements, original source choices and cross-source selected-file metadata inspection.
+- Bounded JSON, table, gradient and CHANGES previews; source-backed tree descriptions and acquisition metadata. Preview capabilities differ by file family and source; see the reference.
+- Participant availability filtering/paging, explicitly linked raw/derivative datasets and persistent SquashFS availability snapshots. ZIP/tar inventories persist; ordinary directory listings and description snapshots remain in memory.
+- A built-in progressive NIfTI viewer using the packaged NiiVue library, plus a native Image view for acquisition/header context and display controls. External installed editors are optional through **Open Image With**.
 
-This is a separate project from the native SwiftUI/Metal viewer. BIDS Explorer packages the NiiVue library for progressive NIfTI viewing and supports other VS Code editors through Open Image With.
+See the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md) for current behavior and tested limits. These capabilities do not imply full BIDS validation, every compression variant or unlimited indexing/viewing.
 
-Dataset exploration is read-only by default. The initial implementation must not rename, move, restructure, rewrite or automatically validate/fix datasets. Explicit validation and rationalization workflows are later, separate work in PLANS.md.
+## Boundaries and invariants
 
-## Intended audience
+Dataset exploration must not rename, move, restructure, rewrite metadata, repack archives or automatically validate/fix a study. Any future validation/editing workflow is separate scope in [PLANS.md](PLANS.md). Opening an ordinary original file in another editor is a separate user action that can allow changes.
 
-BIDS Explorer is for neuroimaging researchers and staff who know concepts such as participants, sessions, modalities, and derivatives. They may have little experience with programming, JSON, the terminal, or VS Code extension development. Lead with study context, recorded values, units, and what the user can do next. Keep exact BIDS names and original files accessible, and put technical paths and parsing details under source information. Distinguish what the dataset records, what the BIDS specification defines, and what the explorer could check.
+Keep physical host/container/member identity separate from logical BIDS paths and display labels. Preserve original values, source revisions, pipeline boundaries and duplicate-path source choices. Match raw/derivative roots through explicit links; shared participant labels or archive filenames alone do not establish dataset membership or spatial alignment. Report incomplete, unsupported and failed coverage separately from absence.
 
-## Navigation and dataset context
+Keep indexing, merging, summaries and table parsing off the UI path, with bounds, cancellation and useful partial results. Archive images use checked selected-member extraction and private storage with shared-window lifetime protection. Use the existing VS Code Remote SSH connection and workspace-host readers rather than a second SSH transport. Keep large data, caches and credentials outside Git; read ignored machine-specific test context only for an authorized test.
 
-- Automatically recognize BIDS workspace roots by the presence of an ordinary root-level `dataset_description.json`; no recursive discovery or conformance validation. Manual registration remains available for external/noncanonical directories; explicit `bidsExplorer.collectionRoots` declarations also populate descriptorless workspace collections without filename-based membership guessing.
+BIDS Explorer owns navigation, metadata, relationships and image streaming; NiiVue supplies rendering. Use documented integration points. Private webview/Preact probes in the benchmark are historical instrumentation, not a production API. Optional plugins, derivative overlays, broader relationships, large-table work and explicit validation remain future directions, with scoped issues linked from PLANS.md.
 
-- Dataset → participant → session → modality and processing folders.
-- Raw data and derivatives; alternative views by modality and pipeline.
-- Semantic filters and a participant × session availability matrix.
-- Metadata inheritance, related files, clinical tables, QC and provenance.
-- Lazy expansion, cached metadata indexes and bounded selected-image caching.
-- Local and Remote SSH workspaces, with indexing on the filesystem host.
-- ZIP, tar/tarball and SquashFS sources, locally and over SSH, with file-wise overlays of shards belonging to a declared dataset. Collections can span disjoint subjects, sessions and modalities.
-- ZIP files may occur at any level of the physical dataset tree and contain a whole dataset or a subject/session/modality/subtree. Preserve physical archive/member identity separately from the declared or explainable logical placement; do not require every archive to be a dataset root.
-- Associate combined `sub-…_ses-…` folders and session-tagged files with logical subject/session folders while preserving original member paths.
-- Expose conflicting paths as source choices. Preserve extraction provenance.
-- Distinguish absent data from unindexed data. Show indexed-container coverage and explicitly partial overview counts.
-- Limit the BIDS EXPLORER section to recognizable BIDS elements. Use the normal EXPLORER file section for the complete physical tree, including `.datalad` and unfamiliar entries. Filtering is not validation.
+## Documentation and development
 
-## Extension boundary
+- [PLANS.md](PLANS.md): direction, priorities, release themes and links to GitHub work items.
+- [RESEARCH.md](RESEARCH.md): findings, options, historical measurements and reference locations.
+- [Development guide](docs/DEVELOPMENT.md), [testing](TESTING.md) and [security](SECURITY.md): contributor setup and required checks.
+- [CHANGELOG.md](CHANGELOG.md) and [milestone records](PLANS.md#completed-milestones-and-evidence): shipped changes and validation history.
+- [VERSIONING.md](VERSIONING.md) and [publishing](docs/PUBLISHING.md): version source, authorized releases and distribution.
 
-BIDS Explorer owns navigation, indexing, archives, metadata, tables, availability and provenance. Its read-only gradient metadata preview uses raw b-vector components without inferring anatomical orientation. BIDS Explorer manages the image stream in its progressive viewer and delegates rendering to the NiiVue library. The standalone NiiVue editor is an optional editor choice.
+The public repository is [dlq/bids-explorer](https://github.com/dlq/bids-explorer), licensed MIT; dependencies and datasets retain their own licenses. The production Marketplace publisher is `MCIN-dlq`. The manifest and lockfile are authoritative for the extension version; release targets do not authorize publication.
 
-Start integration with ordinary file opening through a supported custom editor. Richer comparison, anatomy-plus-overlay scenes, label control and events require inspection of supported APIs and possibly collaboration with NiiVue maintainers. Do not depend on private webview/Preact internals; those were used only for benchmark instrumentation. Do not treat all command declarations as callable viewer APIs.
-
-Workflow execution (local tools and Slurm) is a later possibility, not initial implementation scope. The extension development scaffold is authorized and in place. Read-only directory browsing, literal dataset-description previews, source-backed entity interpretation and in-place combined-folder recognition and explicit selected-file JSON inheritance/DWI companion reports and bounded participant/session/scan table previews are implemented. Metadata descriptions now enrich dataset/pipeline roots, task NIfTI files and explicitly mapped participant/session folders; broader metadata relationships remain follow-up work. The 0.3.0 release includes a bounded ZIP central-directory inspector and tested explicit archive-placement model; ZIP and loose sources in registered directories now overlay into logical subject/session navigation with original source choices; bounded archive metadata previews and checked selected-image extraction/viewer handoff are now implemented. Selected-file metadata inspection supports inheritance across ZIP and loose sources. The 0.4.0 release extends the logical tree, previews and MRI opening to plain POSIX ustar and gzip tarballs. The 0.7.0 release adds saved ZIP and tar placements, linked raw and derivative views, and cached SquashFS availability snapshots. A tolerant CHANGES view, readable metadata inspector and inherited-gradient opening complete the agreed 0.2.0 feature scope. The source repository and original 1.0.0 VSIX are published on GitHub. The project uses the MIT license; third-party materials retain their own licenses. Version 1.0.1 is publicly available on the Marketplace under `MCIN-dlq`; processing jobs remain future work.
-
-## Evidence and reusable exploration
-
-Strata sources: `/Users/dlq/Developer/macvdb/native/Strata`.
-Archive helpers: `/Users/dlq/Developer/macvdb/native/Strata/Sources/Strata/Resources/archive_reader.py` and archive models/services in that package.
-
-Benchmark report: `/Users/dlq/Developer/macvdb/output/benchmarks/niivue-vscode/REPORT.md`.
-NiiVue VS Code 2.9.0 was tested against Strata on Apple M3 with full-resolution T1, T2 and 16-class SIAM samples. NiiVue showed strong interactive rendering headroom. Different rendering algorithms and measurement paths mean the result is not a universal performance guarantee. Rebenchmark any embedded integration.
-
-The supplied remote Tractoflow collection contained 45 SquashFS files and 7,000 subjects. An audit confirmed every indexed subject/session was preserved by the overlay; session-3-only subjects really were present in this subset. Do not infer missing sessions from expectations.
-
-Keep public sample data and large caches in their existing locations until a concrete implementation needs fixtures. Do not copy credentials, SSH keys, private datasets or caches into this repository.
-
-## Version and release direction
-
-The current manifest is `1.0.2`, the icon update following the published `v1.0.1` Marketplace release. The source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer); the `MCIN-dlq` publisher and Trusted Publishing policy are configured. [PLANS.md](PLANS.md) maps proposed `0.x` minor milestones to a supported `1.0.0` core; [VERSIONING.md](VERSIONING.md) defines semantic versioning, release tags and artifact names. After 1.0, compatible features use minor releases and breaking documented behavior requires a major release. Roadmap targets do not imply implemented features or authorization to publish.
+Strata is a separate native SwiftUI/Metal project at `/Users/dlq/Developer/macvdb`. Its implementation and the [benchmark snapshot](docs/evidence/niivue-vscode/REPORT.md) are reference material, not an extension specification. Verify assumptions before porting behavior and preserve imported evidence verbatim.

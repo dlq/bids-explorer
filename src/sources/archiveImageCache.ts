@@ -1,7 +1,11 @@
 import { streamArchiveMember } from './archiveMember';
 import { mkdir, lstat, opendir, open, writeFile, rename, rm, chmod } from 'node:fs/promises';
-import { createHash, randomUUID } from 'node:crypto';
-import { hostname } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import {
+  cacheHost as host,
+  cacheOwnerExited as ownerExited,
+  withImageCacheLock,
+} from './imageCacheLock';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArchiveUri } from '../core/archiveUri';
@@ -17,20 +21,8 @@ const defaults: ImageCacheLimits = {
   memberBytes: 512 * 1024 ** 2,
 };
 
-// Workspace storage may be shared across cluster nodes. Only inspect local owner PIDs.
-const host = createHash('sha256').update(hostname()).digest('hex').slice(0, 16);
 const ownedPartial = /^partial-([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f-]{36}$/;
-
 const activityOwner = /^(use|clear)-([0-9a-f]{16})-([1-9][0-9]{0,9})-[0-9a-f-]{36}$/;
-
-function ownerExited(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return false;
-  } catch (error) {
-    return (error as NodeJS.ErrnoException).code === 'ESRCH';
-  }
-}
 
 /** Completed files survive extension reload and are never evicted while a viewer may use them. */
 export class ArchiveImageCache {
@@ -128,104 +120,111 @@ export class ArchiveImageCache {
     return { bytes, entries };
   }
   materialize(uri: string, signal: AbortSignal): Promise<string> {
-    return this.serialize(async () => {
-      signal.throwIfAborted();
-      const ref = parseArchiveUri(uri);
-      if (!/\.nii(\.gz)?$/.test(ref.memberPath))
-        throw new Error('Image extraction supports .nii and .nii.gz members.');
-      const archive = await lstat(fileURLToPath(ref.sourceUri));
-      if (
-        !archive.isFile() ||
-        archive.isSymbolicLink() ||
-        archive.size !== ref.revision.size ||
-        archive.mtimeMs !== ref.revision.modifiedAt
-      )
-        throw new Error('Archive changed. Refresh the tree before opening the image.');
-      const existing = this.completed.get(uri);
-      if (existing) {
-        const stat = await lstat(fileURLToPath(existing.uri)).catch((error: unknown) => {
-          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-          return undefined;
-        });
-        if (stat) {
-          if (
-            !stat.isFile() ||
-            stat.isSymbolicLink() ||
-            stat.size !== existing.size ||
-            stat.mtimeMs !== existing.modifiedAt
-          )
-            throw new Error('Extracted image changed. Close editor tabs and clear its cache.');
-          return existing.uri;
+    return this.serialize(() =>
+      withImageCacheLock(this.root, signal, async () => {
+        signal.throwIfAborted();
+        const ref = parseArchiveUri(uri);
+        if (!/\.nii(\.gz)?$/.test(ref.memberPath))
+          throw new Error('Image extraction supports .nii and .nii.gz members.');
+        const archive = await lstat(fileURLToPath(ref.sourceUri));
+        if (
+          !archive.isFile() ||
+          archive.isSymbolicLink() ||
+          archive.size !== ref.revision.size ||
+          archive.mtimeMs !== ref.revision.modifiedAt
+        )
+          throw new Error('Archive changed. Refresh the tree before opening the image.');
+        const existing = this.completed.get(uri);
+        if (existing) {
+          const stat = await lstat(fileURLToPath(existing.uri)).catch((error: unknown) => {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            return undefined;
+          });
+          if (stat) {
+            if (
+              !stat.isFile() ||
+              stat.isSymbolicLink() ||
+              stat.size !== existing.size ||
+              stat.mtimeMs !== existing.modifiedAt
+            )
+              throw new Error('Extracted image changed. Close editor tabs and clear its cache.');
+            return existing.uri;
+          }
+          this.completed.delete(uri);
         }
-        this.completed.delete(uri);
-      }
-      const inventory = await this.inventory(true);
-      if (inventory.entries >= this.limits.entries)
-        throw new Error(
-          'Image cache is full. Close editor tabs and clear the extracted image cache.',
-        );
-      const id = randomUUID();
-      const partial = join(this.root, `partial-${host}-${process.pid}-${id}`),
-        complete = join(this.root, 'image-' + id);
-      const original = basename(ref.memberPath);
-      const name = /^[a-zA-Z0-9+_.-]{1,200}$/.test(original)
-        ? original
-        : 'image' + (original.endsWith('.gz') ? '.nii.gz' : '.nii');
-      await mkdir(partial, { mode: 0o700 });
-      let published = false;
-      try {
-        const target = join(partial, name);
-        const handle = await open(target, 'wx', 0o600);
-        let provenance = '';
+        const inventory = await this.inventory(true);
+        if (inventory.entries >= this.limits.entries)
+          throw new Error(
+            'Image cache is full. Close editor tabs and clear the extracted image cache.',
+          );
+        const id = randomUUID();
+        const partial = join(this.root, `partial-${host}-${process.pid}-${id}`),
+          complete = join(this.root, 'image-' + id);
+        const original = basename(ref.memberPath);
+        const name = /^[a-zA-Z0-9+_.-]{1,200}$/.test(original)
+          ? original
+          : 'image' + (original.endsWith('.gz') ? '.nii.gz' : '.nii');
+        await mkdir(partial, { mode: 0o700 });
+        let published = false;
         try {
-          const write = (chunk: Buffer) => handle.writeFile(chunk);
-          const start = (header: { bytes: number; crc32?: number }) => {
-            provenance = JSON.stringify(
-              {
-                source: ref,
-                memberBytes: header.bytes,
-                crc32: header.crc32,
-                capturedAt: new Date().toISOString(),
-              },
-              null,
-              2,
-            );
-            if (inventory.bytes + header.bytes + Buffer.byteLength(provenance) > this.limits.bytes)
-              throw new Error(
-                'Image cache byte budget reached. Close editor tabs and clear the extracted image cache.',
+          const target = join(partial, name);
+          const handle = await open(target, 'wx', 0o600);
+          let provenance = '';
+          try {
+            const write = (chunk: Buffer) => handle.writeFile(chunk);
+            const start = (header: { bytes: number; crc32?: number }) => {
+              provenance = JSON.stringify(
+                {
+                  source: ref,
+                  memberBytes: header.bytes,
+                  crc32: header.crc32,
+                  capturedAt: new Date().toISOString(),
+                },
+                null,
+                2,
               );
-            return Promise.resolve();
-          };
-          await streamArchiveMember(uri, ref, signal, this.limits.memberBytes, write, start);
+              if (
+                inventory.bytes + header.bytes + Buffer.byteLength(provenance) >
+                this.limits.bytes
+              )
+                throw new Error(
+                  'Image cache byte budget reached. Close editor tabs and clear the extracted image cache.',
+                );
+              return Promise.resolve();
+            };
+            await streamArchiveMember(uri, ref, signal, this.limits.memberBytes, write, start);
+          } finally {
+            await handle.close();
+          }
+          await chmod(target, 0o400);
+          await writeFile(join(partial, 'source.json'), provenance, { mode: 0o400, flag: 'wx' });
+          signal.throwIfAborted();
+          await rename(partial, complete);
+          published = true;
+          const file = join(complete, name),
+            stat = await lstat(file);
+          const result = pathToFileURL(file).toString();
+          signal.throwIfAborted();
+          this.completed.set(uri, { uri: result, size: stat.size, modifiedAt: stat.mtimeMs });
+          return result;
         } finally {
-          await handle.close();
+          if (!published) await rm(partial, { recursive: true, force: true });
         }
-        await chmod(target, 0o400);
-        await writeFile(join(partial, 'source.json'), provenance, { mode: 0o400, flag: 'wx' });
-        signal.throwIfAborted();
-        await rename(partial, complete);
-        published = true;
-        const file = join(complete, name),
-          stat = await lstat(file);
-        const result = pathToFileURL(file).toString();
-        signal.throwIfAborted();
-        this.completed.set(uri, { uri: result, size: stat.size, modifiedAt: stat.mtimeMs });
-        return result;
-      } finally {
-        if (!published) await rm(partial, { recursive: true, force: true });
-      }
-    });
+      }),
+    );
   }
   clear(): Promise<boolean> {
     return this.serialize(async () => {
       const activity = await this.markActivity('clear');
       try {
         if (await activity.blocked()) return false;
-        await this.inventory(false);
-        for await (const entry of await opendir(this.root))
-          await rm(join(this.root, entry.name), { recursive: true, force: true });
-        this.completed.clear();
-        return true;
+        return await withImageCacheLock(this.root, new AbortController().signal, async () => {
+          await this.inventory(false);
+          for await (const entry of await opendir(this.root))
+            await rm(join(this.root, entry.name), { recursive: true, force: true });
+          this.completed.clear();
+          return true;
+        });
       } finally {
         await activity.release();
       }

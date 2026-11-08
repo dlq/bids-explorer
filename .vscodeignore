@@ -47,3 +47,6 @@ CITATION.cff
 
 # Keep the editable icon source in Git; ship the Marketplace PNG.
 media/icon.svg
+
+# Rollup's platform-native build bindings are not used by the packaged renderer.
+node_modules/@rollup/**

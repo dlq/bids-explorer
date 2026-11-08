@@ -2,7 +2,7 @@ import { assertArchivePath, type ArchivePlacement } from '../core/archive';
 import { mergeSquashfsBranches, squashfsBranch, squashfsSuffix } from './squashfsCollection';
 import { logicalChildren, logicalFolder, layoutHint } from '../core/logicalLayout';
 import { type DirectoryEntry, type DirectorySource, type SourceRevision } from '../core/directory';
-import { ZipDirectorySource } from './zipDirectory';
+import { ArchiveDirectorySource } from './archiveDirectory';
 
 type SavedPlacement = Omit<ArchivePlacement, 'index'> & { archivePath: string };
 
@@ -35,7 +35,7 @@ export function savedArchivePlacements(configured: unknown, datasetUri: string):
 export class LogicalDirectorySource implements DirectorySource {
   constructor(
     private readonly physical: DirectorySource &
-      Partial<Pick<ZipDirectorySource, 'placeArchive'>> = new ZipDirectorySource(),
+      Partial<Pick<ArchiveDirectorySource, 'placeArchive'>> = new ArchiveDirectorySource(),
     private readonly configuredPlacements: () => unknown = () => undefined,
   ) {}
   root(uri: string): Promise<DirectoryEntry> {

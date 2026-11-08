@@ -67,7 +67,7 @@ export function openProgressiveNifti(
   const resource = (uri: vscode.Uri) =>
     webview.asWebviewUri(uri).toString().replaceAll('&', '&amp;').replaceAll('"', '&quot;');
   if (empty) {
-    webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+    webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; base-uri 'none'; form-action 'none';">
 <link rel="stylesheet" href="${resource(vscode.Uri.joinPath(media, 'nifti.css'))}"><title>No image data</title></head>
 <body><main class="empty-image"><h1>No image data</h1><p role="alert">This file is empty (0 bytes) and contains no image data.</p>
@@ -81,7 +81,7 @@ export function openProgressiveNifti(
   }).replaceAll('<', '\\u003c');
   const nonce = randomBytes(16).toString('hex');
   webview.html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' 'strict-dynamic'; img-src data:; style-src ${webview.cspSource}; connect-src ${webview.cspSource}; base-uri 'none'; form-action 'none';">
 <link rel="stylesheet" href="${resource(vscode.Uri.joinPath(media, 'nifti.css'))}">
 <script type="importmap" nonce="${nonce}">${imports}</script>

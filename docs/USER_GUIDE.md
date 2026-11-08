@@ -7,7 +7,7 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 1. In desktop VS Code 1.96 or newer, install [BIDS Explorer](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer) from the Extensions view. Alternatively, use **Extensions: Install from VSIX** with the package from the [1.0.2 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.2).
 2. Open a study folder you trust. For a study on a server, connect with VS Code Remote SSH, then open the study folder on that server and install BIDS Explorer on the connected host.
 3. In the **Explorer** sidebar, expand **BIDS**. A folder with a root-level `dataset_description.json` appears automatically. If it doesn’t appear, use **Add Dataset** and select the folder.
-4. Expand a participant, then a session and modality. Click a file to open its preview. The regular **File Explorer** still shows the physical folder layout.
+4. Expand a participant, then a session if present and a modality. Click a file to open its preview. The regular **File Explorer** still shows the physical folder layout.
 
 Matching multi-echo images share an acquisition branch with ordered **Echo** children. **Run**, **Acquisition**, **Phase encoding** and other readable labels preserve the distinctions between scans. Expand an echo for its image and metadata; original filenames remain in source details.
 
@@ -23,6 +23,8 @@ Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. Fo
 | See an image or diffusion gradient scheme                        | Click a NIfTI image to use the built-in viewer, or click a `.bval` or `.bvec` file to inspect its gradient pair. Use **Open Image With** if you prefer another installed editor.                                                                                                                                                                       |
 | Compare raw data and processing outputs                          | Expand a session’s **Derivatives** branch to browse matching processing pipelines. Outputs without a session appear under **Derivatives without a session** at participant level. For a cohort, right-click the dataset and choose **Show Participant Availability**. Select the sessions or derivative outputs you need and choose **Apply filters**. |
 | Read the dataset’s release notes                                 | Open `CHANGES`. The preview follows the file’s order and shows its recorded versions and dates.                                                                                                                                                                                                                                                        |
+
+For tables inside an archive, the column dictionary comes from a JSON file next to the table in that archive. To inspect metadata inherited from other locations or sources, use **Inspect Metadata and Related Files** on the table.
 
 A preview’s **Open original** action opens the source in the regular editor. Use **Reload snapshot** if the file has changed. In the availability grid, **Missing** means the inspected branch contained no matching data. **Not checked** means coverage is incomplete.
 

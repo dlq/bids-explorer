@@ -33,11 +33,11 @@ Version 1.0.1 is the first public Marketplace release, containing the MIT licens
 2. Publish a stable GitHub Release for that tag. This starts **Marketplace release**. Publishing a prerelease is deliberately rejected until a separate preview-channel policy is adopted.
 3. The workflow checks the tag/version/publisher, verifies that the commit belongs to `main`, runs formatting, type checks, lint, coverage, integration tests, Semgrep and dependency audit, then builds a VSIX. CodeQL analyzes the same source commit.
 4. The publishing job downloads that exact tested artifact, verifies its SHA-256 checksum and runs `vsce publish --oidc --packagePath …`. It does not rebuild the package or bump a version. The Marketplace trust policy must match the workflow and environment.
-5. Check the workflow result and Marketplace listing. Existing Marketplace versions are not silently skipped or overwritten.
+5. Check the workflow result, the latest validated Marketplace version and its icon. A successful upload may remain **Verifying**; an existing public page can still show the previous version. HTTP 200 alone does not confirm the update. Existing versions are not silently skipped or overwritten.
 
 For a rehearsal, open **Actions → Marketplace release → Run workflow**, select `main`, and leave **Publish** unchecked. Tests, security scans, packaging and CodeQL run; no Marketplace request is made. To retry an authorized release publication manually, supply its existing tag and check **Publish**.
 
-A successful CodeQL job means analysis completed; it does not mean the alert list is empty. Review new [code-scanning alerts](https://github.com/dlq/bids-explorer/security/code-scanning) before a release. The original GitHub 1.0.0 VSIX predates the production publisher and license file, and must not be submitted as the Marketplace release.
+A successful CodeQL job means analysis completed; it does not mean the alert list is empty. Maintainers with repository security permissions must review new [code-scanning alerts](https://github.com/dlq/bids-explorer/security/code-scanning) before a release. The original GitHub 1.0.0 VSIX predates the production publisher and license file, and must not be submitted as the Marketplace release.
 
 ## Security and dependency maintenance
 
@@ -56,3 +56,5 @@ The first extended scan reported ten alerts. The [review record](CODEQL_REVIEW.m
 ## Extension icon
 
 The manifest’s `icon` field points to `media/icon.png`. Keep the editable SVG in Git and the 256 × 256 PNG in the VSIX; inspect both the manifest and packaged image before publication. The icon appears in Marketplace and VS Code extension listings after the new version finishes Microsoft verification. Editing repository artwork alone does not update a published listing. See [artwork and colour sources](BRANDING.md).
+
+Version 1.0.2 completed [OIDC upload](https://github.com/dlq/bids-explorer/actions/runs/42420351550) on November 7, 2026. On November 8 the public gallery reported it validated, with the exact submitted VSIX checksum and approved icon; see [1.0.2 verification](MILESTONE_1.0.2.md).
