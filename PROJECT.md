@@ -14,7 +14,7 @@ The BIDS sidebar section is a logical study view. Administrative and unfamiliar 
 - Logical participant/session/modality and derivative navigation, declared archive/shard overlays, saved ZIP/tar placements, original source choices and cross-source selected-file metadata inspection.
 - Bounded JSON, table, gradient and CHANGES previews; source-backed tree descriptions and acquisition metadata. Preview capabilities differ by file family and source; see the reference.
 - Participant availability filtering/paging, explicitly linked raw/derivative datasets and persistent SquashFS availability snapshots. ZIP/tar inventories persist; ordinary directory listings and description snapshots remain in memory.
-- A built-in progressive NIfTI viewer using the packaged NiiVue library, plus a native Image view for acquisition/header context and display controls. External installed editors are optional through **Open Image With**.
+- A built-in progressive NIfTI viewer using the packaged NiiVue library, plus a native Imaging view for acquisition/header context and display controls. External installed editors are optional through **Open Image With**.
 
 See the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md) for current behavior and tested limits. These capabilities do not imply full BIDS validation, every compression variant or unlimited indexing/viewing.
 

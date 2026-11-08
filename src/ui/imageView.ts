@@ -48,7 +48,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
     const resource = (path: string[]) =>
       view.webview.asWebviewUri(vscode.Uri.joinPath(this.extension, ...path)).toString();
     const nonce = randomBytes(16).toString('hex');
-    view.webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${view.webview.cspSource}; base-uri 'none'; form-action 'none';"><link rel="stylesheet" href="${resource(['media', 'imageView.css'])}"><title>Image</title></head><body>
+    view.webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${view.webview.cspSource}; base-uri 'none'; form-action 'none';"><link rel="stylesheet" href="${resource(['media', 'imageView.css'])}"><title>Imaging</title></head><body>
 <p id="empty">Open an image from BIDS to see its information and controls.</p>
 <main hidden><section aria-labelledby="acquisition-title"><h2 id="acquisition-title">Acquisition</h2><p id="acquisition"></p><p id="context"></p><p id="status" role="status"></p></section>
 <section aria-labelledby="parameters-title"><h2 id="parameters-title">Scan parameters</h2><p class="hint">From the NIfTI header</p><dl id="scan-information" class="scan-summary"></dl><p id="metadata-status" class="hint" role="status"></p><dl id="metadata" class="scan-summary"></dl><button id="inspect" type="button">Inspect all metadata</button></section>
@@ -109,7 +109,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
       metadata: [],
       metadataStatus: empty
         ? 'Empty image placeholder; no image data.'
-        : 'Metadata loads when the Image view is shown.',
+        : 'Metadata loads when the Imaging view is shown.',
       state: empty
         ? {
             status: 'No image data: empty placeholder.',
@@ -170,7 +170,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
         session.token = randomBytes(16).toString('hex');
         session.metadata = [];
         session.sources = [];
-        session.metadataStatus = 'Metadata loads when the Image view is shown.';
+        session.metadataStatus = 'Metadata loads when the Imaging view is shown.';
       }
       this.selected = session;
       this.publish();
@@ -183,7 +183,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
       void this.view.webview.postMessage({ type: 'image', image: null });
       return;
     }
-    if (session.metadataStatus === 'Metadata loads when the Image view is shown.') {
+    if (session.metadataStatus === 'Metadata loads when the Imaging view is shown.') {
       session.metadataStatus = 'Reading applicable JSON metadata…';
       void this.loadMetadata(session);
     }

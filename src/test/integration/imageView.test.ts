@@ -12,7 +12,7 @@ import { LocalDirectorySource } from '../../sources/localDirectory';
 import { DatasetTreeProvider, type EntryElement } from '../../ui/datasetTreeProvider';
 import { niftiFixture } from '../niftiFixture';
 
-suite('Native Image view', () => {
+suite('Native Imaging view', () => {
   test('renders source-backed metadata, controls the selected image and follows selection/disposal without losing focus', async function () {
     this.timeout(45000);
     const { imageView } = await vscode.extensions

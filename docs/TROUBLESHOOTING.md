@@ -48,7 +48,7 @@ To clear extracted images, close that workspace's image viewers and source edito
 
 ## Image controls are missing or in the wrong place
 
-Choose **Image controls** in the built-in viewer. To place them on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**. VS Code remembers view placement. Expand **Position** for keyboard crosshair buttons; single-volume images intentionally have no volume selector.
+Choose **Image controls** in the built-in viewer. To place them on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. VS Code remembers view placement. Expand **Position** for keyboard crosshair buttons; single-volume images intentionally have no volume selector.
 
 ## I have two copies or get an already exists command error
 

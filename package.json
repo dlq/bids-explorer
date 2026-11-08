@@ -117,7 +117,7 @@
       "bidsExplorer-image": [
         {
           "id": "bidsExplorer.imageControls",
-          "name": "Image",
+          "name": "Imaging",
           "type": "webview",
           "icon": "media/icons/imaging-dark.svg"
         }
@@ -346,7 +346,7 @@
       "activitybar": [
         {
           "id": "bidsExplorer-image",
-          "title": "BIDS Image",
+          "title": "Imaging",
           "icon": "media/icons/imaging-dark.svg"
         }
       ]

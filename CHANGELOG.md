@@ -4,8 +4,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Rename the image-controls sidebar view and its container to **Imaging**, retaining existing view IDs and placement.
+
 - Read shared-cache queue tickets through one bounded, revision-checked file handle, rejecting symlink leaves and changed files without reopening a checked path.
-- Update the development compiler, lint, coverage and VS Code test tools; explicitly load host test types for TypeScript 6 update the paired CodeQL actions and select patched transitive development dependencies for a clean npm audit.
+- Update the development compiler, lint, coverage and VS Code test tools; explicitly load host test types for TypeScript 6, update the paired CodeQL actions and select patched transitive development dependencies for a clean npm audit.
 
 ## [1.0.3] - 2026-11-08
 
