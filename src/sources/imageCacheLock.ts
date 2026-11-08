@@ -1,5 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, lstat, opendir, readFile, writeFile, rename, rm } from 'node:fs/promises';
+import { constants, type Stats } from 'node:fs';
+import {
+  mkdir,
+  lstat,
+  opendir,
+  open,
+  writeFile,
+  rename,
+  rm,
+  type FileHandle,
+} from 'node:fs/promises';
+import { sameFileRevision } from './fileRevision';
 import { hostname } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
@@ -13,6 +24,45 @@ export function cacheOwnerExited(pid: number): boolean {
     return false;
   } catch (error) {
     return (error as NodeJS.ErrnoException).code === 'ESRCH';
+  }
+}
+
+interface CacheTicketReadIO {
+  open(path: string): Promise<Pick<FileHandle, 'read' | 'close'> & { stat(): Promise<Stats> }>;
+}
+const ticketIO: CacheTicketReadIO = {
+  open: (path) => open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK),
+};
+
+/** Validate and read the same inode; never reopen a checked ticket by path. */
+export async function readCacheTicket(
+  path: string,
+  signal: AbortSignal,
+  io: CacheTicketReadIO = ticketIO,
+): Promise<number> {
+  signal.throwIfAborted();
+  const handle = await io.open(path);
+  try {
+    const before = await handle.stat();
+    if (!before.isFile() || before.size < 1 || before.size > 32)
+      throw new Error('Invalid image cache queue ticket.');
+    const bytes = Buffer.alloc(33);
+    let offset = 0;
+    while (offset < bytes.length) {
+      signal.throwIfAborted();
+      const read = await handle.read(bytes, offset, bytes.length - offset, offset);
+      if (!read.bytesRead) break;
+      offset += read.bytesRead;
+    }
+    if (offset !== before.size || !sameFileRevision(before, await handle.stat()))
+      throw new Error('Image cache queue ticket changed while reading.');
+    signal.throwIfAborted();
+    const ticket = Number(bytes.subarray(0, offset).toString('utf8'));
+    if (!Number.isSafeInteger(ticket) || ticket < 1 || ticket >= Number.MAX_SAFE_INTEGER)
+      throw new Error('Invalid image cache queue ticket.');
+    return ticket;
+  } finally {
+    await handle.close();
   }
 }
 
@@ -53,15 +103,11 @@ export async function withImageCacheLock<T>(
         continue;
       }
       try {
-        const ticketPath = join(path, 'ticket');
-        const stat = await lstat(ticketPath);
-        if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 32)
-          throw new Error('Invalid image cache queue ticket.');
-        const ticket = Number(await readFile(ticketPath, 'utf8'));
-        if (!Number.isSafeInteger(ticket) || ticket < 1 || ticket >= Number.MAX_SAFE_INTEGER)
-          throw new Error('Invalid image cache queue ticket.');
+        const ticket = await readCacheTicket(join(path, 'ticket'), signal);
         found.push({ name: entry.name, ticket });
       } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ELOOP')
+          throw new Error('Invalid image cache queue ticket.');
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
         // An unpublished ticket means "choosing"; a removed request has finished.
         if (
