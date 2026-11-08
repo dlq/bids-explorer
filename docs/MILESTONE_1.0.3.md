@@ -1,6 +1,6 @@
 # 1.0.3 release verification
 
-Prepared November 8, 2026. This maintenance release includes the shared-window image-cache budget correction, failed-page navigation recovery, the typed Availability client, standalone panel lifecycle ownership, localized capability explanations and portable VSIX contract checks. Dataset access remains read-only.
+Released November 8, 2026; public Marketplace validation was confirmed the same day. This maintenance release includes the shared-window image-cache budget correction, failed-page navigation recovery, the typed Availability client, standalone panel lifecycle ownership, localized capability explanations and portable VSIX contract checks. Dataset access remains read-only.
 
 All windows sharing the cache must reload onto the updated extension to participate in the new queue. Foreign-host reservations are not expired by age. The queue requires coherent directory reads and atomic rename semantics; synthetic testing does not establish behavior on every HPC filesystem.
 
@@ -27,3 +27,7 @@ The stable [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1
 [Release run 42506668593](https://github.com/dlq/bids-explorer/actions/runs/42506668593) passed verification, CodeQL and OIDC publication. The upload was accepted November 8 at 17:51:37 UTC. The GitHub release contains that exact hosted VSIX and matching SHA256SUMS. VSIX SHA-256: `e3cba6a466267cee24207817ae0667deaee19a4c9eaa073f7c88ecb6dbcd2b57` (2,221,086 bytes). All 406 packaged file contents match the clean local candidate byte for byte; only ZIP container metadata differs. GitHub’s uploaded-asset digest independently matches this checksum. No native .node files are included, and the icon remains the approved PNG.
 
 Marketplace upload acceptance is confirmed. At the initial post-upload check on November 8 around 17:52 UTC, the public gallery still reported 1.0.2; public validation of 1.0.3 had not yet been observed. Upload acceptance and public validation are tracked separately.
+
+## Public Marketplace validation
+
+On November 8 at 17:59 UTC the public gallery reported 1.0.3 validated. The listing returned HTTP 200; the downloaded public VSIX matched the hosted SHA-256 above byte for byte. The served icon matched the approved PNG (SHA-256 `09c512a8a37e90946172f53b77acfb6a756b930c9333f4df2270aa5251037eaa`). Version 1.0.3 is available from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), separately confirming the earlier upload acceptance.
