@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Add a beginner Remote SSH walkthrough covering connection, MFA, remote installation, study browsing and reconnect troubleshooting.
+
 - Rename the image-controls sidebar view and its container to **Imaging**, retaining existing view IDs and placement.
 
 - Read shared-cache queue tickets through one bounded, revision-checked file handle, rejecting symlink leaves and changed files without reopening a checked path.

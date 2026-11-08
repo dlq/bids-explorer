@@ -2,6 +2,8 @@
 
 This walkthrough uses two participants and four real anatomical MRI images, about 13 MB. It needs no programming or terminal commands. Download time depends on your connection.
 
+If your study is already on a server, use the [Remote SSH walkthrough](REMOTE_SSH.md) instead. The steps below use a sample on your own computer.
+
 ## 1. Install the extension
 
 Install desktop [VS Code](https://code.visualstudio.com/) 1.96 or newer. In its **Extensions** view, find **BIDS Explorer** by **Darcy Quesnel (`MCIN-dlq`)** and choose **Install**. You can also use the [Marketplace page](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer).

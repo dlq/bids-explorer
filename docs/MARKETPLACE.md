@@ -32,6 +32,8 @@ Sessionless studies work too. Multi-echo acquisitions group their echoes togethe
 
 ## Work with a study over SSH
 
+New to remote connections? Follow the [beginner Remote SSH walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/REMOTE_SSH.md), from installing Remote - SSH through opening your first scan.
+
 1. Connect to the server using **Remote - SSH**. Complete any password or MFA prompt shown by VS Code; prompts may appear at the top of the window.
 2. Open the study folder on that server.
 3. In Extensions, install BIDS Explorer on the connected SSH host. Installing only on your own computer may leave it unavailable in the remote window.

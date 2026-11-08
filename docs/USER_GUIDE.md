@@ -13,6 +13,8 @@ Matching multi-echo images share an acquisition branch with ordered **Echo** chi
 
 Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Imaging** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **Imaging** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
 
+For a first server connection, follow the [Remote SSH walkthrough](REMOTE_SSH.md), including MFA prompts and installing BIDS Explorer on the connected host.
+
 ## Find what you need
 
 | If you want to…                                                  | In BIDS Explorer                                                                                                                                                                                                                                                                                                                                       |

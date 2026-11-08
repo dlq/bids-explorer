@@ -182,6 +182,8 @@ ZIP member reading supports unencrypted stored/Deflate members and rejects links
 
 ## Requirements and data handling
 
+For connection and installation steps, use the [Remote SSH walkthrough](REMOTE_SSH.md).
+
 Use desktop **VS Code 1.96 or newer** with a trusted, non-virtual workspace. The directory adapter accepts `file:` URIs on the workspace host. The compatibility matrix records tested VS Code versions, hosts, archive formats and recovery cases. Browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported. The runtime uses bundled archive readers and can render NIfTI without the standalone NiiVue extension. See [Compatibility](COMPATIBILITY.md).
 
 Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. SquashFS availability snapshots persist in private extension storage on the workspace host. Completed selected archive images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. The extension uses the existing Remote SSH connection. Opening a selected remote image transfers its bytes to the local viewer; browsing does not unpack or download a whole archive.
