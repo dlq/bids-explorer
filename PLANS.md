@@ -133,6 +133,7 @@ Keep tolerant exploration independent of conformance checking. The intended sequ
 
 These remain ideas until a user problem and testable outcome justify a scoped issue:
 
+- **Compare BIDS Explorer with ANCP Lab’s BIDS Manager.** Use the same small public or synthetic study to compare first use, browsing an existing dataset, metadata and image inspection, and how each tool handles dataset changes. Document BIDS Manager’s conversion, editing and validation workflows alongside BIDS Explorer’s read-only browsing, archive support and Remote SSH access. Identify where the tools complement each other and which usability ideas fit the explorer. Record findings in `RESEARCH.md` when the comparison is done. [BIDS Manager documentation](https://ancplaboldenburg.github.io/bids_manager_documentation/index.html)
 - Broader recorded dataset relationships, modality-specific channel/electrode/coordinate views and additional image/metadata coordination.
 - QC annotations with separate provenance; no implicit source edits.
 - Offline browsing, additional persistent/shared metadata caches and branch caching, justified by coverage requirements and measurements.
