@@ -59,7 +59,12 @@ Browsing is read-only. Opening an original file in a regular editor is a separat
 
 ## What stays on the server?
 
-Directory reads, archive indexing and selected-member extraction run on the server. Supported inventories and availability snapshots are cached there; extracted images use private extension storage outside the dataset. Browsing does not download the whole study or unpack a whole archive. Selected image bytes still travel to your computer for display, so large scans can take time and the local viewer uses memory/GPU resources. See [supported formats and limits](COMPATIBILITY.md).
+Directory reads, archive indexing and selected-member extraction run on the server. BIDS Explorer keeps its persistent inventories, availability snapshots and extracted-image cache in private extension storage on that server, outside the study folder. Check that this storage location is approved for your study too. See [supported formats and limits](COMPATIBILITY.md).
+
+The VS Code window on your computer receives the information it displays, including filenames, participant labels, metadata and table values. When you open an image, its bytes travel over the SSH connection to the viewer on your computer. Large scans can take time to load and use memory and graphics resources on your computer. [How VS Code Remote SSH works](https://code.visualstudio.com/docs/remote/ssh)
+
+- **If viewing on your computer is allowed but saving copies there is restricted**, confirm that your VS Code setup meets the study's rules before opening restricted data. Server-side caches cover storage managed by BIDS Explorer. Local traces such as recent paths, editor state, logs and webview data still need to be checked. Use your institution's approved settings for exports, screenshots and clipboard use.
+- **If the study requires processing and viewing inside an approved environment**, use VS Code and its viewer there, for example on an institution-approved virtual desktop. Confirm the setup with your institution, including whether remote display, clipboard use or file transfer is permitted. Restrictions can apply to filenames and participant labels as well as images.
 
 **Terminal → New Terminal** in this remote window opens a terminal on the server. Commands there can change remote files independently of BIDS Explorer; no terminal commands are required for this walkthrough.
 
