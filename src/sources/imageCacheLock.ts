@@ -39,7 +39,7 @@ export async function readCacheTicket(
   path: string,
   signal: AbortSignal,
   io: CacheTicketReadIO = ticketIO,
-): Promise<number> {
+): Promise<number | undefined> {
   signal.throwIfAborted();
   const handle = await io.open(path);
   try {
@@ -54,9 +54,12 @@ export async function readCacheTicket(
       if (!read.bytesRead) break;
       offset += read.bytesRead;
     }
-    if (offset !== before.size || !sameFileRevision(before, await handle.stat()))
-      throw new Error('Image cache queue ticket changed while reading.');
+    const after = await handle.stat();
     signal.throwIfAborted();
+    // A finished request removes its ticket while another process may still hold it open.
+    if (after.nlink === 0) return undefined;
+    if (offset !== before.size || !sameFileRevision(before, after))
+      throw new Error('Image cache queue ticket changed while reading.');
     const ticket = Number(bytes.subarray(0, offset).toString('utf8'));
     if (!Number.isSafeInteger(ticket) || ticket < 1 || ticket >= Number.MAX_SAFE_INTEGER)
       throw new Error('Invalid image cache queue ticket.');
@@ -104,7 +107,7 @@ export async function withImageCacheLock<T>(
       }
       try {
         const ticket = await readCacheTicket(join(path, 'ticket'), signal);
-        found.push({ name: entry.name, ticket });
+        if (ticket !== undefined) found.push({ name: entry.name, ticket });
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'ELOOP')
           throw new Error('Invalid image cache queue ticket.');

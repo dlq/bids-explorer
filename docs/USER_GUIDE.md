@@ -4,7 +4,7 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 
 ## Open a study
 
-1. In desktop VS Code 1.96 or newer, install [BIDS Explorer](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer) from the Extensions view. Alternatively, use **Extensions: Install from VSIX** with the package from the [1.0.3 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.3).
+1. In desktop VS Code 1.96 or newer, install [BIDS Explorer](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer) from the Extensions view. Alternatively, use **Extensions: Install from VSIX** with the package from the [1.0.4 release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.4).
 2. Open a study folder you trust. For a study on a server, connect with VS Code Remote SSH, then open the study folder on that server and install BIDS Explorer on the connected host.
 3. In the **Explorer** sidebar, expand **BIDS**. A folder with a root-level `dataset_description.json` appears automatically. If it doesn’t appear, use **Add Dataset** and select the folder.
 4. Expand a participant, then a session if present and a modality. Click a file to open its preview. The regular **File Explorer** still shows the physical folder layout.

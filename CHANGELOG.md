@@ -4,11 +4,13 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.0.4] - 2026-11-10
+
 - Add a beginner Remote SSH walkthrough covering connection, MFA, remote installation, study browsing and reconnect troubleshooting.
 
 - Rename the image-controls sidebar view and its container to **Imaging**, retaining existing view IDs and placement.
 
-- Read shared-cache queue tickets through one bounded, revision-checked file handle, rejecting symlink leaves and changed files without reopening a checked path.
+- Read shared-cache queue tickets through one bounded, revision-checked file handle, rejecting symlink leaves and changed files without reopening a checked path. Ignore tickets removed by requests that finish during a concurrent read.
 - Update the development compiler, lint, coverage and VS Code test tools; explicitly load host test types for TypeScript 6, update the paired CodeQL actions and select patched transitive development dependencies for a clean npm audit.
 
 ## [1.0.3] - 2026-11-08

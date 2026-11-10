@@ -86,3 +86,7 @@ The checksum-matched package passed the same synthetic image, metadata and sideb
 ## 1.0.3 maintenance patch
 
 [1.0.3 verification](MILESTONE_1.0.3.md) records 178 unit tests, 58 local integration tests per VS Code version, artifact/security checks and seven separate-process cache tests using packaged code on Rorqual’s shared home filesystem. A fresh interactive Remote SSH viewer check was blocked by connection timeouts; the user explicitly authorized release with that limitation. This does not extend the historical interactive SSH or Windows compatibility claims.
+
+## 1.0.4 maintenance patch
+
+The [1.0.4 verification record](MILESTONE_1.0.4.md) covers the installed upgrade, shared cache across two local windows, and a fresh synthetic Rorqual Remote SSH viewer and metadata check.

@@ -4,7 +4,7 @@ The Visual Studio Marketplace is the extension catalog used by desktop VS Code. 
 
 Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) describes the publisher account and Trusted Publishing setup. This repository uses GitHub Actions OIDC rather than a stored Marketplace access token.
 
-The next planned publication is the **1.0.4 maintenance patch**, including the merged cache security fix, tooling updates, **Imaging** sidebar title and beginner Remote SSH walkthrough. See [release scope and remaining checks](../PLANS.md#next-publication-104-maintenance-patch). The manifest stays at 1.0.3 until an authorized release is prepared; an ordinary main-branch update does not change the Marketplace package.
+The next planned publication is the **1.0.4 maintenance patch**, including the merged cache security fix, tooling updates, **Imaging** sidebar title and beginner Remote SSH walkthrough. See [release scope and remaining checks](../PLANS.md#next-publication-104-maintenance-patch). The release candidate manifest is 1.0.4. Marketplace publication follows the release workflow below.
 
 ## One-time publisher setup
 

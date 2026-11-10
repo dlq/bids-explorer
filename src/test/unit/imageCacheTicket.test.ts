@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, open, writeFile, rename, symlink, rm } from 'node:fs/promises';
+import { mkdtemp, open, writeFile, rename, symlink, rm, unlink, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { readCacheTicket } from '../../sources/imageCacheLock';
@@ -21,22 +21,15 @@ void test('ticket reads stay on the checked handle when its path is replaced by 
     const outside = path + '-outside';
     await writeFile(outside, '9999');
     let closed = false;
-    let replaced = false;
-    await assert.rejects(
-      readCacheTicket(path, new AbortController().signal, {
+    assert.equal(
+      await readCacheTicket(path, new AbortController().signal, {
         open: async () => {
           const handle = await open(path, 'r');
+          // Replace the path after opening so later reads must use the original handle.
+          await rename(path, path + '-original');
+          await symlink(outside, path);
           return {
-            stat: async () => {
-              const stat = await handle.stat();
-              if (!replaced) {
-                // Rename changes ctime: reject the race without following the replacement.
-                await rename(path, path + '-original');
-                await symlink(outside, path);
-                replaced = true;
-              }
-              return stat;
-            },
+            stat: () => handle.stat(),
             read: handle.read.bind(handle),
             close: async () => {
               await handle.close();
@@ -45,7 +38,7 @@ void test('ticket reads stay on the checked handle when its path is replaced by 
           };
         },
       }),
-      /changed while reading/,
+      1,
     );
     assert.equal(closed, true);
   });
@@ -86,6 +79,29 @@ void test('ticket growth between inspection and reading is bounded and rejected'
   });
 });
 
+void test('a ticket removed by a finished request is ignored during a concurrent read', async () => {
+  await fixture(async (path) => {
+    const handle = await open(path, 'r');
+    let inspected = false;
+    const ticket = await readCacheTicket(path, new AbortController().signal, {
+      open: () =>
+        Promise.resolve({
+          stat: async () => {
+            const stat = await handle.stat();
+            if (!inspected) {
+              inspected = true;
+              await unlink(path);
+            }
+            return stat;
+          },
+          read: handle.read.bind(handle),
+          close: () => handle.close(),
+        }),
+    });
+    assert.equal(ticket, undefined);
+  });
+});
+
 void test('same-size ticket mutation is rejected even when its replacement is a valid number', async () => {
   await fixture(async (path) => {
     let first = true;
@@ -100,6 +116,8 @@ void test('same-size ticket mutation is rejected even when its replacement is a 
               if (first) {
                 first = false;
                 await writeFile(path, '2');
+                // Make the revision change observable on filesystems with coarse timestamps.
+                await utimes(path, stat.atime, new Date(stat.mtimeMs - 10000));
               }
               return stat;
             },

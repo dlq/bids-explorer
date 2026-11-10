@@ -21,7 +21,7 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 ## Install and open your first study
 
 1. Install [desktop VS Code](https://code.visualstudio.com/) 1.96 or newer.
-2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [1.0.3 VSIX](https://github.com/dlq/bids-explorer/releases/download/v1.0.3/bids-explorer-1.0.3.vsix) with **Extensions → … → Install from VSIX…**.
+2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [1.0.4 VSIX](https://github.com/dlq/bids-explorer/releases/download/v1.0.4/bids-explorer-1.0.4.vsix) with **Extensions → … → Install from VSIX…**.
 3. Open a study folder you trust. In the **Explorer** sidebar, expand **BIDS**. A folder containing `dataset_description.json` appears automatically; otherwise choose **Add Dataset**.
 4. Expand a participant, a session if present, and a modality, then select a scan. Choose **Image controls** to show its parameters and viewing controls.
 

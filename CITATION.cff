@@ -6,8 +6,8 @@ abstract: Read-only exploration of BIDS neuroimaging studies in Visual Studio Co
 authors:
   - family-names: Quesnel
     given-names: Darcy
-version: 1.0.3
-date-released: '2026-11-08'
+version: 1.0.4
+date-released: '2026-11-10'
 license: MIT
 repository-code: https://github.com/dlq/bids-explorer
 url: https://github.com/dlq/bids-explorer
