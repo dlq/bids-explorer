@@ -1,12 +1,12 @@
 # BIDS Explorer roadmap
 
-Updated November 8, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
+Updated November 10, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
 
 ## Purpose and supported core
 
 Help neuroimaging practitioners explore studies through a readable logical BIDS tree, source-backed metadata, participant coverage and image viewing. Support ordinary directories and documented ZIP, tar/tarball and SquashFS variants, locally and through VS Code Remote SSH. Preserve access to the physical files and original identifiers.
 
-The supported core is established through 1.0; the manifest is currently 1.0.3. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
+The supported core is established through 1.0; the release candidate manifest is 1.0.4. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
 
 ## How we maintain the plan
 
@@ -45,7 +45,7 @@ Correctness, data handling and usability defects take priority over optional cap
 
 ## Next publication: 1.0.4 maintenance patch
 
-The security correction in [PR #36](https://github.com/dlq/bids-explorer/pull/36) is merged into main, but Marketplace users still receive 1.0.3. Publish this compatible runtime fix at the next authorized release opportunity; development-tool updates alone would normally wait for another release. Include the compatible sidebar/container rename to **Imaging**, with existing view IDs and placement retained and current user instructions updated. Include the [beginner Remote SSH walkthrough](docs/REMOTE_SSH.md), its links from getting-started/help documentation, and the roadmap/research updates. The possible BIDS App assistance and read-only workflow tracking remain unscheduled explorations; documenting them does not add those capabilities to 1.0.4. Keep startup optimization out of this patch. The manifest remains 1.0.3 until release preparation is explicitly requested.
+The security correction in [PR #36](https://github.com/dlq/bids-explorer/pull/36) is merged into main, but Marketplace users still receive 1.0.3. Publish this compatible runtime fix at the next authorized release opportunity; development-tool updates alone would normally wait for another release. Include the compatible sidebar/container rename to **Imaging**, with existing view IDs and placement retained and current user instructions updated. Include the [beginner Remote SSH walkthrough](docs/REMOTE_SSH.md), its links from getting-started/help documentation, and the roadmap/research updates. The possible BIDS App assistance and read-only workflow tracking remain unscheduled explorations; documenting them does not add those capabilities to 1.0.4. Keep startup optimization out of this patch. The 1.0.4 candidate is in release preparation.
 
 The merged source passes 182 unit tests with the per-file coverage gate, 58 integration tests on each of minimum/current VS Code, packaging, Semgrep and hosted CI/CodeQL. The November 8 review found zero open CodeQL/Dependabot alerts and zero npm audit vulnerabilities. These are pre-release observations; recheck the actual release commit and artifact.
 

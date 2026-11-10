@@ -2,7 +2,7 @@
 
 ## Version source and status
 
-`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.3`, the `v1.0.3` maintenance release; the source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer), with Marketplace publication through the configured workflow. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
+`package.json` is the authoritative extension version. Keep the top-level and root-package versions in `package-lock.json` synchronized with it. The current manifest is `1.0.4`, the `v1.0.4` maintenance release; the source is public at [dlq/bids-explorer](https://github.com/dlq/bids-explorer), with Marketplace publication through the configured workflow. Future feature targets live in [PLANS.md](PLANS.md); implemented changes stay under Unreleased in [CHANGELOG.md](CHANGELOG.md) until release preparation.
 
 Use three numeric components: `major.minor.patch`. Do not bump the version for every commit. Node, TypeScript, archive tool and `engines.vscode` versions are separate compatibility/development requirements; they do not track the extension version.
 
@@ -19,10 +19,10 @@ Documentation, internal refactoring and tooling improvements normally wait for t
 
 ## Release names and artifacts
 
-- Manifest version: `1.0.3`.
-- Release tag: `v1.0.3`. Later release tags still require explicit authorization.
-- VSIX: `bids-explorer-1.0.3.vsix`, produced under `dist/` by `npm run package` using the manifest version.
-- Changelog heading: `## [1.0.3] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
+- Manifest version: `1.0.4`.
+- Release tag: `v1.0.4`. Later release tags still require explicit authorization.
+- VSIX: `bids-explorer-1.0.4.vsix`, produced under `dist/` by `npm run package` using the manifest version.
+- Changelog heading: `## [1.0.4] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
 
 Local development builds can share the unreleased manifest version. Use their commit SHA to distinguish them; they are not immutable releases. Release artifacts must come from the tagged commit after checks pass. Do not overwrite a published version or reuse a release tag; ship a new patch instead.
 
