@@ -30,7 +30,7 @@ Open the Command Palette with **Cmd+Shift+P** on macOS or **Ctrl+Shift+P** on Wi
 
 Inside a preview, use **Tab** and **Shift+Tab** to move between filters, source controls and expandable sections. In the gradient preview, the sphere accepts arrow keys to rotate and the b-value plot accepts left/right arrows to select a volume. The **Volume** field and **Numeric table** offer another way to select a volume. In a loaded 4D NIfTI, focus **Volume** and use left/right arrows to change frames.
 
-Choose **Image controls** in the built-in viewer, expand **Position**, then Tab to the X, Y and Z buttons in the native **Image** view. Enter moves the crosshair one voxel and updates the announced voxel coordinates. Tables have a named scrolling region: Tab into it and use arrow keys to reveal additional columns. Expand **Source details** to inspect acquisition-field provenance.
+Choose **Image controls** in the built-in viewer, expand **Position**, then Tab to the X, Y and Z buttons in the native **Imaging** view. Enter moves the crosshair one voxel and updates the announced voxel coordinates. Tables have a named scrolling region: Tab into it and use arrow keys to reveal additional columns. Expand **Source details** to inspect acquisition-field provenance.
 
 See the [usability record](USABILITY.md) for the sampled keyboard, theme and user-assisted VoiceOver checks and their limits.
 
@@ -86,7 +86,7 @@ Column names and identifiers must match exactly, preserving leading zeros. Label
 
 Hover for a short description, dataset-relative location and source filename; use **Show Source Details → treeDescription** for exact recorded values, row/column or JSON-pointer evidence, source revisions/times and contributing JSON sources. Metadata strings are plain text. Whitespace/control characters are flattened for display, names longer than 120 characters are shortened, and values over 4,096 characters are omitted from automatic descriptions. Original source values are unchanged.
 
-This label-column/name enrichment currently applies only to eligible ordinary physical entries, not archive members or merged virtual nodes. Archive-aware acquisition timing summaries and the Image sidebar use the separate logical inheritance path. Description work runs separately from tree publication, with at most two jobs active, 32 waiting and 512 cached states/results. Entries beyond those bounds can remain unloaded; Source Details distinguishes unloaded/loading/ready/unavailable. This is partial enrichment, not a recursive metadata index. No image bytes are read. There are no filesystem watchers: refresh a branch to reread its descriptions, or use global Refresh to retry all. Changing column settings clears descriptions without refreshing physical listings. Cancellation drops pending work and retains completed descriptions; there is no persistent description cache. Large/remote description throughput has not yet been benchmarked.
+This label-column/name enrichment currently applies only to eligible ordinary physical entries, not archive members or merged virtual nodes. Archive-aware acquisition timing summaries and the Imaging sidebar use the separate logical inheritance path. Description work runs separately from tree publication, with at most two jobs active, 32 waiting and 512 cached states/results. Entries beyond those bounds can remain unloaded; Source Details distinguishes unloaded/loading/ready/unavailable. This is partial enrichment, not a recursive metadata index. No image bytes are read. There are no filesystem watchers: refresh a branch to reread its descriptions, or use global Refresh to retry all. Changing column settings clears descriptions without refreshing physical listings. Cancellation drops pending work and retains completed descriptions; there is no persistent description cache. Large/remote description throughput has not yet been benchmarked.
 
 ## Dataset description preview
 
@@ -182,6 +182,8 @@ ZIP member reading supports unencrypted stored/Deflate members and rejects links
 
 ## Requirements and data handling
 
+For connection and installation steps, use the [Remote SSH walkthrough](REMOTE_SSH.md).
+
 Use desktop **VS Code 1.96 or newer** with a trusted, non-virtual workspace. The directory adapter accepts `file:` URIs on the workspace host. The compatibility matrix records tested VS Code versions, hosts, archive formats and recovery cases. Browser-only VS Code and arbitrary remote filesystem URI schemes are unsupported. The runtime uses bundled archive readers and can render NIfTI without the standalone NiiVue extension. See [Compatibility](COMPATIBILITY.md).
 
 Explorer reads directory entries, requested filesystem attributes, bounded selected gradient pairs, explicitly selected dataset descriptions, participant tables/dictionaries and applicable ancestor JSON for selected-file inspection. It never writes dataset files or creates indexes/caches inside datasets. Only explicit registration URIs are saved in VS Code's workspace state; automatic roots follow the current workspace folder list and are not saved as manual registrations; directory listings are kept in memory. SquashFS availability snapshots persist in private extension storage on the workspace host. Completed selected archive images and provenance are stored in a bounded private cache outside datasets, with in-memory reuse during the current extension session. The extension uses the existing Remote SSH connection. Opening a selected remote image transfers its bytes to the local viewer; browsing does not unpack or download a whole archive.
@@ -194,9 +196,9 @@ See [Compatibility](COMPATIBILITY.md) for current release checks, Remote SSH rec
 
 Use **BIDS Explorer: Inspect Tar Archive** from the Command Palette or the native Explorer context menu to list a `.tar`, `.tar.gz` or `.tgz` file on the workspace host. The command scans sequentially and reports the first 200 members and the total count. Gzip tarballs must be decompressed through the end for a complete inventory. The scan is cancellable and supports POSIX ustar headers. For logical browsing, use **Add Dataset** on the directory containing the tarball. The tree can show the archive’s subjects, sessions, modalities and files alongside loose and ZIP sources. Select a tar file row for its metadata preview or to open the selected MRI in the built-in viewer. **Show Source Details** displays the original member path. Tar reads scan the archive sequentially and can take longer than ZIP reads.
 
-## Native Image view
+## Native Imaging view
 
-The viewer's **Image controls** button opens a standard VS Code webview view. Move the **BIDS Image** activity icon to **Secondary Side Bar** using its **Move To** menu for a right-hand panel. The stable API supported by VS Code 1.96 does not assign a secondary-sidebar default; the workbench remembers your placement. The view is resizable, movable and hideable through normal VS Code controls.
+The viewer's **Image controls** button opens a standard VS Code webview view. Move the **Imaging** activity icon to **Secondary Side Bar** using its **Move To** menu for a right-hand panel. The stable API supported by VS Code 1.96 does not assign a secondary-sidebar default; the workbench remembers your placement. The view is resizable, movable and hideable through normal VS Code controls.
 
 The view follows the most recently selected built-in image and retains that selection while you operate its controls or inspect metadata. Selecting another image updates the context, controls and sources together. Closing the selected image selects another visible image or shows the empty state. Empty image placeholders have no enabled image controls.
 

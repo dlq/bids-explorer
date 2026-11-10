@@ -2,6 +2,8 @@
 
 This walkthrough uses two participants and four real anatomical MRI images, about 13 MB. It needs no programming or terminal commands. Download time depends on your connection.
 
+If your study is already on a server, use the [Remote SSH walkthrough](REMOTE_SSH.md) instead. The steps below use a sample on your own computer.
+
 ## 1. Install the extension
 
 Install desktop [VS Code](https://code.visualstudio.com/) 1.96 or newer. In its **Extensions** view, find **BIDS Explorer** by **Darcy Quesnel (`MCIN-dlq`)** and choose **Install**. You can also use the [Marketplace page](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer).
@@ -21,7 +23,7 @@ Only mark folders as trusted when you trust their contents. This sample is a doc
 
 Expand **01 → Anatomical** and select **T1-weighted**. You should see three orthogonal planes and a 3D view. Choose **Image controls** for dimensions, voxel spacing and display controls.
 
-To put the controls on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**. Try changing the layout or colour map, then choose **Reset display**. Expand **Position** to move the crosshair with its X, Y and Z buttons.
+To put the controls on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. Try changing the layout or colour map, then choose **Reset display**. Expand **Position** to move the crosshair with its X, Y and Z buttons.
 
 Participant **02** has another T1-weighted image. Full source filenames remain in tooltips and source details even though the tree uses shorter labels. Browsing does not rewrite the images.
 

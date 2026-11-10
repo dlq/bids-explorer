@@ -32,6 +32,8 @@ Sessionless studies work too. Multi-echo acquisitions group their echoes togethe
 
 ## Work with a study over SSH
 
+New to remote connections? Follow the [beginner Remote SSH walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/REMOTE_SSH.md), from installing Remote - SSH through opening your first scan.
+
 1. Connect to the server using **Remote - SSH**. Complete any password or MFA prompt shown by VS Code; prompts may appear at the top of the window.
 2. Open the study folder on that server.
 3. In Extensions, install BIDS Explorer on the connected SSH host. Installing only on your own computer may leave it unavailable in the remote window.
@@ -43,7 +45,7 @@ Archive reading and indexing run beside the data on the server, using the VS Cod
 
 Click a NIfTI image or its acquisition label to use the built-in viewer. The default layout shows **axial, coronal and sagittal planes plus a 3D volume view**. For a 4D scan, the first volume can appear while the remaining volumes load.
 
-Choose **Image controls** to open the native **Image** sidebar. To place it on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**. VS Code remembers its position.
+Choose **Image controls** to open the native **Imaging** sidebar. To place it on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. VS Code remembers its position.
 
 The sidebar includes:
 
@@ -110,7 +112,7 @@ For fuller recovery instructions, see [Troubleshooting](https://github.com/dlq/b
 
 ## Keyboard access
 
-Use arrow keys to navigate and expand the BIDS tree, **Enter** to open, and **Shift+F10** for the selected entry’s actions. Use **Tab** to reach filters, table scrolling regions and disclosure controls. The volume selector accepts arrow keys, and the Image sidebar’s **Position** buttons provide keyboard crosshair movement.
+Use arrow keys to navigate and expand the BIDS tree, **Enter** to open, and **Shift+F10** for the selected entry’s actions. Use **Tab** to reach filters, table scrolling regions and disclosure controls. The volume selector accepts arrow keys, and the Imaging sidebar’s **Position** buttons provide keyboard crosshair movement.
 
 Open the Command Palette with **Cmd+Shift+P** on macOS or **Ctrl+Shift+P** on Windows/Linux. Extension commands start with **BIDS Explorer:**. Previews follow the VS Code theme; sampled keyboard, high-contrast and VoiceOver checks are documented in the [usability record](https://github.com/dlq/bids-explorer/blob/main/docs/USABILITY.md).
 

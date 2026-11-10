@@ -27,7 +27,7 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 
 **Try it first:** the [five-minute walkthrough](docs/QUICKSTART.md) uses a ready-to-open 13 MB public anatomical sample and requires no terminal commands.
 
-For a study on a server, first connect using [VS Code Remote SSH](https://code.visualstudio.com/docs/remote/ssh), open the server’s study folder, and install BIDS Explorer on the connected host. To place image controls on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**.
+For step-by-step server setup, follow the [Remote SSH walkthrough](docs/REMOTE_SSH.md). First connect using [VS Code Remote SSH](https://code.visualstudio.com/docs/remote/ssh), open the server’s study folder, and install BIDS Explorer on the connected host. To place image controls on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**.
 
 Older development copies used publisher `bids-explorer-dev`. Disable that copy before installing the production extension to avoid duplicate commands; manual dataset registrations may need to be recreated. Dataset files are unchanged.
 
@@ -43,6 +43,7 @@ For a complete first-use walkthrough, see the [Marketplace getting-started guide
 
 ## Help and feedback
 
+- [Remote SSH walkthrough](docs/REMOTE_SSH.md): connect, sign in and browse a study on a server.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): missing studies, SSH/MFA, archives, image loading and caches.
 - [User guide](docs/USER_GUIDE.md): metadata, tables, derivatives, keyboard navigation and viewing controls.
 - [Explorer reference](docs/EXPLORER_REFERENCE.md): detailed behavior, source collections and troubleshooting.

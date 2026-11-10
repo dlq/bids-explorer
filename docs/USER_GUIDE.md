@@ -11,7 +11,9 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 
 Matching multi-echo images share an acquisition branch with ordered **Echo** children. **Run**, **Acquisition**, **Phase encoding** and other readable labels preserve the distinctions between scans. Expand an echo for its image and metadata; original filenames remain in source details.
 
-Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Image** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **BIDS Image** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
+Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Imaging** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **Imaging** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
+
+For a first server connection, follow the [Remote SSH walkthrough](REMOTE_SSH.md), including MFA prompts and installing BIDS Explorer on the connected host.
 
 ## Find what you need
 
@@ -42,7 +44,7 @@ Expanded acquisitions can show recorded TR, TE and duration after a background m
 
 ## Keyboard and display
 
-The study tree uses VS Code’s arrow-key navigation. **Enter** opens the selected file, and **Shift+F10** opens its actions. Use **Tab** to reach filters and expandable definitions in previews. In a loaded 4D image, the **Volume** control accepts arrow keys. Expand **Position** in the Image sidebar and use the X, Y and Z buttons to move the crosshair one voxel at a time. Tab into a table’s scrolling region and use arrow keys to reveal additional columns.
+The study tree uses VS Code’s arrow-key navigation. **Enter** opens the selected file, and **Shift+F10** opens its actions. Use **Tab** to reach filters and expandable definitions in previews. In a loaded 4D image, the **Volume** control accepts arrow keys. Expand **Position** in the Imaging sidebar and use the X, Y and Z buttons to move the crosshair one voxel at a time. Tab into a table’s scrolling region and use arrow keys to reveal additional columns.
 
 Previews follow the VS Code theme. Representative keyboard and VoiceOver workflows have been checked on macOS; see [USABILITY.md](USABILITY.md) for the tested scope.
 

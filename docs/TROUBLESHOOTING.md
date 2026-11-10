@@ -16,6 +16,8 @@ For archives, add the containing directory. Descriptorless collections may need 
 
 ## SSH is waiting, reconnecting or asking for MFA
 
+For initial setup, follow the [Remote SSH walkthrough](REMOTE_SSH.md).
+
 BIDS Explorer uses **VS Code Remote SSH**. It has no separate password or SSH configuration. Check VS Code's notification area and the prompt bar at the top of the window; MFA/password prompts can appear there. Complete that prompt before retrying.
 
 If the connection itself fails, open **View → Output**, select the Remote SSH output channel and follow Microsoft's [Remote SSH troubleshooting](https://code.visualstudio.com/docs/remote/troubleshooting). Confirm ordinary remote folder access before diagnosing the BIDS view. Do not post login codes, credentials or unredacted server logs in public issues.
@@ -48,7 +50,7 @@ To clear extracted images, close that workspace's image viewers and source edito
 
 ## Image controls are missing or in the wrong place
 
-Choose **Image controls** in the built-in viewer. To place them on the right, right-click **BIDS Image** and choose **Move To → Secondary Side Bar**. VS Code remembers view placement. Expand **Position** for keyboard crosshair buttons; single-volume images intentionally have no volume selector.
+Choose **Image controls** in the built-in viewer. To place them on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. VS Code remembers view placement. Expand **Position** for keyboard crosshair buttons; single-volume images intentionally have no volume selector.
 
 ## I have two copies or get an already exists command error
 
