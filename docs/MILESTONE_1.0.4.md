@@ -13,4 +13,8 @@ The 1.0.4 maintenance patch includes the shared image-cache queue correction, th
 
 ## Distribution verification
 
-The release workflow builds from the immutable tag, verifies the package checksum before OIDC upload, and produces the artifact used for GitHub and Marketplace distribution. Publication results are recorded after validation.
+Tag `v1.0.4` identifies commit `cca7d4ec6a74de2242d906d539ed3ab5e9fbd77e`. The [release workflow](https://github.com/dlq/bids-explorer/actions/runs/42900722448) passed quality, 58 integration cases on each of VS Code 1.96.0 and current stable (two opt-in cases skipped per version), security, packaging and CodeQL. The post-run review found zero open CodeQL or Dependabot alerts.
+
+Marketplace accepted the Trusted Publishing upload at 16:04:22 EST on November 10, 2026. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.4) contains the exact hosted VSIX and its checksum. All 406 packaged files matched the local candidate’s contents. The hosted VSIX is 2,221,901 bytes with SHA-256 `d8858388c1f3e4f1e9e9f88d3c59f997eba4005c7130c768555e9da29344dcb8`.
+
+At 16:08:54 EST the public Marketplace catalog returned validated version 1.0.4. The downloaded public VSIX matched the GitHub asset byte for byte. The public listing returned HTTP 200, and the served icon matched the approved PNG with SHA-256 `09c512a8a37e90946172f53b77acfb6a756b930c9333f4df2270aa5251037eaa`. [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer)
