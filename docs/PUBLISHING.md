@@ -4,7 +4,7 @@ The Visual Studio Marketplace is the extension catalog used by desktop VS Code. 
 
 Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) describes the publisher account and Trusted Publishing setup. This repository uses GitHub Actions OIDC rather than a stored Marketplace access token.
 
-The next planned publication is the **1.0.4 maintenance patch**, including the merged cache security fix, tooling updates, **Imaging** sidebar title and beginner Remote SSH walkthrough. See [release scope and remaining checks](../PLANS.md#next-publication-104-maintenance-patch). The release candidate manifest is 1.0.4. Marketplace publication follows the release workflow below.
+See the [1.0.4 verification record](MILESTONE_1.0.4.md) for the current release and its package checksum.
 
 ## One-time publisher setup
 
@@ -61,4 +61,6 @@ The manifest’s `icon` field points to `media/icon.png`. Keep the editable SVG 
 
 Version 1.0.2 completed [OIDC upload](https://github.com/dlq/bids-explorer/actions/runs/42420351550) on November 7, 2026. On November 8 the public gallery reported it validated, with the exact submitted VSIX checksum and approved icon; see [1.0.2 verification](MILESTONE_1.0.2.md).
 
-Version 1.0.3 completed [OIDC upload](https://github.com/dlq/bids-explorer/actions/runs/42506668593) on November 8, 2026. Its GitHub release contains the exact hosted package and checksum; public Marketplace validation, the exact served VSIX and approved icon were confirmed at 17:59 UTC the same day. See [1.0.3 verification](MILESTONE_1.0.3.md) for current publication evidence and the accepted SSH viewer-test limitation.
+Version 1.0.3 completed [OIDC upload](https://github.com/dlq/bids-explorer/actions/runs/42506668593) on November 8, 2026. Its GitHub release contains the exact hosted package and checksum; public Marketplace validation, the exact served VSIX and approved icon were confirmed at 17:59 UTC the same day. See [1.0.3 verification](MILESTONE_1.0.3.md) for that release’s publication evidence and accepted SSH viewer-test limitation.
+
+Version 1.0.4 completed [OIDC upload](https://github.com/dlq/bids-explorer/actions/runs/42900722448) on November 10, 2026. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.0.4) contains the workflow’s VSIX and checksum. The public Marketplace catalog now reports validated 1.0.4 and serves the identical package and approved icon. [Verification record](MILESTONE_1.0.4.md)
