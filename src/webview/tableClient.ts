@@ -4,6 +4,7 @@ const api = acquireVsCodeApi();
 const element = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 let table: TableSnapshot | undefined, dictionary: SummaryTablePreview['dictionary'] | undefined;
 let isEventsTable = false;
+let scanRevision: number | undefined;
 let page = 0,
   columnPage = 0,
   visibleCount = 0;
@@ -25,6 +26,7 @@ function report(): void {
     dictionaryText: element('dictionary').textContent?.slice(0, 2000),
     issuesText: element('issues').textContent,
     errorText: element('error').hidden ? '' : element('error').textContent,
+    scanStatus: element('scan-status').hidden ? '' : element('scan-status').textContent,
     displayedCells: Array.from(element('rows').querySelectorAll('tr:first-child td')).map(
       (cell) => cell.textContent,
     ),
@@ -99,6 +101,11 @@ function render(): void {
   line.scope = 'col';
   line.className = 'source-line';
   heading.append(line);
+  const scanColumn = table.columns.indexOf('filename');
+  const scans =
+    scanRevision !== undefined &&
+    scanColumn >= 0 &&
+    scanColumn === table.columns.lastIndexOf('filename');
   for (const i of columns) {
     const th = document.createElement('th');
     th.scope = 'col';
@@ -111,6 +118,12 @@ function render(): void {
       th.append(units);
     }
     heading.append(th);
+  }
+  if (scans) {
+    const action = document.createElement('th');
+    action.scope = 'col';
+    action.textContent = 'Scan';
+    heading.append(action);
   }
   head.append(heading);
   const shown = rows.slice(page * 50, page * 50 + 50);
@@ -132,6 +145,22 @@ function render(): void {
           ? 'Recorded missing value: n/a'
           : short('Source token: ' + (row.tokens[i] ?? '(no cell)'));
       tr.append(td);
+    }
+    if (scans) {
+      const action = document.createElement('td');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = `open-scan-${row.line}`;
+      button.textContent = 'Open scan';
+      button.setAttribute('aria-label', `Open scan from source line ${row.line}`);
+      const revision = scanRevision;
+      button.addEventListener('click', () => {
+        element('scan-status').hidden = false;
+        element('scan-status').textContent = `Finding scan from source line ${row.line}…`;
+        api.postMessage({ type: 'openScan', line: row.line, revision });
+      });
+      action.append(button);
+      tr.append(action);
     }
     body.append(tr);
   }
@@ -216,6 +245,11 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     report();
     return;
   }
+  if (message.type === 'scanStatus' && 'text' in message && typeof message.text === 'string') {
+    element('scan-status').textContent = message.text;
+    element('scan-status').hidden = false;
+    return;
+  }
   if (message.type === 'error' && 'message' in message && typeof message.message === 'string') {
     element('error').textContent = message.message;
     element('error').hidden = false;
@@ -246,6 +280,14 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
             ? 'Table'
             : 'Participants';
   table = message.table as TableSnapshot;
+  scanRevision =
+    'kind' in message &&
+    message.kind === 'scans' &&
+    'scanRevision' in message &&
+    typeof message.scanRevision === 'number'
+      ? message.scanRevision
+      : undefined;
+  element('scan-status').hidden = true;
   isEventsTable = 'kind' in message && message.kind === 'events';
   if (isEventsTable)
     element('table-note').textContent =

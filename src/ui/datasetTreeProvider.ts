@@ -59,6 +59,7 @@ export interface EntryElement {
   readonly groupLabel?: string;
   readonly overviewParent?: OverviewElement;
   participantParent?: EntryElement;
+  treeParent?: EntryElement;
   derivativeOnly?: true;
   sessionless?: true;
   ambiguousLabel?: boolean;
@@ -391,6 +392,7 @@ export class DatasetTreeProvider
     if (element.participantParent) return element.participantParent;
     if (element.acquisitionParent) return element.acquisitionParent;
     if (element.acquisition) return element.acquisition.parent;
+    if (element.treeParent) return element.treeParent;
     if (element.inOverview || !isRootParticipant(element.entry)) return;
     const root = this.browser
       .datasets()

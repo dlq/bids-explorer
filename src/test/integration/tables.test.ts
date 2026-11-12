@@ -9,6 +9,8 @@ import { TablePreviewManager, isParticipantsTable } from '../../ui/tablePreview'
 import { DatasetTreeProvider } from '../../ui/datasetTreeProvider';
 import { DatasetBrowser } from '../../core/browser';
 import { LocalDirectorySource } from '../../sources/localDirectory';
+import { parseArchiveUri } from '../../core/archiveUri';
+import { zipFixture } from '../zipFixture';
 
 async function rendered(
   panel: vscode.WebviewPanel,
@@ -16,6 +18,7 @@ async function rendered(
   matches: (state: Record<string, unknown>) => boolean = () => true,
 ): Promise<Record<string, unknown>> {
   let result: Record<string, unknown> | undefined;
+  let last: unknown;
   const listener = panel.webview.onDidReceiveMessage((message: unknown) => {
     if (
       message &&
@@ -23,15 +26,19 @@ async function rendered(
       'type' in message &&
       message.type === 'rendered' &&
       'rowCount' in message &&
-      message.rowCount === count &&
-      matches(message)
-    )
-      result = message;
+      message.rowCount === count
+    ) {
+      last = 'scanStatus' in message ? message.scanStatus : undefined;
+      if (matches(message)) result = message;
+    }
   });
   try {
     const deadline = Date.now() + 15000;
     while (!result) {
-      assert.ok(Date.now() < deadline, 'Packaged table client should render recorded rows');
+      assert.ok(
+        Date.now() < deadline,
+        `Packaged table client should render recorded rows (${String(last)})`,
+      );
       await panel.webview.postMessage({ type: 'inspect' });
       await new Promise<void>((resolve) => setTimeout(resolve, 40));
     }
@@ -52,10 +59,119 @@ function installControls(panel: vscode.WebviewPanel): void {
     const node = document.getElementById(event.data.id);
     if (node instanceof HTMLSelectElement) { node.value = event.data.value; node.dispatchEvent(new Event('change')); }
     else if (node instanceof HTMLInputElement) { node.value = event.data.value; node.dispatchEvent(new Event('input')); }
-    else if (node instanceof HTMLButtonElement) node.click();
+    else if (node instanceof HTMLButtonElement) {
+      if (event.data.keyboard) {
+        node.focus();
+        if (node.tabIndex !== 0 || document.activeElement !== node) return;
+      }
+      node.click();
+    }
   });</script></body>`,
   );
 }
+
+suite('Scan row navigation', () => {
+  test('opens an exact loose match and offers physical choices from a wrapped ZIP table', async function () {
+    this.timeout(30000);
+    const { provider } = await vscode.extensions
+      .getExtension<{ provider: DatasetTreeProvider }>(extensionId)!
+      .activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-scan-row-'));
+    const rootUri = vscode.Uri.file(folder);
+    const unique = 'meg/sub-01_task-other_meg.fif';
+    const shared = 'meg/sub-01_task-test_meg.fif';
+    const table = `filename\n${unique}\n${shared}\nmeg/missing.fif\n../outside.fif\n`;
+    const bytes = zipFixture([
+      { name: 'sub-01/sub-01_scans.tsv', text: table },
+      { name: 'sub-01/' + shared, text: 'ZIP scan' },
+    ]);
+    const archive = join(folder, 'sub-01.zip');
+    let panel: vscode.WebviewPanel | undefined;
+    try {
+      await mkdir(join(folder, 'sub-01', 'meg'), { recursive: true });
+      await writeFile(join(folder, 'sub-01', shared), 'Loose scan');
+      await writeFile(join(folder, 'sub-01', unique), 'Unique scan');
+      await writeFile(archive, bytes);
+      const root = await vscode.commands.executeCommand<
+        import('../../core/directory').DirectoryEntry
+      >('bidsExplorer.addDataset', rootUri);
+      assert.ok(root);
+      const subject = (await provider.getChildren(provider.element(root))).find(
+        (row) => row.type === 'entry' && row.entry.name === 'sub-01',
+      );
+      assert.ok(subject);
+      const tableEntry = (await provider.getChildren(subject)).find(
+        (row) => row.type === 'entry' && row.entry.name === 'sub-01_scans.tsv',
+      );
+      assert.ok(tableEntry);
+      panel = await vscode.commands.executeCommand('bidsExplorer.openFile', tableEntry);
+      assert.ok(panel);
+      installControls(panel);
+      assert.equal((await rendered(panel, 4)).firstCell, unique);
+      const click = async (line: number) => {
+        panel!.reveal();
+        await rendered(panel!, 4);
+        await panel!.webview.postMessage({
+          type: 'testControl',
+          id: 'open-scan-' + line,
+          keyboard: true,
+        });
+      };
+      await click(2);
+      await waitText(vscode.Uri.file(join(folder, 'sub-01', unique)));
+      assert.equal(vscode.window.activeTextEditor!.document.getText(), 'Unique scan');
+      await click(4);
+      await rendered(panel, 4, (report) =>
+        String(report.scanStatus).includes('Scan missing “meg/missing.fif”'),
+      );
+      await click(5);
+      await rendered(panel, 4, (report) =>
+        String(report.scanStatus).includes('Invalid scan reference “../outside.fif”'),
+      );
+
+      const request = new Promise<void>((resolve) => {
+        const listener = panel!.webview.onDidReceiveMessage(
+          (message: { type?: string; line?: number }) => {
+            if (message.type === 'openScan' && message.line === 3) {
+              listener.dispose();
+              resolve();
+            }
+          },
+        );
+      });
+      await click(3);
+      await request;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      assert.ok(!Boolean(vscode.window.activeTextEditor), 'A duplicate waits for source selection');
+      await vscode.commands.executeCommand('workbench.action.quickOpenSelectNext');
+      await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+      const deadline = Date.now() + 5000;
+      while (vscode.window.activeTextEditor?.document.uri.scheme !== 'bids-zip') {
+        assert.ok(Date.now() < deadline, 'Expected the selected ZIP member to open');
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      const selected = vscode.window.activeTextEditor.document;
+      assert.equal(parseArchiveUri(selected.uri.toString()).memberPath, 'sub-01/' + shared);
+      assert.equal(selected.getText(), 'ZIP scan');
+      assert.deepEqual(await readFile(archive), bytes);
+      assert.equal(await readFile(join(folder, 'sub-01', shared), 'utf8'), 'Loose scan');
+    } finally {
+      panel?.dispose();
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      await vscode.commands.executeCommand(
+        'bidsExplorer.removeDataset',
+        provider.element({
+          datasetUri: rootUri.toString(),
+          uri: rootUri.toString(),
+          relativePath: '',
+          name: folder,
+          kind: 'directory',
+        }),
+      );
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
 async function waitText(uri: vscode.Uri): Promise<void> {
   const deadline = Date.now() + 5000;
   while (vscode.window.activeTextEditor?.document.uri.toString() !== uri.toString()) {

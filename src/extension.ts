@@ -1,12 +1,21 @@
 import { acquisitionSummary } from './core/acquisitions';
 import * as vscode from 'vscode';
+import { relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { entryArchiveUri, resourcePath } from './core/archiveUri';
 import { datasetAvailability } from './core/availability';
 import { DatasetBrowser } from './core/browser';
-import { describeEntry, folderEntities, type DirectoryEntry } from './core/directory';
+import {
+  describeEntry,
+  folderEntities,
+  isRecognizedBidsEntry,
+  type DirectoryEntry,
+} from './core/directory';
 import { interpretEntry } from './core/entities';
 import { linkedDerivativeDatasets } from './core/participantData';
 import { DatasetRegistrations } from './core/registrations';
+import { findRecordedScan } from './core/scanNavigation';
+import type { TextSnapshot } from './core/textSnapshot';
 import { descriptionPlan, type DescriptionOptions } from './core/treeDescriptions';
 import { WorkspaceDiscovery, isDeclaredCollection } from './core/workspaceDiscovery';
 import { ArchiveImageCache } from './sources/archiveImageCache';
@@ -22,7 +31,7 @@ import { ArchiveInspector } from './ui/archiveInspector';
 import { openAvailabilityView } from './ui/availabilityView';
 import { withCancellation } from './ui/cancellation';
 import { openDatasetDescriptionComparison } from './ui/datasetDescriptionComparison';
-import { DatasetTreeProvider, type TreeElement } from './ui/datasetTreeProvider';
+import { DatasetTreeProvider, type EntryElement, type TreeElement } from './ui/datasetTreeProvider';
 import { GradientPreviewManager, isGradientFile } from './ui/gradientPreview';
 import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
 import { ImageView } from './ui/imageView';
@@ -85,7 +94,7 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(handoff);
   const history = new HistoryPreviewManager(context.extensionUri);
   context.subscriptions.push(history);
-  const tables = new TablePreviewManager(context.extensionUri);
+  const tables = new TablePreviewManager(context.extensionUri, openRecordedScan);
   context.subscriptions.push(tables);
   const metadata = new MetadataPreviewManager(context.extensionUri);
   context.subscriptions.push(metadata);
@@ -301,6 +310,207 @@ export function activate(context: vscode.ExtensionContext): {
     void vscode.window.showErrorMessage(`BIDS Explorer could not open the file: ${String(error)}`);
   };
 
+  function openTable(uri: vscode.Uri, entry?: DirectoryEntry) {
+    if (entry && entryUri(entry).toString() === uri.toString())
+      return tables.open(uri, entry.datasetUri, entry.relativePath);
+    const root = browser
+      .datasets()
+      .map((entry) => entry.uri)
+      .filter((root) => uri.toString().startsWith(root.replace(/\/$/, '') + '/'))
+      .sort((a, b) => b.length - a.length)[0];
+    const path =
+      root && uri.scheme === 'file'
+        ? relative(fileURLToPath(root), uri.fsPath).split(sep).join('/')
+        : undefined;
+    return tables.open(uri, root, path);
+  }
+
+  async function openEntry(entry: DirectoryEntry) {
+    const { metadataVersions, name } = entry;
+    if (metadataVersions && name === 'dataset_description.json') {
+      const controller = new AbortController();
+      return await trackArchiveWork(controller, () =>
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: 'BIDS Explorer: Comparing dataset descriptions',
+            cancellable: true,
+          },
+          (_, token) =>
+            withCancellation(token, controller, async (signal) =>
+              panels.add(
+                await openDatasetDescriptionComparison(
+                  metadataVersions,
+                  context.extensionUri,
+                  signal,
+                ),
+              ),
+            ),
+        ),
+      );
+    }
+    if (entry.kind !== 'file') return;
+    await source.revision(entry);
+    const uri = entryUri(entry);
+    if (isNiftiFileName(resourcePath(uri.toString()))) return await openImage(entry);
+    if (isGradientFile(uri)) return previewGradients(uri);
+    if (isHistoryFile(uri))
+      return await previewOrOpenText(
+        uri,
+        () => history.open(uri),
+        'Could not preview history; opening the original text.',
+      );
+    if (isSummaryTable(uri))
+      return await previewOrOpenText(
+        uri,
+        () => openTable(uri, entry),
+        'Could not preview the table; opening the original TSV instead.',
+      );
+    if (isJsonMetadata(uri))
+      return await previewOrOpenText(
+        uri,
+        () => metadata.open(uri),
+        'Could not preview JSON metadata; opening the original JSON instead.',
+      );
+    await vscode.commands.executeCommand('vscode.open', uri);
+  }
+
+  async function openRecordedScan(
+    datasetUri: string | undefined,
+    tablePath: string | undefined,
+    table: TextSnapshot,
+    filename: string,
+    signal: AbortSignal,
+  ): Promise<string> {
+    const recorded = `“${filename || '(empty)'}”`;
+    const root = browser.datasets().find((entry) => entry.datasetUri === datasetUri);
+    if (!root || !tablePath)
+      return `Scan not checked ${recorded}. Reopen the table from its registered dataset in the BIDS tree.`;
+    const scanSource = {
+      children: (entry: DirectoryEntry, abort: AbortSignal) => {
+        const current = browser.snapshot(entry);
+        const prefix = entry.relativePath ? entry.relativePath + '/' : '';
+        // A table opened on a later SquashFS page can use its visible ancestors.
+        // Below the table directory, always read the physical branches again.
+        if (
+          !current.stale &&
+          current.paging &&
+          current.paging.page > 1 &&
+          tablePath.startsWith(prefix) &&
+          current.children.some(
+            (child) =>
+              child.kind === 'directory' &&
+              child.name === tablePath.slice(prefix.length).split('/')[0],
+          )
+        )
+          return Promise.resolve([...current.children, { ...entry, paging: current.paging }]);
+        return source.children(entry, abort);
+      },
+      revision: (entry: DirectoryEntry) => source.revision(entry),
+    };
+    const result = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Finding recorded scan',
+        cancellable: true,
+      },
+      (_, token) => {
+        const controller = new AbortController();
+        return withCancellation(token, controller, (progressSignal) =>
+          findRecordedScan(
+            scanSource,
+            root,
+            tablePath,
+            table,
+            filename,
+            AbortSignal.any([signal, progressSignal]),
+          ),
+        ).catch((error: unknown) => {
+          if (!controller.signal.aborted) throw error;
+        });
+      },
+    );
+    if (!result) return 'Scan lookup cancelled.';
+    switch (result.status) {
+      case 'invalid':
+        return `Invalid scan reference ${recorded}. Use a relative path within the table’s dataset or pipeline, without URLs or parent-directory segments.`;
+      case 'stale':
+        return `The table source changed. Reload its snapshot before opening ${recorded}.`;
+      case 'missing':
+        return `Scan missing ${recorded}. No exact match was found in the checked scope.`;
+      case 'unchecked':
+        return `Scan not fully checked ${recorded}. Browse the relevant pages or archive branch to inspect additional sources.`;
+      case 'unreadable':
+        return `Could not read the scan scope for ${recorded}. Refresh the relevant branch and try again.`;
+    }
+    const coverage = [
+      result.unchecked ? 'Some sources were not checked.' : '',
+      result.unreadable ? 'Some sources could not be read.' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    let entry = result.entries[0];
+    if (result.entries.length > 1 || coverage) {
+      const cancellation = new vscode.CancellationTokenSource();
+      const cancel = () => cancellation.cancel();
+      signal.throwIfAborted();
+      signal.addEventListener('abort', cancel, { once: true });
+      const selected = await Promise.resolve(
+        vscode.window.showQuickPick(
+          result.entries.map((entry) => ({
+            label: entry.name,
+            description: entry.archive?.sourceUri ?? entry.uri,
+            detail: entry.archive
+              ? `${entry.archive.memberPath} (member ${entry.archive.memberIndex ?? 'directory'})`
+              : undefined,
+            entry,
+          })),
+          {
+            title: 'Choose scan source',
+            placeHolder: coverage || filename,
+            matchOnDescription: true,
+            matchOnDetail: true,
+          },
+          cancellation.token,
+        ),
+      ).finally(() => {
+        signal.removeEventListener('abort', cancel);
+        cancellation.dispose();
+      });
+      if (!selected) return `Scan selection cancelled. ${coverage}`.trim();
+      entry = selected.entry;
+    }
+    signal.throwIfAborted();
+    if (!browser.datasets().includes(root))
+      return 'The dataset is no longer registered. Reopen the table.';
+    if (entry.kind === 'directory') {
+      if (entry.archive) {
+        const folder = result.directories.find((folder) =>
+          folder.logical?.sources.some(
+            (physical) =>
+              physical.archive?.sourceUri === entry.archive?.sourceUri &&
+              physical.archive?.memberPath === entry.archive?.memberPath,
+          ),
+        );
+        if (!folder || !isRecognizedBidsEntry(folder))
+          return `Found ${recorded} in the archive. Browse the selected archive to inspect this directory.`;
+        let parent: EntryElement | undefined;
+        for (const branch of [...result.ancestors, folder]) {
+          const row = provider.element(branch);
+          row.treeParent = parent;
+          parent = row;
+        }
+        await tree.reveal(parent!, { select: true, focus: true });
+      } else {
+        await handoff.add(vscode.Uri.parse(root.uri));
+        await vscode.commands.executeCommand('revealInExplorer', entryUri(entry));
+      }
+      return `Located ${recorded}. ${coverage}`.trim();
+    }
+    await openEntry(entry);
+    return `Opened ${recorded}. ${coverage}`.trim();
+  }
+
   context.subscriptions.push(
     provider,
     tree,
@@ -496,16 +706,11 @@ export function activate(context: vscode.ExtensionContext): {
           );
           return undefined;
         }
-        const root =
-          element?.type === 'entry' && element.entry.uri === uri.toString()
-            ? element.entry.datasetUri
-            : browser
-                .datasets()
-                .map((entry) => entry.uri)
-                .filter((root) => uri.toString().startsWith(root.replace(/\/$/, '') + '/'))
-                .sort((a, b) => b.length - a.length)[0];
         try {
-          return await tables.open(uri, root);
+          return await openTable(
+            uri,
+            element?.type === 'entry' && element.entry.kind === 'file' ? element.entry : undefined,
+          );
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') return undefined;
           void vscode.window.showErrorMessage(
@@ -562,54 +767,8 @@ export function activate(context: vscode.ExtensionContext): {
     command('bidsExplorer.openFile', async (arg) => {
       const element = selected(arg);
       if (element?.type !== 'entry') return;
-      const { metadataVersions, name } = element.entry;
       try {
-        if (metadataVersions && name === 'dataset_description.json') {
-          const controller = new AbortController();
-          return await trackArchiveWork(controller, () =>
-            vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: 'BIDS Explorer: Comparing dataset descriptions',
-                cancellable: true,
-              },
-              (_, token) =>
-                withCancellation(token, controller, async (signal) =>
-                  panels.add(
-                    await openDatasetDescriptionComparison(
-                      metadataVersions,
-                      context.extensionUri,
-                      signal,
-                    ),
-                  ),
-                ),
-            ),
-          );
-        }
-        if (element.entry.kind !== 'file') return;
-        await source.revision(element.entry);
-        const uri = entryUri(element.entry);
-        if (isNiftiFileName(resourcePath(uri.toString()))) return await openImage(element.entry);
-        if (isGradientFile(uri)) return previewGradients(uri);
-        if (isHistoryFile(uri))
-          return await previewOrOpenText(
-            uri,
-            () => history.open(uri),
-            'Could not preview history; opening the original text.',
-          );
-        if (isSummaryTable(uri))
-          return await previewOrOpenText(
-            uri,
-            () => tables.open(uri, element.entry.datasetUri),
-            'Could not preview the table; opening the original TSV instead.',
-          );
-        if (isJsonMetadata(uri))
-          return await previewOrOpenText(
-            uri,
-            () => metadata.open(uri),
-            'Could not preview JSON metadata; opening the original JSON instead.',
-          );
-        await vscode.commands.executeCommand('vscode.open', uri);
+        return await openEntry(element.entry);
       } catch (error) {
         reportOpenError(error);
       }

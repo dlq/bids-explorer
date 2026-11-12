@@ -196,7 +196,7 @@ export class LogicalDirectorySource implements DirectorySource {
             signal.throwIfAborted();
             if (!tar) throw error;
             // Keep an unreadable tar expandable so its error can be inspected independently.
-            candidates.push(child);
+            candidates.push({ ...child, archive: { ...child.archive, unreadable: true } });
           }
         } else candidates.push(child);
       }

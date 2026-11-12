@@ -32,6 +32,7 @@ export interface DirectoryEntry {
   readonly archive?: {
     readonly format?: 'tar' | 'squashfs';
     readonly datasetWrapper?: boolean;
+    readonly unreadable?: true;
     readonly sourceUri: string;
     readonly containerPath: string;
     readonly memberPath: string;
