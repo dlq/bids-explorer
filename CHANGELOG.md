@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Stream NIfTI images through VS Code's webview messaging channel to avoid writing remote image bytes to the local webview resource cache. Keep first-frame viewing for loose and archived images.
+
 ## [1.0.4] - 2026-11-10
 
 - Add a beginner Remote SSH walkthrough covering connection, MFA, remote installation, study browsing and reconnect troubleshooting.

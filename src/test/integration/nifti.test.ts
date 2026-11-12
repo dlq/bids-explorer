@@ -70,7 +70,10 @@ suite('Progressive NIfTI viewer', () => {
             frame: number;
           };
         } = {};
+        let showedFirstFrame = false;
         const listener = panel.webview.onDidReceiveMessage((state: typeof report) => {
+          if (state.status?.startsWith('Showing frame 1 of 2.') && !state.loadedFrames)
+            showedFirstFrame = true;
           report = state;
         });
         try {
@@ -86,6 +89,8 @@ suite('Progressive NIfTI viewer', () => {
           }
           assert.equal(report.loadedFrames, 2, report.status);
           assert.equal(report.previewFrames, 2);
+          assert.ok(showedFirstFrame, 'The first frame must render before the full image');
+          assert.doesNotMatch(panel.webview.html, /data-source=|connect-src/);
           assert.equal(report.navigationEnabled, true);
           assert.equal(report.display?.layout, 'quad');
           assert.deepEqual(

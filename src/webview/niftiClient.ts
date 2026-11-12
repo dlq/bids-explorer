@@ -249,13 +249,62 @@ async function open() {
     state.display.maximum = image.cal_max ?? 1;
     publish();
   };
-  const response = await fetch(canvas.dataset.source!, { signal: controller.signal });
-  if (!response.ok || !response.body)
-    throw new Error(`Unable to read the image (HTTP ${response.status}).`);
+  controller.signal.throwIfAborted();
+  let stopReading: () => void;
+  const bytes = new ReadableStream<Uint8Array<ArrayBuffer>>(
+    {
+      start(output) {
+        const signal = controller.signal;
+        const cleanup = () => {
+          window.removeEventListener('message', receive);
+          signal.removeEventListener('abort', abort);
+        };
+        const abort = () => {
+          cleanup();
+          api.postMessage('cancelNiftiRead');
+          output.error(signal.reason);
+        };
+        const receive = (event: MessageEvent<unknown>) => {
+          const message = event.data;
+          if (
+            event.origin !== window.location.origin ||
+            !message ||
+            typeof message !== 'object' ||
+            !('type' in message)
+          )
+            return;
+          if (
+            message.type === 'niftiChunk' &&
+            'bytes' in message &&
+            message.bytes instanceof ArrayBuffer
+          ) {
+            output.enqueue(new Uint8Array(message.bytes));
+          } else if (message.type === 'niftiEnd') {
+            cleanup();
+            output.close();
+          } else if (message.type === 'niftiReadError') {
+            cleanup();
+            output.error(new Error('Could not read the image file.'));
+          }
+        };
+        window.addEventListener('message', receive);
+        signal.addEventListener('abort', abort, { once: true });
+        stopReading = () => {
+          cleanup();
+          api.postMessage('cancelNiftiRead');
+        };
+      },
+      pull() {
+        api.postMessage('readNiftiChunk');
+      },
+      cancel() {
+        stopReading();
+      },
+    },
+    { highWaterMark: 0 },
+  );
   const stream =
-    canvas.dataset.gzip === 'true'
-      ? response.body.pipeThrough(new DecompressionStream('gzip'))
-      : response.body;
+    canvas.dataset.gzip === 'true' ? bytes.pipeThrough(new DecompressionStream('gzip')) : bytes;
   let preview: NVImage | undefined;
   const complete = await readNiftiStream(stream, async (buffer, frames) => {
     preview = await NVImage.loadFromUrl({ url: buffer, name: 'preview.nii' });

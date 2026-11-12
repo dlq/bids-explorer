@@ -1,4 +1,6 @@
 import { randomBytes } from 'node:crypto';
+import { constants, type ReadStream } from 'node:fs';
+import { open } from 'node:fs/promises';
 import * as vscode from 'vscode';
 import { PreviewPanelManager } from './previewPanelManager';
 import type { DirectoryEntry } from '../core/directory';
@@ -59,7 +61,7 @@ export function openProgressiveNifti(
     {
       enableScripts: true,
       retainContextWhenHidden: true,
-      localResourceRoots: [renderer, scripts, media, vscode.Uri.joinPath(source, '..')],
+      localResourceRoots: [renderer, scripts, media],
     },
   );
   panel.iconPath = niftiIcon(extension);
@@ -74,6 +76,58 @@ export function openProgressiveNifti(
 <p>Some BIDS example datasets use empty image placeholders for testing dataset structure. Choose a dataset with real images to use the viewer.</p></main></body></html>`;
     return panel;
   }
+  // Send image bytes over the webview message channel. Resource URLs can write the
+  // full response to VS Code's client-side webview cache, including over Remote SSH.
+  let stream: ReadStream | undefined;
+  let reader: AsyncIterator<Buffer> | undefined;
+  let reading = false;
+  let stopped = false;
+  const stop = () => {
+    stopped = true;
+    stream?.destroy();
+    listener.dispose();
+  };
+  const listener = webview.onDidReceiveMessage(async (message: unknown) => {
+    if (message === 'cancelNiftiRead') return stop();
+    if (message !== 'readNiftiChunk' || reading || stopped) return;
+    reading = true;
+    try {
+      if (!reader) {
+        const file = await open(
+          source.fsPath,
+          constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+        );
+        try {
+          if (!(await file.stat()).isFile()) throw new Error('Expected an ordinary image file.');
+          if (stopped) return;
+          stream = file.createReadStream({ highWaterMark: 256 * 1024 });
+        } finally {
+          if (!stream) await file.close();
+        }
+        reader = stream[Symbol.asyncIterator]();
+      }
+      const next = await reader.next();
+      if (stopped) return;
+      reading = false;
+      if (next.done) {
+        stop();
+        await webview.postMessage({ type: 'niftiEnd' });
+      } else if (
+        !(await webview.postMessage({
+          type: 'niftiChunk',
+          bytes: new Uint8Array(next.value).buffer,
+        }))
+      ) {
+        stop();
+      }
+    } catch {
+      if (!stopped) {
+        stop();
+        await webview.postMessage({ type: 'niftiReadError' });
+      }
+    }
+  });
+  panel.onDidDispose(stop);
   const imports = JSON.stringify({
     imports: {
       '@niivue/niivue': webview.asWebviewUri(vscode.Uri.joinPath(renderer, 'index.js')).toString(),
@@ -82,7 +136,7 @@ export function openProgressiveNifti(
   const nonce = randomBytes(16).toString('hex');
   webview.html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' 'strict-dynamic'; img-src data:; style-src ${webview.cspSource}; connect-src ${webview.cspSource}; base-uri 'none'; form-action 'none';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' 'strict-dynamic'; img-src data:; style-src ${webview.cspSource}; base-uri 'none'; form-action 'none';">
 <link rel="stylesheet" href="${resource(vscode.Uri.joinPath(media, 'nifti.css'))}">
 <script type="importmap" nonce="${nonce}">${imports}</script>
 <title>NIfTI image</title></head><body>
@@ -90,7 +144,7 @@ export function openProgressiveNifti(
 <button id="cancel" type="button">Cancel loading</button>
 <button id="image-controls" type="button">Image controls</button>
 </header>
-<main class="image-stage"><div class="image-canvas"><div class="image-renderer"><canvas aria-label="NIfTI image" data-source="${resource(source)}" data-gzip="${source.path.endsWith('.gz')}"></canvas></div></div></main>
+<main class="image-stage"><div class="image-canvas"><div class="image-renderer"><canvas aria-label="NIfTI image" data-gzip="${source.path.endsWith('.gz')}"></canvas></div></div></main>
 <script type="module" nonce="${nonce}" src="${resource(vscode.Uri.joinPath(scripts, 'webview', 'niftiClient.js'))}"></script>
 </body></html>`;
   return panel;
