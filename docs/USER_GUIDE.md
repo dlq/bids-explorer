@@ -26,6 +26,8 @@ For a first server connection, follow the [Remote SSH walkthrough](REMOTE_SSH.md
 | Compare raw data and processing outputs                          | Expand a session’s **Derivatives** branch to browse matching processing pipelines. Outputs without a session appear under **Derivatives without a session** at participant level. For a cohort, right-click the dataset and choose **Show Participant Availability**. Select the sessions or derivative outputs you need and choose **Apply filters**. |
 | Read the dataset’s release notes                                 | Open `CHANGES`. The preview follows the file’s order and shows its recorded versions and dates.                                                                                                                                                                                                                                                        |
 
+For a large **Participants** table, enter text and choose **Apply filter**. The preview reports rows checked, matches and file coverage. Choose **Cancel scan** to stop. An incomplete scan can miss matches farther down the file. Use **Availability** for session and processing-output coverage.
+
 For tables inside an archive, the column dictionary comes from a JSON file next to the table in that archive. To inspect metadata inherited from other locations or sources, use **Inspect Metadata and Related Files** on the table.
 
 A preview’s **Open original** action opens the source in the regular editor. Use **Reload snapshot** if the file has changed. In the availability grid, **Missing** means the inspected branch contained no matching data. **Not checked** means coverage is incomplete.

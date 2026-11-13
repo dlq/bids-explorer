@@ -1,8 +1,11 @@
-import type { TableSnapshot, SummaryTablePreview } from '../core/tableTypes';
+import type { ParticipantTablePage, TableSnapshot, SummaryTablePreview } from '../core/tableTypes';
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
 const element = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 let table: TableSnapshot | undefined, dictionary: SummaryTablePreview['dictionary'] | undefined;
+let tablePage: ParticipantTablePage | undefined;
+let paged = false;
+let scanning = false;
 let isEventsTable = false;
 let scanRevision: number | undefined;
 let page = 0,
@@ -16,6 +19,8 @@ function report(): void {
     sourceUri: table.snapshot.sourceUri,
     rowCount: table.rows.length,
     visibleCount,
+    tableProgress: element('table-progress').textContent,
+    tablePage,
     page,
     columnPage,
     firstCell: table.rows[0]?.cells[0],
@@ -79,10 +84,10 @@ function dictionaryDescription(valueText: string): HTMLElement | undefined {
 function render(): void {
   if (!table) return;
   const filter = element<HTMLInputElement>('filter').value.toLowerCase();
-  const rows = table.rows.filter((row) =>
-    row.cells.some((cell) => cell.toLowerCase().includes(filter)),
-  );
-  page = Math.max(0, Math.min(page, Math.ceil(rows.length / 50) - 1));
+  const rows = tablePage
+    ? table.rows
+    : table.rows.filter((row) => row.cells.some((cell) => cell.toLowerCase().includes(filter)));
+  page = tablePage?.page ?? Math.max(0, Math.min(page, Math.ceil(rows.length / 50) - 1));
   const width = table.rows.reduce(
     (max, row) => Math.max(max, row.cells.length),
     table.columns.length,
@@ -126,7 +131,7 @@ function render(): void {
     heading.append(action);
   }
   head.append(heading);
-  const shown = rows.slice(page * 50, page * 50 + 50);
+  const shown = tablePage ? rows : rows.slice(page * 50, page * 50 + 50);
   visibleCount = shown.length;
   for (const row of shown) {
     const tr = document.createElement('tr'),
@@ -164,19 +169,21 @@ function render(): void {
     }
     body.append(tr);
   }
-  element('page').textContent =
-    `${rows.length ? page * 50 + 1 : 0}–${Math.min(rows.length, (page + 1) * 50)} of ${rows.length} matching rows`;
+  element('page').textContent = tablePage
+    ? `${rows.length ? page * 50 + 1 : 0}–${rows.length ? page * 50 + rows.length : 0} of ${tablePage.matched.toLocaleString()} matching rows`
+    : `${rows.length ? page * 50 + 1 : 0}–${Math.min(rows.length, (page + 1) * 50)} of ${rows.length} matching rows`;
   element('columns').textContent =
     `${columnPage * 12 + 1}–${Math.min(width, (columnPage + 1) * 12)} of ${width} columns`;
   element('column-paging').hidden = width <= 12;
-  element('previous').hidden = rows.length <= 50;
-  element('next').hidden = rows.length <= 50;
-  element<HTMLButtonElement>('previous').disabled = page === 0;
-  element<HTMLButtonElement>('next').disabled = (page + 1) * 50 >= rows.length;
+  const matchCount = tablePage?.matched ?? rows.length;
+  element('previous').hidden = matchCount <= 50;
+  element('next').hidden = matchCount <= 50;
+  element<HTMLButtonElement>('previous').disabled = scanning || page === 0;
+  element<HTMLButtonElement>('next').disabled = scanning || (page + 1) * 50 >= matchCount;
   element<HTMLButtonElement>('left').disabled = columnPage === 0;
   element<HTMLButtonElement>('right').disabled = (columnPage + 1) * 12 >= width;
   element('summary').textContent =
-    `${table.rows.length} recorded rows · ${table.columns.length} columns`;
+    `${(tablePage?.checked ?? table.rows.length).toLocaleString()} recorded rows · ${table.columns.length} columns`;
   element('issues').textContent = [
     table.duplicateHeaders.length ? `${table.duplicateHeaders.length} duplicate header names` : '',
     table.duplicateIds.length
@@ -241,6 +248,35 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   if (event.origin !== window.location.origin) return;
   const message = event.data;
   if (!message || typeof message !== 'object' || !('type' in message)) return;
+  if (message.type === 'tableProgress' && 'progress' in message) {
+    const progress = message.progress as ParticipantTablePage;
+    paged = true;
+    scanning = progress.state === 'scanning';
+    element('apply-filter').hidden = false;
+    element<HTMLInputElement>('filter').maxLength = 256;
+    element('cancel-table').hidden = !scanning;
+    const percent = progress.totalBytes
+      ? Math.min(99, Math.floor((100 * progress.bytes) / progress.totalBytes))
+      : 0;
+    const operation = scanning
+      ? 'Checking table'
+      : progress.state === 'cancelled'
+        ? 'Scan cancelled'
+        : 'Scan failed';
+    element('table-progress').textContent =
+      `${operation} · ${progress.checked.toLocaleString()} rows checked · ${progress.matched.toLocaleString()} matches so far · ${percent}% of file` +
+      (progress.filter ? ` for “${progress.filter}”` : '') +
+      (scanning ? '' : '. Coverage is incomplete. Apply the filter to retry.') +
+      (tablePage
+        ? ` Showing the last completed page${tablePage.filter ? ` for “${tablePage.filter}”` : ' without a filter'}.`
+        : '');
+    if (!scanning) element<HTMLButtonElement>('reload').disabled = false;
+    element<HTMLButtonElement>('previous').disabled = scanning || page === 0;
+    element<HTMLButtonElement>('next').disabled =
+      scanning || (page + 1) * 50 >= (tablePage?.matched ?? 0);
+    report();
+    return;
+  }
   if (message.type === 'inspect') {
     report();
     return;
@@ -280,6 +316,16 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
             ? 'Table'
             : 'Participants';
   table = message.table as TableSnapshot;
+  tablePage =
+    'tablePage' in message ? (message.tablePage as ParticipantTablePage | undefined) : undefined;
+  paged = !!tablePage;
+  scanning = false;
+  element('apply-filter').hidden = !paged;
+  element('cancel-table').hidden = true;
+  element('table-progress').textContent = tablePage
+    ? `Entire table checked · ${tablePage.checked.toLocaleString()} rows · ${tablePage.matched.toLocaleString()} matches` +
+      (tablePage.filter ? ` for “${tablePage.filter}”` : '')
+    : '';
   scanRevision =
     'kind' in message &&
     message.kind === 'scans' &&
@@ -325,15 +371,27 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   element<HTMLButtonElement>('reload').disabled = false;
   render();
 });
+function requestPage(page: number, filter: string): void {
+  api.postMessage({ type: 'participantPage', page, filter });
+}
+const applyFilter = () => requestPage(0, element<HTMLInputElement>('filter').value);
+element('apply-filter').addEventListener('click', applyFilter);
+element('cancel-table').addEventListener('click', () => api.postMessage({ type: 'cancelTable' }));
+element('filter').addEventListener('keydown', (event) => {
+  if (paged && event.key === 'Enter') applyFilter();
+});
 element('filter').addEventListener('input', () => {
+  if (paged) return;
   page = 0;
   render();
 });
 element('previous').addEventListener('click', () => {
+  if (tablePage) return requestPage(page - 1, tablePage.filter);
   page--;
   render();
 });
 element('next').addEventListener('click', () => {
+  if (tablePage) return requestPage(page + 1, tablePage.filter);
   page++;
   render();
 });

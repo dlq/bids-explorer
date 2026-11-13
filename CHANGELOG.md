@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Browse large participant tables in 50-row pages and filter with cancellation, checked-row counts and explicit coverage status.
+
 - Put the five-minute Quickstart beside installation instructions and show how to contribute without writing code on GitHub and the Marketplace.
 
 ## [1.1.0] - 2026-11-13

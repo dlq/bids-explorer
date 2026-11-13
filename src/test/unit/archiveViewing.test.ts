@@ -1,3 +1,4 @@
+import { loadParticipantPreview, scanParticipantTable } from '../../sources/participantTablePaging';
 import { parseJsonMetadata, parseDatasetDescription } from '../../core/metadata';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
@@ -368,6 +369,24 @@ void test('archive metadata previews retain provenance, numeric tokens, dictiona
       ),
       /changed/,
     );
+  });
+});
+void test('large archived participant tables keep the physical member and its column dictionary', async () => {
+  await fixture(async (_folder, _path, ref, write) => {
+    await write([
+      {
+        name: 'participants.tsv',
+        text: 'participant_id\tgroup\n' + 'sub-01\tgroup\n'.repeat(10001),
+      },
+      { name: 'participants.json', text: '{"group":{"Description":"Recorded cohort"}}' },
+    ]);
+    const uri = await ref('participants.tsv');
+    assert.equal((await loadParticipantPreview(uri, signal())).dictionary?.status, 'loaded');
+    const result = await scanParticipantTable(uri, 200, 'group', signal(), () => {});
+    assert.equal(result.data.table.snapshot.archiveSource?.memberPath, 'participants.tsv');
+    assert.equal(result.progress.checked, 10001);
+    assert.equal(result.data.table.rows.length, 1);
+    assert.equal(result.data.table.rows[0].line, 10002);
   });
 });
 void test('MRI cache extracts only one verified member, publishes privately, reuses it and retains provenance until explicit clearing', async () => {

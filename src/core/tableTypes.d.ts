@@ -37,3 +37,13 @@ export interface SummaryTablePreview {
 
 /** Compatibility name for the original participant-only loader. */
 export type ParticipantsPreview = SummaryTablePreview;
+
+export interface ParticipantTablePage {
+  readonly page: number;
+  readonly filter: string;
+  readonly checked: number;
+  readonly matched: number;
+  readonly bytes: number;
+  readonly totalBytes: number;
+  readonly state: 'scanning' | 'complete' | 'cancelled' | 'failed';
+}

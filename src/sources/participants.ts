@@ -14,6 +14,15 @@ export async function loadParticipants(
   const path = fileURLToPath(uri);
   if (basename(path) !== 'participants.tsv') throw new Error('Choose a participants.tsv file.');
   const table = await parseTable(await read(uri, signal), signal);
+  return Object.freeze({ table, dictionary: await loadParticipantsDictionary(uri, signal, read) });
+}
+
+export async function loadParticipantsDictionary(
+  uri: string,
+  signal: AbortSignal,
+  read = readTextSnapshot,
+): Promise<ParticipantsPreview['dictionary']> {
+  const path = fileURLToPath(uri);
   const sourceUri = pathToFileURL(join(dirname(path), 'participants.json')).href;
   let dictionary: ParticipantsPreview['dictionary'];
   try {
@@ -28,5 +37,5 @@ export async function loadParticipants(
     });
   }
   signal.throwIfAborted();
-  return Object.freeze({ table, dictionary });
+  return dictionary;
 }

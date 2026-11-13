@@ -97,6 +97,14 @@ export async function loadArchiveTable(
           ? 'filename'
           : '',
   );
+  return Object.freeze({ kind, table, dictionary: await loadArchiveTableDictionary(uri, signal) });
+}
+
+export async function loadArchiveTableDictionary(
+  uri: string,
+  signal: AbortSignal,
+): Promise<SummaryTablePreview['dictionary']> {
+  const path = resourcePath(uri);
   let dictionary: SummaryTablePreview['dictionary'];
   let sourceUri = parseArchiveUri(uri).sourceUri;
   try {
@@ -126,5 +134,5 @@ export async function loadArchiveTable(
       error: String(error),
     });
   }
-  return Object.freeze({ kind, table, dictionary });
+  return dictionary;
 }

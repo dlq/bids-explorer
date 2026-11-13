@@ -5,6 +5,8 @@ import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { randomBytes } from 'node:crypto';
 import { loadSummaryTable } from '../sources/summaryTables';
 import { summaryTableKind } from '../core/tables';
+import { loadParticipantPreview, scanParticipantTable } from '../sources/participantTablePaging';
+import type { ParticipantTablePage } from '../core/tableTypes';
 import type { TextSnapshot } from '../core/textSnapshot';
 
 type OpenScan = (
@@ -40,27 +42,31 @@ export class TablePreviewManager extends PreviewPanelManager {
 
   open(uri: vscode.Uri, datasetUri?: string, tablePath?: string): Promise<vscode.WebviewPanel> {
     const key = uri.toString() + (isParticipantsTable(uri) ? '' : '\n' + (datasetUri ?? ''));
-    const load = (signal: AbortSignal) => loadSummaryTable(uri.toString(), signal, datasetUri);
-    return this.showPanel(key, load, (data) =>
-      this.render(uri, load, data, this.openScan?.bind(undefined, datasetUri, tablePath)),
+    const load = async (signal: AbortSignal) =>
+      isParticipantsTable(uri)
+        ? loadParticipantPreview(uri.toString(), signal)
+        : { data: await loadSummaryTable(uri.toString(), signal, datasetUri) };
+    return this.showPanel(key, load, (initial) =>
+      this.render(uri, load, initial, this.openScan?.bind(undefined, datasetUri, tablePath)),
     );
   }
 
   private render(
     uri: vscode.Uri,
-    load: (signal: AbortSignal) => ReturnType<typeof loadSummaryTable>,
-    data: Awaited<ReturnType<typeof loadSummaryTable>>,
+    load: (signal: AbortSignal) => ReturnType<typeof loadParticipantPreview>,
+    initial: Awaited<ReturnType<typeof loadParticipantPreview>>,
     openScan?: (table: TextSnapshot, filename: string, signal: AbortSignal) => Promise<string>,
   ): vscode.WebviewPanel {
+    let { data, dictionary } = initial;
     const panel = this.createPanel(
       'bidsExplorer.table',
-      (data.kind === 'sessions'
+      (data?.kind === 'sessions'
         ? 'Sessions'
-        : data.kind === 'scans'
+        : data?.kind === 'scans'
           ? 'Scans'
-          : data.kind === 'events'
+          : data?.kind === 'events'
             ? 'Events'
-            : data.kind === 'table'
+            : data?.kind === 'table'
               ? 'Table'
               : 'Participants') +
         ' · ' +
@@ -70,11 +76,17 @@ export class TablePreviewManager extends PreviewPanelManager {
     let reloadController: AbortController | undefined;
     let scanController: AbortController | undefined;
     let scanRevision = 0;
+    let tableController: AbortController | undefined;
+    let tablePage: ParticipantTablePage | undefined;
+    let latestProgress: ParticipantTablePage | undefined;
     const publish = () => {
+      if (!data) return;
+
       return panel.webview.postMessage({
         type: 'snapshot',
         kind: data.kind ?? 'participants',
         scanRevision,
+        tablePage,
         table: {
           ...data.table,
           snapshot: { ...data.table.snapshot, text: undefined },
@@ -90,12 +102,73 @@ export class TablePreviewManager extends PreviewPanelManager {
           : data.dictionary,
       });
     };
+    const scanPage = async (page: number, filter: string, reload = false) => {
+      const companion = dictionary;
+      if (!companion) return;
+      tableController?.abort();
+      const controller = (tableController = new AbortController());
+      const current = () => !closed && tableController === controller;
+      try {
+        const result = await this.read(
+          (signal) =>
+            scanParticipantTable(
+              uri.toString(),
+              page,
+              filter,
+              signal,
+              (progress) => {
+                if (current()) {
+                  latestProgress = progress;
+                  void panel.webview.postMessage({ type: 'tableProgress', progress });
+                }
+              },
+              reload ? undefined : data?.table.snapshot,
+            ),
+          controller,
+        );
+        if (current()) {
+          data = { ...result.data, dictionary: companion };
+          tablePage = result.progress;
+          latestProgress = undefined;
+          await publish();
+        }
+      } catch (error) {
+        if (current() && !controller.signal.aborted)
+          await panel.webview.postMessage({
+            type: 'error',
+            message: `Could not read the Participants table. ${String(error)}`,
+          });
+      } finally {
+        if (current()) tableController = undefined;
+      }
+    };
     const messages = panel.webview.onDidReceiveMessage(async (message: unknown) => {
       if (!message || typeof message !== 'object' || !('type' in message)) return;
-      if (message.type === 'ready') await publish();
+      if (message.type === 'ready') {
+        if (data) await publish();
+        if (latestProgress)
+          await panel.webview.postMessage({ type: 'tableProgress', progress: latestProgress });
+        else if (!data && !tableController) await scanPage(0, '');
+      }
+      if (message.type === 'cancelTable') tableController?.abort();
+      if (
+        message.type === 'participantPage' &&
+        dictionary &&
+        !reloadController &&
+        'page' in message &&
+        typeof message.page === 'number' &&
+        Number.isSafeInteger(message.page) &&
+        message.page >= 0 &&
+        'filter' in message &&
+        typeof message.filter === 'string' &&
+        message.filter.length <= 256 &&
+        (message.page === 0 ||
+          (message.filter === tablePage?.filter && message.page * 50 < tablePage.matched))
+      )
+        await scanPage(message.page, message.filter);
       if (
         message.type === 'openScan' &&
-        data.kind === 'scans' &&
+        data?.kind === 'scans' &&
         openScan &&
         !scanController &&
         !reloadController &&
@@ -107,6 +180,7 @@ export class TablePreviewManager extends PreviewPanelManager {
         const column = data.table.columns.indexOf('filename');
         if (column < 0 || column !== data.table.columns.lastIndexOf('filename')) return;
         const row = data.table.rows.find((row) => row.line === message.line);
+        const snapshot = data.table.snapshot;
         if (!row) return;
         const controller = (scanController = new AbortController());
         const revision = scanRevision;
@@ -114,7 +188,7 @@ export class TablePreviewManager extends PreviewPanelManager {
         const reply = (text: string) => panel.webview.postMessage({ type: 'scanStatus', text });
         try {
           const text = await this.read(
-            (signal) => openScan(data.table.snapshot, row.cells[column] ?? '', signal),
+            (signal) => openScan(snapshot, row.cells[column] ?? '', signal),
             controller,
           );
           if (current()) await reply(text);
@@ -140,9 +214,10 @@ export class TablePreviewManager extends PreviewPanelManager {
             });
         }
       }
+      const currentDictionary = data?.dictionary;
       const dictionaryUris =
-        data.dictionary.sources?.map((source) => source.sourceUri) ??
-        (data.dictionary.status === 'loaded' ? [data.dictionary.sourceUri] : []);
+        currentDictionary?.sources?.map((source) => source.sourceUri) ??
+        (currentDictionary?.status === 'loaded' ? [currentDictionary.sourceUri] : []);
       if (message.type === 'openDictionary' && dictionaryUris.length) {
         const index = 'index' in message ? message.index : 0;
         if (
@@ -168,13 +243,21 @@ export class TablePreviewManager extends PreviewPanelManager {
       }
       if (message.type === 'reload' && !reloadController) {
         scanController?.abort();
+        tableController?.abort();
         reloadController = new AbortController();
         try {
           const next = await this.read(load, reloadController);
           if (!closed) {
-            data = next;
-            scanRevision++;
-            await publish();
+            if (next.dictionary) {
+              dictionary = next.dictionary;
+              await scanPage(0, tablePage?.filter ?? '', true);
+            } else {
+              ({ data, dictionary } = next);
+              tablePage = undefined;
+              latestProgress = undefined;
+              scanRevision++;
+              await publish();
+            }
           }
         } catch (error) {
           if (!closed)
@@ -190,6 +273,7 @@ export class TablePreviewManager extends PreviewPanelManager {
     panel.onDidDispose(() => {
       closed = true;
       reloadController?.abort();
+      tableController?.abort();
       scanController?.abort();
       messages.dispose();
     });
@@ -209,7 +293,8 @@ function tableHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <p id="table-note" class="note">Rows are shown in file order. n/a is the recorded marker for missing data.</p>
 <div id="error" role="alert" hidden></div><p id="summary" role="status"></p><p id="issues" role="status"></p>
 <p id="scan-status" role="status" hidden></p>
-<label>Filter rows <input id="filter" type="search" placeholder="Text in any cell"></label>
+<label>Filter rows <input id="filter" type="search" placeholder="Text in any cell"></label> <button id="apply-filter" hidden>Apply filter</button> <button id="cancel-table" hidden>Cancel scan</button>
+<p id="table-progress" role="status"></p>
 
 <div class="paging" id="column-paging" hidden><button id="left">Previous columns</button><span id="columns"></span><button id="right">Next columns</button></div>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Table data. Use arrow keys to scroll."><table aria-label="Recorded table data"><thead id="head"></thead><tbody id="rows"></tbody></table></div>

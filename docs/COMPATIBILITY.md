@@ -90,3 +90,17 @@ The checksum-matched package passed the same synthetic image, metadata and sideb
 ## 1.0.4 maintenance patch
 
 The [1.0.4 verification record](MILESTONE_1.0.4.md) covers the installed upgrade, shared cache across two local windows, and a fresh synthetic Rorqual Remote SSH viewer and metadata check.
+
+## Large participant table benchmark on Rorqual
+
+The development build opened a synthetic `participants.tsv` with 500,000 data rows and four columns from a gzip SquashFS archive in VS Code 1.146.0 over Remote SSH. The TSV was 17.0 MB before compression and the archive was 1.72 MB. Each action checked all 500,000 rows and returned at most 50 result rows to the preview.
+
+| Operation                           |             Time |       Range |
+| ----------------------------------- | ---------------: | ----------: |
+| Open and render first page          | 5.60 s (one run) |           — |
+| Next page                           |    0.80 s median | 0.73–0.91 s |
+| Previous page                       |    1.02 s median | 0.71–1.13 s |
+| Filter for 100 matches near the end |    1.17 s median | 0.77–1.38 s |
+| Filter with zero matches            |    0.94 s median | 0.93–0.98 s |
+
+Paging and filtering each ran three times. Timings include reading and decompressing the member on Rorqual, the Remote SSH round trip, and rendering the result. The first-page measurement also includes opening the preview after the archive member was located. A separate host-only run on a smaller, two-column synthetic loose TSV with the same row count gave medians of 238 ms for the first page, 219 ms for the next page, 239 ms for the late-match filter, and 235 ms for the zero-match filter. The real UKB table remains unbenchmarked.

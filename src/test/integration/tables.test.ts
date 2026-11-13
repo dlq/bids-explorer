@@ -444,3 +444,54 @@ suite('Read-only participant tables', () => {
     });
   }
 });
+
+suite('Large Participants tables', () => {
+  test('pages host results and keeps the previous page when a filter scan is cancelled', async function () {
+    this.timeout(30000);
+    const extension = vscode.extensions.getExtension(extensionId)!;
+    const manager = new TablePreviewManager(extension.extensionUri);
+    const folder = await mkdtemp(join(tmpdir(), 'bids-paged-tables-'));
+    try {
+      const uri = vscode.Uri.file(join(folder, 'participants.tsv'));
+      const contents =
+        'participant_id\tgroup\n' +
+        Array.from(
+          { length: 120000 },
+          (_, index) => `sub-${index}\t${index >= 119900 ? 'late cohort' : 'early'}\n`,
+        ).join('');
+      await writeFile(uri.fsPath, contents);
+      const panel = await manager.open(uri);
+      installControls(panel);
+      const click = (id: string, value?: string) =>
+        panel.webview.postMessage({ type: 'testControl', id, value });
+      await rendered(panel, 50, (state) =>
+        String(state.tableProgress).includes('Entire table checked'),
+      );
+      await click('next');
+      const next = await rendered(panel, 50, (state) => state.firstCell === 'sub-50');
+      assert.equal(next.page, 1);
+      await click('filter', 'late cohort');
+      await click('apply-filter');
+      const filtered = await rendered(panel, 50, (state) => state.firstCell === 'sub-119900');
+      assert.equal(filtered.page, 0);
+      assert.match(String(filtered.tableProgress), /100 matches/);
+      await click('filter', 'absent');
+      await click('apply-filter');
+      await click('cancel-table');
+      const cancelled = await rendered(panel, 50, (state) =>
+        String(state.tableProgress).includes('Scan cancelled'),
+      );
+      assert.equal(cancelled.firstCell, 'sub-119900');
+      assert.match(String(cancelled.tableProgress), /Coverage is incomplete/);
+      await click('apply-filter');
+      const empty = await rendered(panel, 0, (state) =>
+        String(state.tableProgress).includes('Entire table checked'),
+      );
+      assert.match(String(empty.tableProgress), /0 matches/);
+      assert.equal(await readFile(uri.fsPath, 'utf8'), contents);
+    } finally {
+      manager.dispose();
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+});
