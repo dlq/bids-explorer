@@ -1,5 +1,7 @@
 # BIDS Explorer user guide
 
+Follow the [Everyday workflows](EVERYDAY_WORKFLOWS.md) for worked examples of participant lookup, Availability and scan inspection.
+
 Browse a neuroimaging study by participant, session and modality in VS Code. Open NIfTI images, check acquisition metadata and find participants with the data or processing outputs you need. BIDS Explorer reads datasets on your computer or over Remote SSH and leaves the dataset files unchanged.
 
 ## Open a study

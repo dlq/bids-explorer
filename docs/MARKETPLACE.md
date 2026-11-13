@@ -12,6 +12,8 @@ _Public functional MRI example from [OpenNeuro ds007661](https://openneuro.org/d
 
 **[Five-minute Quickstart](https://github.com/dlq/bids-explorer/blob/main/docs/QUICKSTART.md)** · Open a T1-weighted MRI from a 13 MB public sample, explore the Imaging controls and find the original file. No terminal commands needed. For a study on a server, follow the [Remote SSH walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/REMOTE_SSH.md).
 
+**[Everyday workflows](https://github.com/dlq/bids-explorer/blob/main/docs/EVERYDAY_WORKFLOWS.md)** · Look up participant attributes, check session and pipeline coverage, and trace scan metadata to its source. The large-table workflow is new in 1.2.0.
+
 Select **Install** on this Marketplace page or in VS Code’s Extensions view. The publisher is **Darcy Quesnel**, with publisher ID **MCIN-dlq**. The full extension identifier is `MCIN-dlq.bids-explorer`.
 
 You need desktop [Visual Studio Code](https://code.visualstudio.com/) **1.96 or newer** and access to a study folder you trust. For data on a server, also install Microsoft’s **Remote - SSH** extension. A separate NiiVue extension, Python, archive utilities and administrator access are not required for the supported browsing and imaging workflows.

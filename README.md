@@ -22,6 +22,8 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 
 **[Five-minute Quickstart](docs/QUICKSTART.md)** · Open a T1-weighted MRI from a 13 MB public sample, explore the Imaging controls and find the original file. No terminal commands needed. For a study on a server, follow the [Remote SSH walkthrough](docs/REMOTE_SSH.md).
 
+**[Everyday workflows](docs/EVERYDAY_WORKFLOWS.md)** · Look up participant attributes, check session and pipeline coverage, and trace scan metadata to its source. The large-table workflow is new in 1.2.0.
+
 1. Install [desktop VS Code](https://code.visualstudio.com/) 1.96 or newer.
 2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [VSIX from the latest GitHub release](https://github.com/dlq/bids-explorer/releases/latest) with **Extensions → … → Install from VSIX…**.
 3. Open a study folder you trust. In the **Explorer** sidebar, expand **BIDS**. A folder containing `dataset_description.json` appears automatically; otherwise choose **Add Dataset**.
