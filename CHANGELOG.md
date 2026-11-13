@@ -4,9 +4,13 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.1.0] - 2026-11-13
+
 - Open a scan from its recorded `scans.tsv` row and choose the physical source when loose files or archives contain multiple matches.
 
 - Stream NIfTI images through VS Code's webview messaging channel to avoid writing remote image bytes to the local webview resource cache. Keep first-frame viewing for loose and archived images.
+
+- Add an annotated Quickstart screenshot and a walkthrough for opening scans and choosing among matching sources.
 
 ## [1.0.4] - 2026-11-10
 

@@ -4,7 +4,7 @@ The Visual Studio Marketplace is the extension catalog used by desktop VS Code. 
 
 Microsoft's [publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) describes the publisher account and Trusted Publishing setup. This repository uses GitHub Actions OIDC rather than a stored Marketplace access token.
 
-See the [1.0.4 verification record](MILESTONE_1.0.4.md) for the current release and its package checksum.
+See the [latest GitHub release](https://github.com/dlq/bids-explorer/releases/latest) for the current release notes, VSIX and checksum.
 
 ## One-time publisher setup
 
