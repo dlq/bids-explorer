@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Put the five-minute Quickstart beside installation instructions and show how to contribute without writing code on GitHub and the Marketplace.
+
 ## [1.1.0] - 2026-11-13
 
 - Open a scan from its recorded `scans.tsv` row and choose the physical source when loose files or archives contain multiple matches.

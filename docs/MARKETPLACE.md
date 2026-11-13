@@ -8,15 +8,15 @@ BIDS Explorer is a read-only study browser for datasets organized using the Brai
 
 _Public functional MRI example from [OpenNeuro ds007661](https://openneuro.org/datasets/ds007661). Study navigation is on the left; image information and controls are on the right._
 
-## Install
+## Install and try it
+
+**[Five-minute Quickstart](https://github.com/dlq/bids-explorer/blob/main/docs/QUICKSTART.md)** · Open a T1-weighted MRI from a 13 MB public sample, explore the Imaging controls and find the original file. No terminal commands needed. For a study on a server, follow the [Remote SSH walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/REMOTE_SSH.md).
 
 Select **Install** on this Marketplace page or in VS Code’s Extensions view. The publisher is **Darcy Quesnel**, with publisher ID **MCIN-dlq**. The full extension identifier is `MCIN-dlq.bids-explorer`.
 
 You need desktop [Visual Studio Code](https://code.visualstudio.com/) **1.96 or newer** and access to a study folder you trust. For data on a server, also install Microsoft’s **Remote - SSH** extension. A separate NiiVue extension, Python, archive utilities and administrator access are not required for the supported browsing and imaging workflows.
 
 If you previously installed a development VSIX published as `bids-explorer-dev`, disable or uninstall that copy before using this one. VS Code treats these as different extensions; manual dataset registrations may need to be added again. Your dataset files are unaffected.
-
-**New to BIDS Explorer?** Follow the [five-minute walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/QUICKSTART.md) with a ready-to-open 13 MB public sample. No programming or terminal setup is required.
 
 ## Open your first study
 
@@ -127,6 +127,8 @@ This extension does not currently validate or fix BIDS conformance, rename or re
 - [User guide](https://github.com/dlq/bids-explorer/blob/main/docs/USER_GUIDE.md) and [Explorer reference](https://github.com/dlq/bids-explorer/blob/main/docs/EXPLORER_REFERENCE.md).
 - [Report a problem or request a feature](https://github.com/dlq/bids-explorer/issues/new/choose). Include extension/VS Code versions, storage format and a small public or synthetic reproduction. Remove private participant information, paths and sensitive screenshots.
 - [Private security reporting](https://github.com/dlq/bids-explorer/security/advisories/new), [release notes](https://github.com/dlq/bids-explorer/blob/main/CHANGELOG.md) and [planned work](https://github.com/dlq/bids-explorer/blob/main/PLANS.md).
+
+You can contribute without writing code. Tell us where the Quickstart was hard to follow, suggest clearer neuroimaging labels or share a public BIDS example that reveals a gap. [Ways to contribute on GitHub](https://github.com/dlq/bids-explorer#contribute-without-writing-code)
 
 BIDS Explorer is [MIT-licensed](https://github.com/dlq/bids-explorer/blob/main/LICENSE). Image rendering uses the bundled [NiiVue](https://github.com/niivue/niivue) library. Dependencies and datasets retain their own licenses; see [third-party notices](https://github.com/dlq/bids-explorer/blob/main/THIRD_PARTY_NOTICES.txt).
 

@@ -18,14 +18,14 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 - **Find usable coverage:** filter participant availability by raw sessions and processing outputs, including explicitly linked derivative datasets.
 - **Browse data where it lives:** use local folders or VS Code Remote SSH, including ZIP, supported tarballs and SquashFS collections. Selected archive images are prepared in a cache without unpacking the entire study.
 
-## Install and open your first study
+## Install and try it
+
+**[Five-minute Quickstart](docs/QUICKSTART.md)** · Open a T1-weighted MRI from a 13 MB public sample, explore the Imaging controls and find the original file. No terminal commands needed. For a study on a server, follow the [Remote SSH walkthrough](docs/REMOTE_SSH.md).
 
 1. Install [desktop VS Code](https://code.visualstudio.com/) 1.96 or newer.
 2. Install [BIDS Explorer from the Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=MCIN-dlq.bids-explorer), published by **Darcy Quesnel (`MCIN-dlq`)**. For manual installation, use the [VSIX from the latest GitHub release](https://github.com/dlq/bids-explorer/releases/latest) with **Extensions → … → Install from VSIX…**.
 3. Open a study folder you trust. In the **Explorer** sidebar, expand **BIDS**. A folder containing `dataset_description.json` appears automatically; otherwise choose **Add Dataset**.
 4. Expand a participant, a session if present, and a modality, then select a scan. Choose **Image controls** to show its parameters and viewing controls.
-
-**Try it first:** the [five-minute walkthrough](docs/QUICKSTART.md) uses a ready-to-open 13 MB public anatomical sample and requires no terminal commands.
 
 For step-by-step server setup, follow the [Remote SSH walkthrough](docs/REMOTE_SSH.md). First connect using [VS Code Remote SSH](https://code.visualstudio.com/docs/remote/ssh), open the server’s study folder, and install BIDS Explorer on the connected host. To place image controls on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**.
 
@@ -51,6 +51,14 @@ For a complete first-use walkthrough, see the [Marketplace getting-started guide
 - [Contributing](CONTRIBUTING.md) · [Development setup](docs/DEVELOPMENT.md) · [Release notes](CHANGELOG.md) · [Roadmap](PLANS.md) · [Security reporting](SECURITY.md).
 
 BIDS Explorer is available under the [MIT license](LICENSE). BIDS Explorer is distributed through the Marketplace and GitHub releases. Image rendering uses [NiiVue](https://github.com/niivue/niivue); bundled dependency notices are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
+## Contribute without writing code
+
+- Try the Quickstart and tell us which step was hard to follow. Mention your OS and VS Code version so we can reproduce it.
+- Suggest clearer wording for a scan label, metadata field or guide. Tell us what you expected to see in your neuroimaging workflow.
+- Share a link to a small public BIDS study that shows a browsing or display problem, and describe what you expected BIDS Explorer to show.
+
+Use GitHub Issues to share feedback. Use public or synthetic data and omit private paths and participant details. [Give feedback](https://github.com/dlq/bids-explorer/issues/new/choose) · [Contribution guide](CONTRIBUTING.md)
 
 ## Citation
 
