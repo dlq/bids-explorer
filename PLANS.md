@@ -6,7 +6,7 @@ Updated November 10, 2026. This document records direction, priorities and scope
 
 Help neuroimaging practitioners explore studies through a readable logical BIDS tree, source-backed metadata, participant coverage and image viewing. Support ordinary directories and documented ZIP, tar/tarball and SquashFS variants, locally and through VS Code Remote SSH. Preserve access to the physical files and original identifiers.
 
-The supported core is established through 1.0; the manifest is currently 1.1.0. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
+The supported core is established through 1.0; the manifest is currently 1.2.0. Implemented behavior and limitations belong in the [user guide](docs/USER_GUIDE.md), [explorer reference](docs/EXPLORER_REFERENCE.md) and [compatibility matrix](docs/COMPATIBILITY.md). [PROJECT.md](PROJECT.md) gives project context; [RESEARCH.md](RESEARCH.md) records exploration, alternatives and evidence.
 
 ## How we maintain the plan
 

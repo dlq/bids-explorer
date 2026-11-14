@@ -34,3 +34,9 @@ Formatting, type checking, linting, all 170 unit tests and the per-file coverage
 The checksum-matched security build also passed a synthetic Rorqual Remote SSH smoke test on VS Code 1.145.2: seven NIfTI cases across loose/ZIP/tar/gzip tar/SquashFS, literal JSON previews for all five storage forms, and seven native Image-sidebar cases. The old development-publisher copy was disabled only in the disposable test client to avoid the already-documented duplicate-command collision. No research datasets or source files were modified.
 
 [Structured evidence](evidence/codeql-review-2026-11-07.json) records the dispositions and test scope without machine-specific paths. This review did not publish a Marketplace release. Alert resolution is not proof that every possible vulnerability is absent.
+
+## 1.2.0 participant table review
+
+[Alert 12](https://github.com/dlq/bids-explorer/security/code-scanning/12) flags the preliminary path stat followed by an open in the loose participant-table reader. The preliminary stat identifies the expected file revision. Open uses `O_NOFOLLOW` and `O_NONBLOCK`, and the reader compares the opened descriptor's file type, device, inode, size, mtime and ctime before reading any data. It reads through that descriptor and rechecks both descriptor and path before returning a completed page. A replacement or changed revision fails the scan. This is the same guarded open pattern reviewed for alert 3.
+
+Alerts 13–16 apply to writes in the unit test. The test creates its own private temporary directory, writes only synthetic fixtures, and intentionally changes and truncates the table to exercise revision and read failures. These writes are excluded from the extension package.

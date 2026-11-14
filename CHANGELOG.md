@@ -4,6 +4,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.2.0] - 2026-11-14
+
+- Add an Everyday workflows guide for participant lookup, Availability, scan metadata, archives, linked derivatives and image previews.
+
 - Browse large participant tables in 50-row pages and filter with cancellation, checked-row counts and explicit coverage status.
 
 - Put the five-minute Quickstart beside installation instructions and show how to contribute without writing code on GitHub and the Marketplace.

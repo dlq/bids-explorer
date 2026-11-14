@@ -104,3 +104,5 @@ The development build opened a synthetic `participants.tsv` with 500,000 data ro
 | Filter with zero matches            |    0.94 s median | 0.93–0.98 s |
 
 Paging and filtering each ran three times. Timings include reading and decompressing the member on Rorqual, the Remote SSH round trip, and rendering the result. The first-page measurement also includes opening the preview after the archive member was located. A separate host-only run on a smaller, two-column synthetic loose TSV with the same row count gave medians of 238 ms for the first page, 219 ms for the next page, 239 ms for the late-match filter, and 235 ms for the zero-match filter. The real UKB table remains unbenchmarked.
+
+The packaged 1.2.0 candidate repeated this workflow on VS Code 1.146.0 over Remote SSH. The first page rendered in 4.61 s. Across three runs, median times were 1.49 s for the next page, 1.15 s for the previous page, 1.10 s for the 100-match filter and 0.82 s for the zero-match filter. Each scan checked all 500,000 rows.
