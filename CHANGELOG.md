@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Switch between Full volume and Crosshair cutaway in 3D. Choose the anatomical corner to remove and move the crosshair to move the cut planes.
+
 - Enter voxel indices or physical image coordinates, read the selected voxel value, and switch between neurological and radiological slice display.
 
 ## [1.2.0] - 2026-11-14

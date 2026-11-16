@@ -64,6 +64,7 @@ suite('Progressive NIfTI viewer', () => {
           edgePadding?: Record<string, number>;
           blackPadding?: Record<string, number>;
           renderedPanels?: number[];
+          clipPlanes?: number[][];
           information?: { label: string; value: string }[];
           display?: {
             layout: string;
@@ -147,6 +148,45 @@ suite('Progressive NIfTI viewer', () => {
             () => report.display?.orientation === 'radiological',
           );
           assert.deepEqual(report.coordinates?.voxel, [1, 0, 0]);
+          await setControl(
+            { action: 'volumeMode', value: 'cutaway' },
+            () => report.clipPlanes?.length === 3,
+          );
+          assert.deepEqual(report.clipPlanes, [
+            [-0.25, 270, 0],
+            [0.25, 0, 0],
+            [0.25, 0, -90],
+          ]);
+          await setControl(
+            { action: 'cutawayCorner', value: ['left', 'posterior', 'inferior'] },
+            () => report.clipPlanes?.[0][1] === 90,
+          );
+          assert.deepEqual(report.clipPlanes, [
+            [0.25, 90, 0],
+            [-0.25, 180, 0],
+            [-0.25, 0, 90],
+          ]);
+          await setControl(
+            { action: 'position', value: { space: 'voxel', coordinates: [0, 1, 1] } },
+            () => report.clipPlanes?.[0][0] === -0.25,
+          );
+          assert.deepEqual(report.clipPlanes, [
+            [-0.25, 90, 0],
+            [0.25, 180, 0],
+            [0.25, 0, 90],
+          ]);
+          await setControl(
+            { action: 'layout', value: 'volume' },
+            () => report.renderedPanels?.join() === '4',
+          );
+          await setControl(
+            { action: 'volumeMode', value: 'full' },
+            () => report.clipPlanes?.length === 0,
+          );
+          await setControl(
+            { action: 'volumeMode', value: 'cutaway' },
+            () => report.clipPlanes?.length === 3,
+          );
           const originalWindow = [report.display.minimum, report.display.maximum];
           for (const control of [
             { action: 'layout', value: 'axial' },
@@ -195,6 +235,9 @@ suite('Progressive NIfTI viewer', () => {
             await new Promise((resolve) => setTimeout(resolve, 30));
           }
           assert.equal(report.display.orientation, 'neurological');
+          await panel.webview.postMessage('inspect');
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          assert.deepEqual(report.clipPlanes, []);
           assert.deepEqual([report.display.minimum, report.display.maximum], originalWindow);
           assert.deepEqual([...report.renderedPanels!].sort(), [0, 1, 2, 4]);
           await panel.webview.postMessage({

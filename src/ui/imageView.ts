@@ -55,6 +55,12 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
 <section aria-labelledby="view-title"><h2 id="view-title">Viewing controls</h2>
 <fieldset id="controls" disabled><legend class="sr-only">Image display</legend>
 <label>Layout<select id="layout"><option value="quad">Three planes + 3D</option><option value="multiplanar">Three planes</option><option value="volume">3D volume</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<fieldset id="volume-display" hidden><legend>3D display</legend>
+<label>Volume view<select id="volume-mode"><option value="full">Full volume</option><option value="cutaway">Crosshair cutaway</option></select></label>
+<div id="cutaway-corner" hidden><p class="hint">Choose the corner to remove. The three cuts follow the crosshair.</p>
+<label>Left or right<select id="cutaway-x"><option value="right">Right</option><option value="left">Left</option></select></label>
+<label>Anterior or posterior<select id="cutaway-y"><option value="anterior">Anterior</option><option value="posterior">Posterior</option></select></label>
+<label>Superior or inferior<select id="cutaway-z"><option value="superior">Superior</option><option value="inferior">Inferior</option></select></label></div></fieldset>
 <label>Slice orientation<select id="orientation"><option value="neurological">Neurological (left on left)</option><option value="radiological">Radiological (left on right)</option></select></label>
 <label id="volume-control" hidden>Volume <output id="frame-value">1</output><input id="frame" type="range" min="1" value="1" max="1" disabled></label>
 <label>Colour map<select id="colormap"><option value="gray">Grayscale</option><option value="viridis">Viridis</option><option value="hot">Hot</option></select></label>

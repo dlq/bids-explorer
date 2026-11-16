@@ -1,6 +1,6 @@
 import { Niivue, NVImage, MULTIPLANAR_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { readNiftiStream } from './niftiStream.js';
-import type { ImageControl, ImageState } from './imageViewTypes';
+import type { CutawaySide, ImageControl, ImageState } from './imageViewTypes';
 
 const canvas = document.querySelector<HTMLCanvasElement>('canvas')!;
 const status = document.querySelector<HTMLElement>('[role="status"]')!;
@@ -9,11 +9,23 @@ declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
 const viewer = new Niivue({
   multiplanarPadPixels: 4,
+  clipPlaneHotKey: '',
+  cycleClipPlaneHotKey: '',
+  clipPlaneColor: [0, 0, 0, 0],
   multiplanarLayout: MULTIPLANAR_TYPE.GRID,
   multiplanarShowRender: SHOW_RENDER.ALWAYS,
 });
 let volume: NVImage | undefined;
 let defaultWindow: [number, number] = [0, 1];
+const defaultCorner = ['right', 'anterior', 'superior'] as const;
+const sideDirections: Record<CutawaySide, readonly [number, number, number]> = {
+  right: [1, 270, 0],
+  left: [-1, 90, 0],
+  anterior: [1, 0, 0],
+  posterior: [-1, 180, 0],
+  superior: [1, 0, -90],
+  inferior: [-1, 0, 90],
+};
 const state: ImageState = {
   status: 'Loading image…',
   previewFrames: 0,
@@ -29,6 +41,8 @@ const state: ImageState = {
     crosshair: true,
     frame: 1,
     orientation: 'neurological',
+    volumeMode: 'full',
+    cutawayCorner: defaultCorner,
   },
 };
 function publish(inspect = false) {
@@ -65,6 +79,7 @@ function publish(inspect = false) {
       : {}),
     type: 'imageState',
     ...state,
+    ...(inspect ? { clipPlanes: viewer.scene.clipPlaneDepthAziElevs } : {}),
     renderedPanels: viewer.screenSlices.map((slice) => slice.axCorSag),
   });
 }
@@ -158,6 +173,45 @@ function goToPosition(image: NVImage, value: unknown) {
   viewer.moveCrosshairInVox(voxel[0] - current[0], voxel[1] - current[1], voxel[2] - current[2]);
 }
 
+function updateCutaway() {
+  const enabled = state.display.volumeMode === 'cutaway';
+  if (!enabled && !viewer.opts.isClipPlanesCutaway) return;
+  viewer.opts.isClipPlanesCutaway = enabled;
+  const corner = state.display.cutawayCorner ?? defaultCorner;
+  viewer.setClipPlanes(
+    enabled
+      ? corner.map((side, axis) => {
+          const [direction, azimuth, elevation] = sideDirections[side];
+          // NiiVue clips the positive half-space in RAS texture coordinates.
+          const depth = direction * (0.5 - viewer.scene.crosshairPos[axis]);
+          return [depth, azimuth, elevation];
+        })
+      : [],
+  );
+}
+
+function guardClipGesture(event: MouseEvent) {
+  if (state.display.volumeMode !== 'cutaway') return;
+  if (event.type === 'mousedown' && event.button !== 2) return;
+  const bounds = canvas.getBoundingClientRect();
+  const x = ((event.clientX - bounds.left) * canvas.width) / bounds.width;
+  const y = ((event.clientY - bounds.top) * canvas.height) / bounds.height;
+  const inVolume = viewer.screenSlices.some(
+    ({ axCorSag, leftTopWidthHeight: [left, top, width, height] }) =>
+      axCorSag === viewer.sliceTypeRender &&
+      x >= left &&
+      x < left + width &&
+      y >= top &&
+      y < top + height,
+  );
+  if (inVolume) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}
+canvas.addEventListener('mousedown', guardClipGesture, { capture: true });
+canvas.addEventListener('wheel', guardClipGesture, { capture: true, passive: false });
+
 function applyControl(control: ImageControl) {
   if (control.action === 'cancel') {
     controller.abort();
@@ -166,6 +220,21 @@ function applyControl(control: ImageControl) {
   if (!volume || !state.navigationEnabled) return;
   const { action, value } = control;
   if (action === 'position') goToPosition(volume, value);
+  if (action === 'volumeMode' && (value === 'full' || value === 'cutaway')) {
+    state.display.volumeMode = value;
+    updateCutaway();
+  }
+  if (action === 'cutawayCorner' && Array.isArray(value) && value.length === 3) {
+    const [x, y, z] = value as unknown[];
+    if (
+      (x === 'left' || x === 'right') &&
+      (y === 'anterior' || y === 'posterior') &&
+      (z === 'superior' || z === 'inferior')
+    ) {
+      state.display.cutawayCorner = [x, y, z];
+      updateCutaway();
+    }
+  }
   if (action === 'orientation' && (value === 'neurological' || value === 'radiological')) {
     state.display.orientation = value;
     viewer.setRadiologicalConvention(value === 'radiological');
@@ -238,6 +307,8 @@ function applyControl(control: ImageControl) {
     );
   if (action === 'reset') {
     state.positionError = undefined;
+    state.display.cutawayCorner = defaultCorner;
+    applyControl({ action: 'volumeMode', value: 'full' });
     applyControl({ action: 'orientation', value: 'neurological' });
     applyControl({ action: 'layout', value: 'quad' });
     applyControl({ action: 'colormap', value: 'gray' });
@@ -324,6 +395,7 @@ async function open() {
   await viewer.attachToCanvas(canvas);
   viewer.onLocationChange = () => {
     updatePosition();
+    updateCutaway();
     publish();
   };
   viewer.onIntensityChange = (image) => {

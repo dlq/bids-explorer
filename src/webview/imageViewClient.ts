@@ -11,6 +11,15 @@ function control(action: ImageControl['action'], value?: unknown) {
 }
 for (const id of ['layout', 'colormap', 'orientation'] as const)
   element<HTMLSelectElement>(id).onchange = () => control(id, element<HTMLSelectElement>(id).value);
+const volumeMode = element<HTMLSelectElement>('volume-mode');
+const corner = ['x', 'y', 'z'].map((axis) => element<HTMLSelectElement>('cutaway-' + axis));
+volumeMode.onchange = () => control('volumeMode', volumeMode.value);
+for (const side of corner)
+  side.onchange = () =>
+    control(
+      'cutawayCorner',
+      corner.map((axis) => axis.value),
+    );
 element<HTMLInputElement>('crosshair').onchange = () =>
   control('crosshair', element<HTMLInputElement>('crosshair').checked);
 element<HTMLInputElement>('frame').oninput = () =>
@@ -236,6 +245,12 @@ window.addEventListener(
     element('voxel-value').textContent =
       state?.voxelValue === undefined ? '' : `Voxel value ${state.voxelValue}`;
     if (!state) return;
+    element('volume-display').hidden = !['quad', 'volume'].includes(state.display.layout);
+    volumeMode.value = state.display.volumeMode ?? 'full';
+    element('cutaway-corner').hidden = volumeMode.value !== 'cutaway';
+    corner.forEach((side, axis) => {
+      side.value = (state.display.cutawayCorner ?? ['right', 'anterior', 'superior'])[axis];
+    });
     element<HTMLSelectElement>('orientation').value = state.display.orientation ?? 'neurological';
     element<HTMLSelectElement>('layout').value = state.display.layout;
     element<HTMLSelectElement>('colormap').value = state.display.colormap;
