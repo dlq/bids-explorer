@@ -4,6 +4,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.3.0] - 2026-11-16
+
+- Group Imaging controls by task and distinguish viewer actions from status messages.
+
 - Save the displayed NIfTI view as a PNG, with the image name and display context in the caption.
 
 - Inspect multiple slices at once in the Lightbox layout. Choose a plane, slice range and spacing.

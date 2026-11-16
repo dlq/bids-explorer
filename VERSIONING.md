@@ -19,10 +19,10 @@ Documentation, internal refactoring and tooling improvements normally wait for t
 
 ## Release names and artifacts
 
-- Manifest version: `1.2.0`.
-- Release tag: `v1.2.0`. Later release tags still require explicit authorization.
-- VSIX: `bids-explorer-1.2.0.vsix`, produced under `dist/` by `npm run package` using the manifest version.
-- Changelog heading: `## [1.2.0] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
+- Manifest version: `1.3.0`.
+- Release tag: `v1.3.0`. Later release tags still require explicit authorization.
+- VSIX: `bids-explorer-1.3.0.vsix`, produced under `dist/` by `npm run package` using the manifest version.
+- Changelog heading: `## [1.3.0] - YYYY-MM-DD`, using the actual release date, followed by Added/Changed/Fixed/Security sections as appropriate.
 
 Local development builds can share the unreleased manifest version. Use their commit SHA to distinguish them; they are not immutable releases. Release artifacts must come from the tagged commit after checks pass. Do not overwrite a published version or reuse a release tag; ship a new patch instead.
 

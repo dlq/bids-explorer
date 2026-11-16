@@ -1,4 +1,4 @@
-cff-version: 1.2.0
+cff-version: 1.3.0
 message: If BIDS Explorer supports your research, please cite the software version you used and cite the datasets and relevant methods separately.
 type: software
 title: BIDS Explorer
@@ -6,8 +6,8 @@ abstract: Read-only exploration of BIDS neuroimaging studies in Visual Studio Co
 authors:
   - family-names: Quesnel
     given-names: Darcy
-version: 1.2.0
-date-released: '2026-11-14'
+version: 1.3.0
+date-released: '2026-11-16'
 license: MIT
 repository-code: https://github.com/dlq/bids-explorer
 url: https://github.com/dlq/bids-explorer
