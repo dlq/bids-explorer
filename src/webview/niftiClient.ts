@@ -3,7 +3,7 @@ import { readNiftiStream } from './niftiStream.js';
 import type { CutawaySide, ImageControl, ImageState, LightboxSettings } from './imageViewTypes';
 
 const canvas = document.querySelector<HTMLCanvasElement>('canvas')!;
-const status = document.querySelector<HTMLElement>('[role="status"]')!;
+const status = document.getElementById('load-status')!;
 const cancel = document.querySelector<HTMLButtonElement>('#cancel')!;
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
@@ -93,6 +93,72 @@ cancel.onclick = () => controller.abort();
 document.getElementById('image-controls')!.onclick = () =>
   api.postMessage({ type: 'showImageControls' });
 window.addEventListener('pagehide', () => controller.abort(), { once: true });
+const screenshot = document.querySelector<HTMLButtonElement>('#save-screenshot')!;
+const screenshotStatus = document.getElementById('screenshot-status')!;
+screenshot.onclick = () => {
+  screenshot.disabled = true;
+  screenshotStatus.textContent = 'Capturing screenshot…';
+  api.postMessage({ type: 'saveScreenshot' });
+};
+
+async function captureScreenshot(request: string, imageName: string) {
+  try {
+    if (!state.navigationEnabled || !canvas.width || !canvas.height) throw new Error();
+    viewer.drawScene();
+    const scale = Math.min(1, 2048 / Math.max(canvas.width, canvas.height));
+    const output = document.createElement('canvas');
+    const width = Math.max(1, Math.round(canvas.width * scale));
+    const height = Math.max(1, Math.round(canvas.height * scale));
+    output.width = width;
+    output.height = height + 56;
+    const context = output.getContext('2d');
+    if (!context) throw new Error();
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, output.width, output.height);
+    context.drawImage(canvas, 0, 0, width, height);
+    context.fillStyle = '#fff';
+    context.font = '14px sans-serif';
+    const spacing = state.information.find((row) => row.label === 'Voxel spacing')?.value;
+    const layouts: Record<string, string> = {
+      quad: 'Three planes + 3D',
+      multiplanar: 'Three planes',
+      volume: '3D volume',
+      axial: 'Axial',
+      coronal: 'Coronal',
+      sagittal: 'Sagittal',
+      lightbox: 'Lightbox',
+    };
+    const lightbox = state.display.layout === 'lightbox' ? state.lightbox?.settings : undefined;
+    const layout = layouts[state.display.layout] ?? 'NIfTI view';
+    const cutaway =
+      ['quad', 'volume'].includes(state.display.layout) && state.display.volumeMode === 'cutaway'
+        ? ` · Cutaway ${(state.display.cutawayCorner ?? []).join(', ')}`
+        : '';
+    context.fillText(imageName, 8, height + 20, Math.max(1, width - 16));
+    context.fillText(
+      [
+        layout +
+          (lightbox
+            ? ` (${lightbox.plane} ${lightbox.first}–${lightbox.last}, step ${lightbox.step})`
+            : '') +
+          cutaway,
+        state.display.layout !== 'volume' ? state.display.orientation : undefined,
+        `Volume ${state.display.frame}`,
+        spacing ? `Voxel spacing ${spacing}` : undefined,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+      8,
+      height + 42,
+      Math.max(1, width - 16),
+    );
+    const png = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, 'image/png'));
+    api.postMessage({ type: 'screenshotCaptured', request, bytes: await png?.arrayBuffer() });
+  } catch {
+    api.postMessage({ type: 'screenshotCaptured', request });
+  }
+}
+
 const spatialUnits = new Map([
   [1, 'm'],
   [2, 'mm'],
@@ -387,6 +453,25 @@ function applyControl(control: ImageControl) {
 }
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
   if (event.origin !== window.location.origin) return;
+  const message = event.data;
+  if (message && typeof message === 'object' && 'type' in message) {
+    if (
+      message.type === 'captureScreenshot' &&
+      'request' in message &&
+      typeof message.request === 'string' &&
+      'imageName' in message &&
+      typeof message.imageName === 'string'
+    )
+      void captureScreenshot(message.request, message.imageName);
+    if (
+      message.type === 'screenshotStatus' &&
+      'text' in message &&
+      typeof message.text === 'string'
+    ) {
+      screenshotStatus.textContent = message.text;
+      screenshot.disabled = !state.navigationEnabled;
+    }
+  }
   if (event.data === 'inspect') publish(true);
   if (
     event.data &&
@@ -442,6 +527,7 @@ function show(image: NVImage, frames: number, restore = false) {
   volume = image;
   viewer.addVolume(image);
   state.navigationEnabled = true;
+  if (!screenshotStatus.textContent) screenshot.disabled = false;
   const min = image.cal_min ?? 0,
     max = image.cal_max ?? 1;
   defaultWindow = [min, max];

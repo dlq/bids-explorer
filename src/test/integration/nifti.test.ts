@@ -209,6 +209,38 @@ suite('Progressive NIfTI viewer', () => {
           );
           assert.equal(report.lightbox?.count, 1);
           assert.deepEqual(report.renderedPanels, [2]);
+          let png: Buffer | undefined;
+          const capture = panel.webview.onDidReceiveMessage(
+            (message: { type?: string; request?: string; bytes?: ArrayBuffer }) => {
+              if (
+                message.type === 'screenshotCaptured' &&
+                message.request === 'test-lightbox' &&
+                message.bytes instanceof ArrayBuffer
+              )
+                png = Buffer.from(message.bytes);
+            },
+          );
+          try {
+            await panel.webview.postMessage({
+              type: 'captureScreenshot',
+              request: 'test-lightbox',
+              imageName: 'Synthetic screenshot',
+            });
+            const deadline = Date.now() + 5000;
+            while (!png) {
+              assert.ok(
+                Date.now() < deadline,
+                'Expected a PNG capture from the displayed Lightbox',
+              );
+              await new Promise((resolve) => setTimeout(resolve, 30));
+            }
+            assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+            assert.equal(png.toString('ascii', 12, 16), 'IHDR');
+            assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(16) <= 2048);
+            assert.ok(png.readUInt32BE(20) > 56 && png.readUInt32BE(20) <= 2104);
+          } finally {
+            capture.dispose();
+          }
           await setControl(
             { action: 'layout', value: 'quad' },
             () => report.renderedPanels?.length === 4,

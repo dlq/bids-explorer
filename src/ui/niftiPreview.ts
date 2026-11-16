@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { constants, type ReadStream } from 'node:fs';
+import { homedir } from 'node:os';
 import { open } from 'node:fs/promises';
 import * as vscode from 'vscode';
 import { PreviewPanelManager } from './previewPanelManager';
@@ -36,7 +37,7 @@ export class NiftiPreviewManager extends PreviewPanelManager {
         return stat.size === 0;
       },
       (empty) => {
-        const panel = openProgressiveNifti(this.extensionUri, source, empty);
+        const panel = openProgressiveNifti(this.extensionUri, source, empty, entry.name);
         this.imageView.attach(panel, entry, empty);
         return panel;
       },
@@ -50,13 +51,14 @@ export function openProgressiveNifti(
   extension: vscode.Uri,
   source: vscode.Uri,
   empty = false,
+  imageName = source.path.split('/').pop() ?? 'NIfTI image',
 ): vscode.WebviewPanel {
   const renderer = vscode.Uri.joinPath(extension, 'node_modules', '@niivue', 'niivue', 'dist');
   const scripts = vscode.Uri.joinPath(extension, 'out', 'browser');
   const media = vscode.Uri.joinPath(extension, 'media');
   const panel = vscode.window.createWebviewPanel(
     progressiveNiftiViewType,
-    source.path.split('/').pop() ?? 'NIfTI image',
+    imageName,
     vscode.ViewColumn.Active,
     {
       enableScripts: true,
@@ -128,6 +130,7 @@ export function openProgressiveNifti(
     }
   });
   panel.onDidDispose(stop);
+  registerScreenshotExport(panel);
   const imports = JSON.stringify({
     imports: {
       '@niivue/niivue': webview.asWebviewUri(vscode.Uri.joinPath(renderer, 'index.js')).toString(),
@@ -140,12 +143,102 @@ export function openProgressiveNifti(
 <link rel="stylesheet" href="${resource(vscode.Uri.joinPath(media, 'nifti.css'))}">
 <script type="importmap" nonce="${nonce}">${imports}</script>
 <title>NIfTI image</title></head><body>
-<header><span role="status">Loading image…</span>
+<header>
+<div class="image-status"><span id="load-status" role="status">Loading image…</span><span id="screenshot-status" role="status"></span></div>
+<div class="image-actions" role="group" aria-label="Image actions">
 <button id="cancel" type="button">Cancel loading</button>
 <button id="image-controls" type="button">Image controls</button>
+<button id="save-screenshot" class="primary-action" type="button" disabled>Save screenshot</button>
+</div>
 </header>
 <main class="image-stage"><div class="image-canvas"><div class="image-renderer"><canvas aria-label="NIfTI image" data-gzip="${source.path.endsWith('.gz')}"></canvas></div></div></main>
 <script type="module" nonce="${nonce}" src="${resource(vscode.Uri.joinPath(scripts, 'webview', 'niftiClient.js'))}"></script>
 </body></html>`;
   return panel;
+}
+
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+const maxScreenshotBytes = 20 * 1024 ** 2;
+
+/** Only a native save dialog supplies the export destination. */
+function registerScreenshotExport(panel: vscode.WebviewPanel): void {
+  const webview = panel.webview;
+  let request: string | undefined;
+  let saving = false;
+  let closed = false;
+  const reply = (text: string) => webview.postMessage({ type: 'screenshotStatus', text });
+  const listener = webview.onDidReceiveMessage(async (message: unknown) => {
+    if (!message || typeof message !== 'object' || !('type' in message)) return;
+    if (message.type === 'saveScreenshot' && !request && !saving) {
+      request = randomBytes(16).toString('hex');
+      if (
+        !(await webview.postMessage({ type: 'captureScreenshot', request, imageName: panel.title }))
+      ) {
+        request = undefined;
+        await reply('Could not start screenshot capture.');
+      }
+      return;
+    }
+    if (
+      message.type !== 'screenshotCaptured' ||
+      !request ||
+      !('request' in message) ||
+      message.request !== request
+    )
+      return;
+    request = undefined;
+    if (
+      !('bytes' in message) ||
+      !(message.bytes instanceof ArrayBuffer) ||
+      message.bytes.byteLength < 33 ||
+      message.bytes.byteLength > maxScreenshotBytes ||
+      !Buffer.from(message.bytes, 0, 8).equals(pngSignature)
+    ) {
+      await reply('Could not capture the image as PNG.');
+      return;
+    }
+    saving = true;
+    let temporary: vscode.Uri | undefined;
+    try {
+      const destination = await vscode.window.showSaveDialog({
+        title: 'Save BIDS Explorer screenshot',
+        defaultUri: vscode.Uri.joinPath(vscode.Uri.file(homedir()), 'bids-view.png'),
+        filters: { PNG: ['png'] },
+      });
+      if (closed) return;
+      if (!destination) {
+        await reply('Screenshot save cancelled.');
+        return;
+      }
+      if (!/\.png$/i.test(destination.path)) {
+        throw new Error('Choose a filename ending in .png.');
+      }
+      const directory = destination.with({
+        path: destination.path.slice(0, destination.path.lastIndexOf('/') + 1),
+      });
+      temporary = vscode.Uri.joinPath(
+        directory,
+        `.bids-screenshot-${randomBytes(16).toString('hex')}.png`,
+      );
+      await vscode.workspace.fs.writeFile(temporary, new Uint8Array(message.bytes));
+      await vscode.workspace.fs.rename(temporary, destination, { overwrite: false });
+      temporary = undefined;
+      await reply('Screenshot saved.');
+    } catch (error) {
+      if (!closed) {
+        const text =
+          error instanceof vscode.FileSystemError && error.code === 'FileExists'
+            ? 'That file already exists. Choose a new filename.'
+            : 'Could not save screenshot. Check the filename and folder permissions.';
+        await reply(text);
+      }
+    } finally {
+      if (temporary) await vscode.workspace.fs.delete(temporary).then(undefined, () => undefined);
+      saving = false;
+    }
+  });
+  panel.onDidDispose(() => {
+    closed = true;
+    listener.dispose();
+  });
 }

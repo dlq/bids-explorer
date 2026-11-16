@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Save the displayed NIfTI view as a PNG, with the image name and display context in the caption.
+
 - Inspect multiple slices at once in the Lightbox layout. Choose a plane, slice range and spacing.
 
 - Switch between Full volume and Crosshair cutaway in 3D. Choose the anatomical corner to remove and move the crosshair to move the cut planes.

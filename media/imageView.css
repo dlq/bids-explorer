@@ -8,10 +8,6 @@ body {
 [hidden] {
   display: none !important;
 }
-section,
-details {
-  margin-bottom: 18px;
-}
 h2 {
   font-size: 1em;
   margin: 0 0 8px;
@@ -47,7 +43,8 @@ button {
   margin: 4px 0;
   color: var(--vscode-button-secondaryForeground);
   background: var(--vscode-button-secondaryBackground);
-  border: 1px solid var(--vscode-contrastBorder, transparent);
+  border: 1px solid var(--vscode-button-border, var(--vscode-contrastBorder, transparent));
+  border-radius: 2px;
   cursor: pointer;
 }
 button:disabled,
@@ -133,11 +130,17 @@ h3 {
   margin: 12px 0 4px;
   overflow-wrap: anywhere;
 }
-#position-details {
-  margin: 10px 0;
+#position-details,
+.metadata-disclosure {
+  margin: 0;
+  padding-block: 8px;
 }
-#position-details summary {
-  font-weight: normal;
+.metadata-disclosure + .metadata-disclosure {
+  border-top: 1px solid var(--vscode-panel-border);
+}
+#position-details {
+  margin-top: 8px;
+  border-top: 1px solid var(--vscode-panel-border);
 }
 #related button {
   max-width: 100%;
@@ -150,4 +153,76 @@ h3 {
   .pair {
     grid-template-columns: 1fr;
   }
+}
+
+main > section {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+#acquisition {
+  font-weight: 600;
+}
+#context {
+  margin-top: 2px;
+}
+#controls {
+  margin-block: 0;
+}
+#controls > fieldset {
+  padding: 0 0 0 10px;
+  margin: 12px 0;
+  border: 0;
+  border-inline-start: 2px solid var(--vscode-panel-border);
+}
+#controls > fieldset > legend {
+  padding: 0 4px;
+  font-weight: 600;
+}
+.slice-range,
+.coordinate-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.action-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+.action-row > p {
+  margin: 0;
+}
+#control-error:empty,
+#position-error:empty {
+  display: none;
+}
+button:hover:not(:disabled) {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+.secondary-action {
+  border-color: var(--vscode-input-border, var(--vscode-panel-border));
+}
+.position-readout {
+  border-inline-start: 2px solid var(--vscode-panel-border);
+  padding-inline-start: 8px;
+  margin-block: 8px;
+}
+.position-readout > * {
+  margin-block: 2px;
+}
+#voxel-value {
+  font-weight: 600;
+}
+@media (max-width: 240px) {
+  .slice-range {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.source-content {
+  border-inline-start: 2px solid var(--vscode-panel-border);
+  padding-inline-start: 10px;
+  margin-block-start: 8px;
 }

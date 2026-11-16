@@ -50,36 +50,36 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
     const nonce = randomBytes(16).toString('hex');
     view.webview.html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src ${view.webview.cspSource}; base-uri 'none'; form-action 'none';"><link rel="stylesheet" href="${resource(['media', 'imageView.css'])}"><title>Imaging</title></head><body>
 <p id="empty">Open an image from BIDS to see its information and controls.</p>
-<main hidden><section aria-labelledby="acquisition-title"><h2 id="acquisition-title">Acquisition</h2><p id="acquisition"></p><p id="context"></p><p id="status" role="status"></p></section>
-<section aria-labelledby="parameters-title"><h2 id="parameters-title">Scan parameters</h2><p class="hint">From the NIfTI header</p><dl id="scan-information" class="scan-summary"></dl><p id="metadata-status" class="hint" role="status"></p><dl id="metadata" class="scan-summary"></dl><button id="inspect" type="button">Inspect all metadata</button></section>
+<main hidden><section aria-labelledby="acquisition-title"><h2 id="acquisition-title">Acquisition</h2><p id="acquisition"></p><p id="context" class="hint"></p><p id="status" role="status"></p></section>
+<section aria-labelledby="parameters-title"><h2 id="parameters-title">Scan parameters</h2><p class="hint">From the NIfTI header</p><dl id="scan-information" class="scan-summary"></dl><p id="metadata-status" class="hint" role="status"></p><dl id="metadata" class="scan-summary"></dl><button id="inspect" class="secondary-action" type="button">Inspect all metadata</button></section>
 <section aria-labelledby="view-title"><h2 id="view-title">Viewing controls</h2>
 <fieldset id="controls" disabled><legend class="sr-only">Image display</legend>
 <label>Layout<select id="layout"><option value="quad">Three planes + 3D</option><option value="multiplanar">Three planes</option><option value="volume">3D volume</option><option value="lightbox">Lightbox</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<label>Slice orientation<select id="orientation"><option value="neurological">Neurological (left on left)</option><option value="radiological">Radiological (left on right)</option></select></label>
 <fieldset id="lightbox-controls" hidden><legend>Lightbox slices</legend>
 <label>Plane<select id="lightbox-plane"><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
 <p id="lightbox-range" class="hint"></p>
-<div class="pair"><label>First slice<input id="lightbox-first" type="number" min="0" step="1"></label><label>Last slice<input id="lightbox-last" type="number" min="0" step="1"></label></div>
-<label>Spacing (slices)<input id="lightbox-step" type="number" min="1" step="1"></label>
-<button id="apply-lightbox" type="button">Apply slice range</button><p id="lightbox-status" role="status"></p></fieldset>
+<div class="slice-range"><label>First slice<input id="lightbox-first" type="number" min="0" step="1"></label><label>Last slice<input id="lightbox-last" type="number" min="0" step="1"></label>
+<label>Spacing<input id="lightbox-step" type="number" min="1" step="1" aria-label="Spacing in slices"></label></div>
+<div class="action-row"><button id="apply-lightbox" type="button">Apply slice range</button><p id="lightbox-status" class="hint" role="status"></p></div></fieldset>
 <fieldset id="volume-display" hidden><legend>3D display</legend>
 <label>Volume view<select id="volume-mode"><option value="full">Full volume</option><option value="cutaway">Crosshair cutaway</option></select></label>
 <div id="cutaway-corner" hidden><p class="hint">Choose the corner to remove. The three cuts follow the crosshair.</p>
 <label>Left or right<select id="cutaway-x"><option value="right">Right</option><option value="left">Left</option></select></label>
 <label>Anterior or posterior<select id="cutaway-y"><option value="anterior">Anterior</option><option value="posterior">Posterior</option></select></label>
 <label>Superior or inferior<select id="cutaway-z"><option value="superior">Superior</option><option value="inferior">Inferior</option></select></label></div></fieldset>
-<label>Slice orientation<select id="orientation"><option value="neurological">Neurological (left on left)</option><option value="radiological">Radiological (left on right)</option></select></label>
 <label id="volume-control" hidden>Volume <output id="frame-value">1</output><input id="frame" type="range" min="1" value="1" max="1" disabled></label>
-<label>Colour map<select id="colormap"><option value="gray">Grayscale</option><option value="viridis">Viridis</option><option value="hot">Hot</option></select></label>
-<div class="pair"><label>Intensity minimum<input id="minimum" type="number" step="any"></label><label>Intensity maximum<input id="maximum" type="number" step="any"></label></div><button id="window" type="button">Apply intensity window</button><p id="control-error" role="alert"></p>
-<label class="check"><input id="crosshair" type="checkbox" checked>Show crosshair</label>
-<details id="position-details"><summary>Position</summary><fieldset><legend>Move crosshair by one voxel</legend><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<button type="button" data-axis="${axis.toLowerCase()}" data-step="-1" aria-label="Decrease ${axis} by one voxel">${axis} −</button><button type="button" data-axis="${axis.toLowerCase()}" data-step="1" aria-label="Increase ${axis} by one voxel">${axis} +</button>`).join('')}</div></fieldset><output id="position" aria-live="polite"></output><p id="voxel-value"></p>
+<details id="position-details"><summary>Position and voxel value</summary><div class="position-readout"><output id="position" aria-live="polite"></output><p id="voxel-value"></p></div><label class="check"><input id="crosshair" type="checkbox" checked>Show crosshair</label><fieldset><legend>Move crosshair by one voxel</legend><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<button type="button" data-axis="${axis.toLowerCase()}" data-step="-1" aria-label="Decrease ${axis} by one voxel">${axis} −</button><button type="button" data-axis="${axis.toLowerCase()}" data-step="1" aria-label="Increase ${axis} by one voxel">${axis} +</button>`).join('')}</div></fieldset>
 <label>Coordinate type<select id="position-space"><option value="voxel">Voxel indices (zero-based, RAS)</option><option value="physical">Physical image coordinates</option></select></label>
-<p class="hint" id="position-transform"></p><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<label>${axis}<input type="number" step="any" id="position-${axis.toLowerCase()}"></label>`).join('')}</div>
+<p class="hint" id="position-transform"></p><div class="coordinate-fields">${['X', 'Y', 'Z'].map((axis) => `<label>${axis}<input type="number" step="any" id="position-${axis.toLowerCase()}"></label>`).join('')}</div>
 <button id="go-to-position" type="button">Go to position</button><p id="position-error" role="status"></p></details>
-<button id="reset" type="button">Reset display</button></fieldset></section>
-<details><summary>More image information</summary><p class="hint">From the NIfTI header</p><dl id="information"></dl></details>
-<details><summary>Related files</summary><p class="hint">Applicable JSON and resolved diffusion companions. Other acquisition resources remain in the BIDS tree.</p><div id="related"></div></details>
-<details><summary>Source details</summary><details><summary>Image location</summary><p id="source"></p></details><div id="provenance"></div></details></main>
+<fieldset class="control-group"><legend>Appearance</legend>
+<label>Colour map<select id="colormap"><option value="gray">Grayscale</option><option value="viridis">Viridis</option><option value="hot">Hot</option></select></label>
+<div class="pair"><label>Intensity minimum<input id="minimum" type="number" step="any"></label><label>Intensity maximum<input id="maximum" type="number" step="any"></label></div><button id="window" type="button">Apply intensity window</button><p id="control-error" role="alert"></p></fieldset>
+<button id="reset" class="secondary-action" type="button">Reset display</button></fieldset></section>
+<details class="metadata-disclosure"><summary>More image information</summary><p class="hint">From the NIfTI header</p><dl id="information"></dl></details>
+<details id="related-files" class="metadata-disclosure" hidden><summary>Related files</summary><div id="related"></div></details>
+<details class="metadata-disclosure"><summary>Source details</summary><div class="source-content"><dl><dt>Image location</dt><dd id="source"></dd></dl><div id="provenance"></div></div></details></main>
 <script nonce="${nonce}" type="module" src="${resource(['out', 'browser', 'webview', 'imageViewClient.js'])}"></script></body></html>`;
     view.webview.onDidReceiveMessage(
       (message: { type?: string; target?: string; index?: number; control?: unknown }) => {

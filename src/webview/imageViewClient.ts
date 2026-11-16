@@ -217,6 +217,7 @@ window.addEventListener(
         provenance.append(group);
       }
     }
+    element('related-files').hidden = image.related.length === 0;
     const relatedSignature = JSON.stringify([target, image.related]);
     if (element('related').dataset.signature !== relatedSignature) {
       element('related').dataset.signature = relatedSignature;
@@ -248,7 +249,8 @@ window.addEventListener(
     );
     element('volume-control').hidden =
       Math.max(state?.loadedFrames ?? 0, state?.previewFrames ?? 0) < 2;
-    element('position').textContent = state?.position ?? 'Position available after loading.';
+    const position = state?.position ?? 'Position available after loading.';
+    if (element('position').textContent !== position) element('position').textContent = position;
     latestCoordinates = state?.coordinates;
     const physicalOption = space.options[1];
     physicalOption.disabled = !latestCoordinates?.physical;
