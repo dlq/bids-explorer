@@ -11,6 +11,26 @@ function control(action: ImageControl['action'], value?: unknown) {
 }
 for (const id of ['layout', 'colormap', 'orientation'] as const)
   element<HTMLSelectElement>(id).onchange = () => control(id, element<HTMLSelectElement>(id).value);
+const lightboxPlane = element<HTMLSelectElement>('lightbox-plane');
+const lightboxFields = ['first', 'last', 'step'].map((name) =>
+  element<HTMLInputElement>('lightbox-' + name),
+);
+let lastLightbox = '';
+lightboxPlane.onchange = () => control('lightbox', { plane: lightboxPlane.value });
+element('apply-lightbox').onclick = () => {
+  const [first, last, step] = lightboxFields.map((field) => field.valueAsNumber);
+  if (![first, last, step].every(Number.isSafeInteger)) {
+    element('lightbox-status').textContent =
+      'Enter whole numbers for the first slice, last slice and spacing.';
+    return;
+  }
+  control('lightbox', { plane: lightboxPlane.value, first, last, step });
+};
+for (const field of lightboxFields)
+  field.onkeydown = (event) => {
+    if (event.key === 'Enter') element('apply-lightbox').click();
+  };
+
 const volumeMode = element<HTMLSelectElement>('volume-mode');
 const corner = ['x', 'y', 'z'].map((axis) => element<HTMLSelectElement>('cutaway-' + axis));
 volumeMode.onchange = () => control('volumeMode', volumeMode.value);
@@ -245,6 +265,25 @@ window.addEventListener(
     element('voxel-value').textContent =
       state?.voxelValue === undefined ? '' : `Voxel value ${state.voxelValue}`;
     if (!state) return;
+    const lightbox = state.lightbox;
+    element('lightbox-controls').hidden = state.display.layout !== 'lightbox' || !lightbox;
+    if (lightbox) {
+      const { settings, lastIndex, count, error } = lightbox;
+      const signature = JSON.stringify([target, settings, lastIndex]);
+      if (changed || signature !== lastLightbox) {
+        lastLightbox = signature;
+        lightboxPlane.value = settings.plane;
+        [settings.first, settings.last, settings.step].forEach((value, i) => {
+          lightboxFields[i].value = String(value);
+        });
+        lightboxFields[0].max = lightboxFields[1].max = String(lastIndex);
+      }
+      element('lightbox-range').textContent = `Slice indices 0–${lastIndex}. Show up to 24 slices.`;
+      element('lightbox-status').textContent =
+        error ?? `${count} ${count === 1 ? 'slice' : 'slices'} shown.`;
+    } else {
+      lastLightbox = '';
+    }
     element('volume-display').hidden = !['quad', 'volume'].includes(state.display.layout);
     volumeMode.value = state.display.volumeMode ?? 'full';
     element('cutaway-corner').hidden = volumeMode.value !== 'cutaway';

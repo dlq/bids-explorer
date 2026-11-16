@@ -65,6 +65,8 @@ suite('Progressive NIfTI viewer', () => {
           blackPadding?: Record<string, number>;
           renderedPanels?: number[];
           clipPlanes?: number[][];
+          slicePositions?: number[];
+          lightbox?: { count: number; error?: string };
           information?: { label: string; value: string }[];
           display?: {
             layout: string;
@@ -187,6 +189,30 @@ suite('Progressive NIfTI viewer', () => {
             { action: 'volumeMode', value: 'cutaway' },
             () => report.clipPlanes?.length === 3,
           );
+          await setControl(
+            { action: 'layout', value: 'lightbox' },
+            () =>
+              report.renderedPanels?.join() === '0,0' &&
+              report.slicePositions?.join() === '0.25,0.75',
+          );
+          await setControl(
+            { action: 'lightbox', value: { plane: 'sagittal' } },
+            () => report.renderedPanels?.join() === '2,2',
+          );
+          await setControl(
+            { action: 'lightbox', value: { plane: 'sagittal', first: 0, last: 1, step: 2 } },
+            () => report.renderedPanels?.join() === '2' && report.slicePositions?.join() === '0.25',
+          );
+          await setControl(
+            { action: 'lightbox', value: { plane: 'sagittal', first: 0, last: 2, step: 1 } },
+            () => !!report.lightbox?.error,
+          );
+          assert.equal(report.lightbox?.count, 1);
+          assert.deepEqual(report.renderedPanels, [2]);
+          await setControl(
+            { action: 'layout', value: 'quad' },
+            () => report.renderedPanels?.length === 4,
+          );
           const originalWindow = [report.display.minimum, report.display.maximum];
           for (const control of [
             { action: 'layout', value: 'axial' },
@@ -239,7 +265,7 @@ suite('Progressive NIfTI viewer', () => {
           await new Promise((resolve) => setTimeout(resolve, 50));
           assert.deepEqual(report.clipPlanes, []);
           assert.deepEqual([report.display.minimum, report.display.maximum], originalWindow);
-          assert.deepEqual([...report.renderedPanels!].sort(), [0, 1, 2, 4]);
+          assert.deepEqual([...report.renderedPanels].sort(), [0, 1, 2, 4]);
           await panel.webview.postMessage({
             type: 'imageControl',
             control: { action: 'layout', value: 'multiplanar' },
@@ -250,7 +276,7 @@ suite('Progressive NIfTI viewer', () => {
             await new Promise((resolve) => setTimeout(resolve, 30));
           }
           assert.deepEqual(
-            [...report.renderedPanels!].sort(),
+            [...report.renderedPanels].sort(),
             [0, 1, 2],
             'Three planes must exclude 3D',
           );

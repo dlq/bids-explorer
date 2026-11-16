@@ -1,6 +1,6 @@
 import { Niivue, NVImage, MULTIPLANAR_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { readNiftiStream } from './niftiStream.js';
-import type { CutawaySide, ImageControl, ImageState } from './imageViewTypes';
+import type { CutawaySide, ImageControl, ImageState, LightboxSettings } from './imageViewTypes';
 
 const canvas = document.querySelector<HTMLCanvasElement>('canvas')!;
 const status = document.querySelector<HTMLElement>('[role="status"]')!;
@@ -79,7 +79,12 @@ function publish(inspect = false) {
       : {}),
     type: 'imageState',
     ...state,
-    ...(inspect ? { clipPlanes: viewer.scene.clipPlaneDepthAziElevs } : {}),
+    ...(inspect
+      ? {
+          clipPlanes: viewer.scene.clipPlaneDepthAziElevs,
+          slicePositions: viewer.screenSlices.map((slice) => slice.sliceFrac),
+        }
+      : {}),
     renderedPanels: viewer.screenSlices.map((slice) => slice.axCorSag),
   });
 }
@@ -212,6 +217,60 @@ function guardClipGesture(event: MouseEvent) {
 canvas.addEventListener('mousedown', guardClipGesture, { capture: true });
 canvas.addEventListener('wheel', guardClipGesture, { capture: true, passive: false });
 
+const lightboxAxes = { axial: 2, coronal: 1, sagittal: 0 } as const;
+
+function setLightbox(image: NVImage, value: unknown) {
+  if (!value || typeof value !== 'object' || !('plane' in value)) return;
+  const { plane } = value;
+  if (plane !== 'axial' && plane !== 'coronal' && plane !== 'sagittal') return;
+  const axis = lightboxAxes[plane];
+  const dimension = image.dimsRAS?.[axis + 1];
+  if (!dimension || !image.frac2mmOrtho) return;
+  const lastIndex = dimension - 1;
+  let settings: LightboxSettings = {
+    plane,
+    first: 0,
+    last: lastIndex,
+    step: Math.max(1, Math.ceil(lastIndex / 11)),
+  };
+  if ('first' in value && 'last' in value && 'step' in value) {
+    const { first, last, step } = value;
+    if (!state.lightbox) return;
+    if (
+      typeof first !== 'number' ||
+      typeof last !== 'number' ||
+      typeof step !== 'number' ||
+      ![first, last, step].every(Number.isSafeInteger) ||
+      first < 0 ||
+      last < first ||
+      last > lastIndex ||
+      step < 1 ||
+      Math.floor((last - first) / step) >= 24
+    ) {
+      state.lightbox.error =
+        'Choose an in-range first and last slice and positive spacing for up to 24 slices.';
+      return;
+    }
+    settings = { plane, first, last, step };
+  }
+  // Mosaic positions use the same orthogonal image coordinates as the 2D viewer.
+  const rows: string[][] = [];
+  const count = Math.floor((settings.last - settings.first) / settings.step) + 1;
+  const columns = Math.ceil(Math.sqrt(count));
+  for (let index = 0; index < count; index++) {
+    const fraction: [number, number, number] = [0.5, 0.5, 0.5];
+    fraction[axis] = (settings.first + index * settings.step + 0.5) / dimension;
+    const position = image.convertFrac2MM(fraction)[axis];
+    if (!Number.isFinite(position)) return;
+    if (index % columns === 0) rows.push([]);
+    rows[rows.length - 1].push(String(position));
+  }
+  state.lightbox = { settings, lastIndex, count };
+  viewer.setSliceMosaicString(
+    `L ${plane[0].toUpperCase()} ${rows.map((row) => row.join(' ')).join('; ')}`,
+  );
+}
+
 function applyControl(control: ImageControl) {
   if (control.action === 'cancel') {
     controller.abort();
@@ -219,6 +278,7 @@ function applyControl(control: ImageControl) {
   }
   if (!volume || !state.navigationEnabled) return;
   const { action, value } = control;
+  if (action === 'lightbox' && state.display.layout === 'lightbox') setLightbox(volume, value);
   if (action === 'position') goToPosition(volume, value);
   if (action === 'volumeMode' && (value === 'full' || value === 'cutaway')) {
     state.display.volumeMode = value;
@@ -248,7 +308,11 @@ function applyControl(control: ImageControl) {
       coronal: viewer.sliceTypeCoronal,
       sagittal: viewer.sliceTypeSagittal,
     };
-    if (Object.hasOwn(layouts, value)) {
+    if (value === 'lightbox') {
+      setLightbox(volume, state.lightbox?.settings ?? { plane: 'axial' });
+      if (state.lightbox) state.display.layout = 'lightbox';
+    } else if (Object.hasOwn(layouts, value)) {
+      if (state.display.layout === 'lightbox') viewer.setSliceMosaicString('');
       viewer.opts.multiplanarShowRender = value === 'quad' ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
       viewer.setMultiplanarLayout(value === 'quad' ? MULTIPLANAR_TYPE.GRID : MULTIPLANAR_TYPE.AUTO);
       viewer.setSliceType(layouts[value]);
@@ -311,6 +375,7 @@ function applyControl(control: ImageControl) {
     applyControl({ action: 'volumeMode', value: 'full' });
     applyControl({ action: 'orientation', value: 'neurological' });
     applyControl({ action: 'layout', value: 'quad' });
+    state.lightbox = undefined;
     applyControl({ action: 'colormap', value: 'gray' });
     applyControl({ action: 'window', value: defaultWindow });
     applyControl({ action: 'crosshair', value: true });

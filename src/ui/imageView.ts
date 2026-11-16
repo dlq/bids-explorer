@@ -54,7 +54,13 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
 <section aria-labelledby="parameters-title"><h2 id="parameters-title">Scan parameters</h2><p class="hint">From the NIfTI header</p><dl id="scan-information" class="scan-summary"></dl><p id="metadata-status" class="hint" role="status"></p><dl id="metadata" class="scan-summary"></dl><button id="inspect" type="button">Inspect all metadata</button></section>
 <section aria-labelledby="view-title"><h2 id="view-title">Viewing controls</h2>
 <fieldset id="controls" disabled><legend class="sr-only">Image display</legend>
-<label>Layout<select id="layout"><option value="quad">Three planes + 3D</option><option value="multiplanar">Three planes</option><option value="volume">3D volume</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<label>Layout<select id="layout"><option value="quad">Three planes + 3D</option><option value="multiplanar">Three planes</option><option value="volume">3D volume</option><option value="lightbox">Lightbox</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<fieldset id="lightbox-controls" hidden><legend>Lightbox slices</legend>
+<label>Plane<select id="lightbox-plane"><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagittal</option></select></label>
+<p id="lightbox-range" class="hint"></p>
+<div class="pair"><label>First slice<input id="lightbox-first" type="number" min="0" step="1"></label><label>Last slice<input id="lightbox-last" type="number" min="0" step="1"></label></div>
+<label>Spacing (slices)<input id="lightbox-step" type="number" min="1" step="1"></label>
+<button id="apply-lightbox" type="button">Apply slice range</button><p id="lightbox-status" role="status"></p></fieldset>
 <fieldset id="volume-display" hidden><legend>3D display</legend>
 <label>Volume view<select id="volume-mode"><option value="full">Full volume</option><option value="cutaway">Crosshair cutaway</option></select></label>
 <div id="cutaway-corner" hidden><p class="hint">Choose the corner to remove. The three cuts follow the crosshair.</p>
