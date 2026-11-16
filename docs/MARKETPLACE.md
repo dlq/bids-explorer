@@ -12,7 +12,7 @@ _Public functional MRI example from [OpenNeuro ds007661](https://openneuro.org/d
 
 **[Five-minute Quickstart](https://github.com/dlq/bids-explorer/blob/main/docs/QUICKSTART.md)** · Open a T1-weighted MRI from a 13 MB public sample, explore the Imaging controls and find the original file. No terminal commands needed. For a study on a server, follow the [Remote SSH walkthrough](https://github.com/dlq/bids-explorer/blob/main/docs/REMOTE_SSH.md).
 
-**[Everyday workflows](https://github.com/dlq/bids-explorer/blob/main/docs/EVERYDAY_WORKFLOWS.md)** · Look up participant attributes, check session and pipeline coverage, and trace scan metadata to its source. The large-table workflow is new in 1.2.0.
+**[Everyday workflows](https://github.com/dlq/bids-explorer/blob/main/docs/EVERYDAY_WORKFLOWS.md)** · Look up participant attributes, check session and pipeline coverage, and trace scan metadata to its source.
 
 Select **Install** on this Marketplace page or in VS Code’s Extensions view. The publisher is **Darcy Quesnel**, with publisher ID **MCIN-dlq**. The full extension identifier is `MCIN-dlq.bids-explorer`.
 
@@ -53,8 +53,12 @@ The sidebar includes:
 
 - **Acquisition context:** participant, dataset, task, run and other recorded scan distinctions.
 - **Scan parameters:** image dimensions and voxel spacing, plus applicable JSON values such as TR in seconds and TE in milliseconds when recorded.
-- **Viewing controls:** layout, colour map, intensity range, crosshair and volume selection for loaded 4D data. Expand **Position** to move the crosshair one voxel at a time.
+- **Layout:** compare slices in **Lightbox**, or choose **Crosshair cutaway** under **3D display** to see inside the volume. Choose the anatomical corner to remove. All three cut planes follow the crosshair.
+- **Position and voxel value:** enter voxel indices or physical image coordinates, or move the crosshair one voxel at a time. The value follows the crosshair and the selected volume.
+- **Display:** switch between radiological and neurological slice conventions, adjust the colour map or intensity range, and select a volume in loaded 4D data.
 - **Source details:** the original files and exact values behind the displayed information.
+
+Choose **Save screenshot** above the image to export the displayed view and caption as a PNG. Review the caption for participant identifiers before sharing.
 
 Use **Reset display** to restore the default presentation. **Open Image With…** lets you choose another installed VS Code editor if you prefer. Reopening an already-open image returns to its existing viewer.
 
@@ -114,7 +118,7 @@ For fuller recovery instructions, see [Troubleshooting](https://github.com/dlq/b
 
 ## Keyboard access
 
-Use arrow keys to navigate and expand the BIDS tree, **Enter** to open, and **Shift+F10** for the selected entry’s actions. Use **Tab** to reach filters, table scrolling regions and disclosure controls. The volume selector accepts arrow keys, and the Imaging sidebar’s **Position** buttons provide keyboard crosshair movement.
+Use arrow keys to navigate and expand the BIDS tree, **Enter** to open, and **Shift+F10** for the selected entry’s actions. Use **Tab** to reach filters, table scrolling regions and disclosure controls. The volume selector accepts arrow keys, and the Imaging sidebar’s **Position and voxel value** buttons provide keyboard crosshair movement.
 
 Open the Command Palette with **Cmd+Shift+P** on macOS or **Ctrl+Shift+P** on Windows/Linux. Extension commands start with **BIDS Explorer:**. Previews follow the VS Code theme; sampled keyboard, high-contrast and VoiceOver checks are documented in the [usability record](https://github.com/dlq/bids-explorer/blob/main/docs/USABILITY.md).
 
