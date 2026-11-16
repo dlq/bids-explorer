@@ -20,6 +20,7 @@ suite('Progressive NIfTI viewer', () => {
     const first = gunzipSync(niftiFixture());
     first.writeInt16LE(4, 40);
     first.writeInt16LE(2, 48);
+    first.writeFloatLE(10, 292); // Translate the image affine along X.
     const image = Buffer.concat([first, Buffer.alloc(8, 123)]);
     try {
       for (const [suffix, bytes] of [
@@ -56,6 +57,9 @@ suite('Progressive NIfTI viewer', () => {
           previewFrames?: number;
           loadedFrames?: number;
           position?: string;
+          coordinates?: { voxel: number[]; physical?: number[]; units?: string };
+          voxelValue?: string;
+          positionError?: string;
           navigationEnabled?: boolean;
           edgePadding?: Record<string, number>;
           blackPadding?: Record<string, number>;
@@ -68,6 +72,7 @@ suite('Progressive NIfTI viewer', () => {
             maximum: number;
             crosshair: boolean;
             frame: number;
+            orientation?: string;
           };
         } = {};
         let showedFirstFrame = false;
@@ -108,6 +113,40 @@ suite('Progressive NIfTI viewer', () => {
             '1 × 1 × 1 mm',
           );
           assert.doesNotMatch(panel.webview.html, /<label>Frame/);
+          const setControl = async (
+            control: { action: string; value?: unknown },
+            done: () => boolean,
+          ) => {
+            await panel.webview.postMessage({ type: 'imageControl', control });
+            const deadline = Date.now() + 5000;
+            while (!done()) {
+              assert.ok(Date.now() < deadline, `Control did not settle: ${control.action}`);
+              await panel.webview.postMessage('inspect');
+              await new Promise((resolve) => setTimeout(resolve, 30));
+            }
+          };
+          await setControl(
+            { action: 'position', value: { space: 'voxel', coordinates: [0, 0, 0] } },
+            () => report.coordinates?.voxel.join() === '0,0,0',
+          );
+          assert.deepEqual(report.coordinates?.physical, [10, 0, 0]);
+          assert.equal(report.coordinates.units, 'mm');
+          assert.equal(report.voxelValue, '0');
+          await setControl(
+            { action: 'position', value: { space: 'physical', coordinates: [11, 0, 0] } },
+            () => report.coordinates?.voxel.join() === '1,0,0',
+          );
+          assert.equal(report.voxelValue, '20');
+          await setControl(
+            { action: 'position', value: { space: 'voxel', coordinates: [2, 0, 0] } },
+            () => /outside/.test(report.positionError ?? ''),
+          );
+          assert.deepEqual(report.coordinates?.voxel, [1, 0, 0]);
+          await setControl(
+            { action: 'orientation', value: 'radiological' },
+            () => report.display?.orientation === 'radiological',
+          );
+          assert.deepEqual(report.coordinates?.voxel, [1, 0, 0]);
           const originalWindow = [report.display.minimum, report.display.maximum];
           for (const control of [
             { action: 'layout', value: 'axial' },
@@ -137,6 +176,7 @@ suite('Progressive NIfTI viewer', () => {
           assert.equal(report.display.minimum, 10);
           assert.equal(report.display.maximum, 90);
           assert.equal(report.display.crosshair, false);
+          assert.equal(report.voxelValue, '123');
           for (const control of [
             { action: 'window', value: [100, 1] },
             { action: 'frame', value: 999 },
@@ -154,6 +194,7 @@ suite('Progressive NIfTI viewer', () => {
             await panel.webview.postMessage('inspect');
             await new Promise((resolve) => setTimeout(resolve, 30));
           }
+          assert.equal(report.display.orientation, 'neurological');
           assert.deepEqual([report.display.minimum, report.display.maximum], originalWindow);
           assert.deepEqual([...report.renderedPanels!].sort(), [0, 1, 2, 4]);
           await panel.webview.postMessage({

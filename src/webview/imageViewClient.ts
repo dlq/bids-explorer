@@ -9,7 +9,7 @@ function send(type: string, extra: object = {}) {
 function control(action: ImageControl['action'], value?: unknown) {
   send('control', { control: { action, value } });
 }
-for (const id of ['layout', 'colormap'] as const)
+for (const id of ['layout', 'colormap', 'orientation'] as const)
   element<HTMLSelectElement>(id).onchange = () => control(id, element<HTMLSelectElement>(id).value);
 element<HTMLInputElement>('crosshair').onchange = () =>
   control('crosshair', element<HTMLInputElement>('crosshair').checked);
@@ -33,6 +33,40 @@ element('window').onclick = () => {
 for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-axis]')))
   button.onclick = () =>
     control('move', { axis: button.dataset.axis, step: Number(button.dataset.step) });
+const coordinateFields = ['x', 'y', 'z'].map((axis) =>
+  element<HTMLInputElement>('position-' + axis),
+);
+const space = element<HTMLSelectElement>('position-space');
+let latestCoordinates: ImageState['coordinates'];
+let positionEdited = false;
+function showCoordinates() {
+  const coordinates =
+    space.value === 'physical' ? latestCoordinates?.physical : latestCoordinates?.voxel;
+  coordinateFields.forEach((field, axis) => {
+    field.value = coordinates ? String(Number(coordinates[axis].toPrecision(8))) : '';
+  });
+}
+space.onchange = () => {
+  positionEdited = false;
+  showCoordinates();
+};
+for (const field of coordinateFields) {
+  field.oninput = () => {
+    positionEdited = true;
+  };
+  field.onkeydown = (event) => {
+    if (event.key === 'Enter') element('go-to-position').click();
+  };
+}
+element('go-to-position').onclick = () => {
+  const coordinates = coordinateFields.map((field) => field.valueAsNumber);
+  if (!coordinates.every(Number.isFinite)) {
+    element('position-error').textContent = 'Enter a number for each coordinate.';
+    return;
+  }
+  positionEdited = false;
+  control('position', { space: space.value, coordinates });
+};
 element('reset').onclick = () => control('reset');
 element('inspect').onclick = () => send('inspect');
 function fields(id: string, rows: readonly { label: string; value: string }[]) {
@@ -186,7 +220,23 @@ window.addEventListener(
     element('volume-control').hidden =
       Math.max(state?.loadedFrames ?? 0, state?.previewFrames ?? 0) < 2;
     element('position').textContent = state?.position ?? 'Position available after loading.';
+    latestCoordinates = state?.coordinates;
+    const physicalOption = space.options[1];
+    physicalOption.disabled = !latestCoordinates?.physical;
+    physicalOption.textContent = latestCoordinates?.physical
+      ? `Physical image coordinates (${latestCoordinates.units})`
+      : 'Physical image coordinates (unavailable)';
+    if (changed || (physicalOption.disabled && space.value === 'physical')) {
+      space.value = 'voxel';
+      positionEdited = false;
+    }
+    if (!positionEdited) showCoordinates();
+    element('position-transform').textContent = latestCoordinates?.transform ?? '';
+    element('position-error').textContent = state?.positionError ?? '';
+    element('voxel-value').textContent =
+      state?.voxelValue === undefined ? '' : `Voxel value ${state.voxelValue}`;
     if (!state) return;
+    element<HTMLSelectElement>('orientation').value = state.display.orientation ?? 'neurological';
     element<HTMLSelectElement>('layout').value = state.display.layout;
     element<HTMLSelectElement>('colormap').value = state.display.colormap;
     for (const [id, value] of [

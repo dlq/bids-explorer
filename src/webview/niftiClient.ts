@@ -1,10 +1,4 @@
-import {
-  Niivue,
-  NVImage,
-  MULTIPLANAR_TYPE,
-  SHOW_RENDER,
-  type NiiVueLocation,
-} from '@niivue/niivue';
+import { Niivue, NVImage, MULTIPLANAR_TYPE, SHOW_RENDER } from '@niivue/niivue';
 import { readNiftiStream } from './niftiStream.js';
 import type { ImageControl, ImageState } from './imageViewTypes';
 
@@ -34,6 +28,7 @@ const state: ImageState = {
     maximum: 1,
     crosshair: true,
     frame: 1,
+    orientation: 'neurological',
   },
 };
 function publish(inspect = false) {
@@ -78,6 +73,91 @@ cancel.onclick = () => controller.abort();
 document.getElementById('image-controls')!.onclick = () =>
   api.postMessage({ type: 'showImageControls' });
 window.addEventListener('pagehide', () => controller.abort(), { once: true });
+const spatialUnits = new Map([
+  [1, 'm'],
+  [2, 'mm'],
+  [3, 'µm'],
+]);
+
+function updatePosition() {
+  if (!volume) return;
+  const voxel = Array.from(viewer.frac2vox(viewer.scene.crosshairPos));
+  const header = volume.hdr;
+  const units = spatialUnits.get((header?.xyzt_units ?? 0) & 7);
+  const matrix = volume.matRAS;
+  const [a, b, c, , d, e, f, , g, h, i] = matrix ?? [];
+  const determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+  const valid =
+    matrix &&
+    Array.from(matrix).every(Number.isFinite) &&
+    Number.isFinite(determinant) &&
+    determinant !== 0;
+  const hasQform = (header?.qform_code ?? 0) > 0;
+  const hasSform = (header?.sform_code ?? 0) > 0;
+  const physical =
+    units && valid && (hasQform || hasSform) ? Array.from(viewer.vox2mm(voxel, matrix)) : undefined;
+  const transform = !units
+    ? 'Physical coordinates unavailable. Spatial units are missing.'
+    : !hasQform && !hasSform
+      ? 'Physical coordinates unavailable. No qform or sform is recorded.'
+      : !physical?.every(Number.isFinite)
+        ? 'Physical coordinates unavailable. The viewer transform is invalid.'
+        : hasQform && hasSform
+          ? 'Image coordinates use the viewer’s NIfTI affine. Both qform and sform are recorded and may differ.'
+          : 'Image coordinates use the viewer’s NIfTI affine.';
+  state.coordinates = {
+    voxel,
+    physical: physical?.every(Number.isFinite) ? physical : undefined,
+    units,
+    transform,
+  };
+  state.position = `Voxel position X ${voxel[0]}, Y ${voxel[1]}, Z ${voxel[2]}.`;
+  const intensity = volume.getValue(voxel[0], voxel[1], voxel[2], state.display.frame - 1);
+  state.voxelValue = Number.isFinite(intensity)
+    ? String(Number(intensity.toPrecision(8)))
+    : String(intensity);
+}
+
+function goToPosition(image: NVImage, value: unknown) {
+  if (!value || typeof value !== 'object' || !('space' in value) || !('coordinates' in value))
+    return;
+  const { space, coordinates } = value;
+  if (
+    (space !== 'voxel' && space !== 'physical') ||
+    !Array.isArray(coordinates) ||
+    coordinates.length !== 3 ||
+    !coordinates.every((part: unknown) => typeof part === 'number' && Number.isFinite(part))
+  )
+    return;
+  if (
+    (space === 'physical' && !state.coordinates?.physical) ||
+    (space === 'voxel' && !coordinates.every(Number.isInteger))
+  ) {
+    state.positionError =
+      space === 'physical'
+        ? 'Physical coordinates are unavailable for this image.'
+        : 'Enter whole-number voxel indices.';
+    return;
+  }
+  const voxel =
+    space === 'physical'
+      ? Array.from(image.mm2vox(coordinates as number[]))
+      : (coordinates as number[]);
+  const dimensions = image.dimsRAS;
+  if (
+    !dimensions ||
+    !voxel.every(
+      (index, axis) => Number.isInteger(index) && index >= 0 && index < dimensions[axis + 1],
+    )
+  ) {
+    state.positionError = 'That position is outside the image.';
+    return;
+  }
+  state.positionError = undefined;
+  const current = viewer.frac2vox(viewer.scene.crosshairPos);
+  viewer.moveCrosshairInVox(voxel[0] - current[0], voxel[1] - current[1], voxel[2] - current[2]);
+}
+
 function applyControl(control: ImageControl) {
   if (control.action === 'cancel') {
     controller.abort();
@@ -85,6 +165,11 @@ function applyControl(control: ImageControl) {
   }
   if (!volume || !state.navigationEnabled) return;
   const { action, value } = control;
+  if (action === 'position') goToPosition(volume, value);
+  if (action === 'orientation' && (value === 'neurological' || value === 'radiological')) {
+    state.display.orientation = value;
+    viewer.setRadiologicalConvention(value === 'radiological');
+  }
   if (action === 'layout' && typeof value === 'string') {
     const layouts: Record<string, number> = {
       quad: viewer.sliceTypeMultiplanar,
@@ -135,6 +220,7 @@ function applyControl(control: ImageControl) {
   ) {
     viewer.setFrame4D(volume.id, value - 1);
     state.display.frame = value;
+    updatePosition();
   }
   if (
     action === 'move' &&
@@ -151,6 +237,8 @@ function applyControl(control: ImageControl) {
       value.axis === 'z' ? value.step : 0,
     );
   if (action === 'reset') {
+    state.positionError = undefined;
+    applyControl({ action: 'orientation', value: 'neurological' });
     applyControl({ action: 'layout', value: 'quad' });
     applyControl({ action: 'colormap', value: 'gray' });
     applyControl({ action: 'window', value: defaultWindow });
@@ -179,12 +267,7 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
 function information(image: NVImage, frames: number) {
   const header = image.hdr;
   if (!header) return;
-  const units =
-    new Map([
-      [1, 'm'],
-      [2, 'mm'],
-      [3, 'µm'],
-    ]).get(header.xyzt_units & 7) ?? 'units not recorded';
+  const units = spatialUnits.get(header.xyzt_units & 7) ?? 'units not recorded';
   const timeUnits = new Map([
     [8, 's'],
     [16, 'ms'],
@@ -239,9 +322,8 @@ function show(image: NVImage, frames: number, restore = false) {
 }
 async function open() {
   await viewer.attachToCanvas(canvas);
-  viewer.onLocationChange = (location) => {
-    const { vox } = location as NiiVueLocation;
-    state.position = `Voxel position X ${vox[0]}, Y ${vox[1]}, Z ${vox[2]}.`;
+  viewer.onLocationChange = () => {
+    updatePosition();
     publish();
   };
   viewer.onIntensityChange = (image) => {

@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Enter voxel indices or physical image coordinates, read the selected voxel value, and switch between neurological and radiological slice display.
+
 ## [1.2.0] - 2026-11-14
 
 - Add an Everyday workflows guide for participant lookup, Availability, scan metadata, archives, linked derivatives and image previews.
