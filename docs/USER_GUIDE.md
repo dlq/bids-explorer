@@ -13,9 +13,11 @@ Browse a neuroimaging study by participant, session and modality in VS Code. Ope
 
 Matching multi-echo images share an acquisition branch with ordered **Echo** children. **Run**, **Acquisition**, **Phase encoding** and other readable labels preserve the distinctions between scans. Expand an echo for its image and metadata; original filenames remain in source details.
 
-Images open in four quadrants: axial, coronal, sagittal and a 3D volume view. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Imaging** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position and voxel value**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **Imaging** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
+Images open in four quadrants: axial, coronal, sagittal and a 3D cutaway view facing the removed corner. For image information and viewing controls, choose **Image controls** in the built-in viewer. The native **Imaging** view follows your selected image, with scan parameters above viewing controls. It shows TE in milliseconds, keeps voxel-position buttons under **Position and voxel value**, and offers **Volume** navigation for 4D images. To put it on the right, right-click the **Imaging** activity icon and choose **Move To → Secondary Side Bar**. VS Code remembers the placement.
 
 Choose **Lightbox** to compare slices, **Crosshair cutaway** to inspect inside the 3D volume, or **Save screenshot** to export the displayed view as a PNG. For coordinate entry, slice orientation and step-by-step instructions, see [Inspect images and diffusion gradients](EVERYDAY_WORKFLOWS.md#inspect-images-and-diffusion-gradients).
+
+For a 4D image, use **Play**, **Pause** and **Playback speed** after loading completes. The **Volume** slider follows playback. **Signal at crosshair** shows the selected voxel across the run, with a marker for the current volume. Moving the slider or selecting a point on the plot pauses playback.
 
 For a first server connection, follow the [Remote SSH walkthrough](REMOTE_SSH.md), including MFA prompts and installing BIDS Explorer on the connected host.
 

@@ -45,7 +45,7 @@ Archive reading and indexing run beside the data on the server, using the VS Cod
 
 ## View MRI images and acquisition parameters
 
-Click a NIfTI image or its acquisition label to use the built-in viewer. The default layout shows **axial, coronal and sagittal planes plus a 3D volume view**. For a 4D scan, the first volume can appear while the remaining volumes load.
+Click a NIfTI image or its acquisition label to use the built-in viewer. The default layout shows **axial, coronal and sagittal planes plus a 3D cutaway view**, facing the removed corner. For a 4D scan, the first volume can appear while the remaining volumes load.
 
 Choose **Image controls** to open the native **Imaging** sidebar. To place it on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. VS Code remembers its position.
 
@@ -55,6 +55,7 @@ The sidebar includes:
 - **Scan parameters:** image dimensions and voxel spacing, plus applicable JSON values such as TR in seconds and TE in milliseconds when recorded.
 - **Layout:** compare slices in **Lightbox**, or choose **Crosshair cutaway** under **3D display** to see inside the volume. Choose the anatomical corner to remove. All three cut planes follow the crosshair.
 - **Position and voxel value:** enter voxel indices or physical image coordinates, or move the crosshair one voxel at a time. The value follows the crosshair and the selected volume.
+- **4D playback and signal:** choose **Play** or **Pause** and set the playback speed. The **Volume** slider follows playback and pauses it when moved. **Signal at crosshair** plots the selected voxel across the run; its marker follows the selected volume. Click the plot or use Left and Right to select a volume. Long traces are labeled when sampled, and unavailable timing or signal units are identified. Playback is available after the full image loads.
 - **Display:** switch between radiological and neurological slice conventions, adjust the colour map or intensity range, and select a volume in loaded 4D data.
 - **Source details:** the original files and exact values behind the displayed information.
 

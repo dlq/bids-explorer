@@ -112,3 +112,33 @@ The packaged 1.2.0 candidate repeated this workflow on VS Code 1.146.0 over Remo
 The 1.3.0 candidate passed 192 unit tests and 60 extension-host tests each on VS Code 1.96.0 and current stable on macOS. Hosted CI also passed on Linux with minimum and current stable VS Code. CodeQL completed with zero open alerts at release. [CI](https://github.com/dlq/bids-explorer/actions/runs/43910540533) · [CodeQL](https://github.com/dlq/bids-explorer/actions/runs/43910540528)
 
 Over Remote SSH on Rorqual, the packaged build opened a synthetic loose NIfTI image, displayed two axial slices in Lightbox and saved the view through the VS Code save dialog. The resulting 1028 × 1324 PNG was verified to contain both slices, orientation markers and the caption. The Marketplace download matches the VSIX attached to the [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.3.0).
+
+## 1.4.0 candidate verification
+
+On November 19, 2026, the candidate built from commit `a32bf8d` with the manifest and lockfile set to 1.4.0 passed the following checks before release publication.
+
+- Clean install, formatting, type checking, linting and 196 unit tests with the per-file coverage gate.
+- Full extension-host suite on macOS arm64 with VS Code 1.96.0 and 1.147.0, each with 60 passing tests and two opt-in examples skipped.
+- Semgrep and its rule tests, dependency audit with zero reported vulnerabilities, and both package-contract tests.
+- The same VSIX contents loaded in isolated profiles on both local VS Code versions and in VS Code 1.147.0 over Remote SSH on Rorqual.
+
+Each packaged run exercised these six synthetic sources through the logical BIDS tree.
+
+| Source        | Selected image   | Minimum local | Current local | Remote SSH |
+| ------------- | ---------------- | ------------- | ------------- | ---------- |
+| Loose file    | `.nii`           | Passed        | Passed        | Passed     |
+| Loose file    | `.nii.gz`        | Passed        | Passed        | Passed     |
+| ZIP           | `.nii.gz` member | Passed        | Passed        | Passed     |
+| Tar           | `.nii` member    | Passed        | Passed        | Passed     |
+| Gzip tar      | `.nii.gz` member | Passed        | Passed        | Passed     |
+| Gzip SquashFS | `.nii.gz` member | Passed        | Passed        | Passed     |
+
+The images contained 24 volumes of 16 × 16 × 16 float32 voxels with known values. Checks covered Play and Pause, changing speed during playback, synchronized slider and plot readouts, crosshair-driven trace changes, rendered plot pixels, and the default cutaway camera. JSON TR supplied regular timing; the ZIP case used irregular `VolumeTiming` values. SHA-256 comparisons confirmed that every synthetic source file remained unchanged.
+
+The initial broader minimum-version run timed out waiting for Lightbox PNG capture. A repeat with the test window kept visible passed, including PNG capture. Animation and capture checks need a visible renderer. These checks cover small synthetic images. Large-4D throughput and memory/GPU profiling remain tracked in [issue #28](https://github.com/dlq/bids-explorer/issues/28) tracks that work.
+
+The candidate is `dist/bids-explorer-1.4.0.vsix`, 2,243,389 bytes, SHA-256 `b0b8403a0c3c98ea879c9eeceff841ec3f95f98fe1ca7fbbd131df6cb60f1e43`. Its uploaded Remote SSH copy had the same checksum. Disposable test windows were closed and the temporary Rorqual fixture directory was removed.
+
+### 1.4.0 release packaging
+
+The release preparation updates the Marketplace description and changelog. A comparison of every file in the final local VSIX against the tested candidate found changes only in `extension/readme.md` and `extension/changelog.md`. All runtime and dependency files are identical. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.4.0) carries the published VSIX and its SHA-256 checksum.

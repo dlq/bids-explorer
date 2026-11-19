@@ -53,7 +53,7 @@ Open **Explorer** and expand **BIDS**. A workspace folder with an ordinary root-
 
 If the study does not appear, use **Add Dataset** in the BIDS section, or run **BIDS Explorer: Add Dataset** from the Command Palette. Select its folder on the server. For descriptorless archive collections and custom placements, see the [explorer reference](EXPLORER_REFERENCE.md).
 
-Try opening a JSON sidecar and a NIfTI image. **Inspect Metadata and Related Files** shows inherited acquisition values and their sources. **Image controls** opens the imaging sidebar. To position it on the right, use the sidebar activity icon's **Move To → Secondary Side Bar** menu. The [user guide](USER_GUIDE.md) explains tables, gradients and participant availability.
+Try opening a JSON sidecar and a NIfTI image. **Inspect Metadata and Related Files** shows inherited acquisition values and their sources. **Image controls** opens the imaging sidebar. For a 4D image, Play and Pause become available after loading completes. The signal plot reads from the loaded image as you move the crosshair. To position it on the right, use the sidebar activity icon's **Move To → Secondary Side Bar** menu. See the 4D review walkthrough and user guide for image controls, tables, gradients and participant availability. [4D review walkthrough](EVERYDAY_WORKFLOWS.md#inspect-images-and-diffusion-gradients) · [User guide](USER_GUIDE.md)
 
 Browsing is read-only. Opening an original file in a regular editor is a separate action that can allow edits.
 

@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+## [1.4.0] - 2026-11-19
+
 - Plot the signal at the crosshair across 4D volumes, with a marker following playback and volume selection, recorded timing where available, and bounded sampling for long runs.
 
 - Default 3D rendering to Crosshair cutaway, facing the removed corner. Changing the corner turns the volume toward the exposed cut surfaces.

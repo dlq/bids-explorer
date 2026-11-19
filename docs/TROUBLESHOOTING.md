@@ -36,7 +36,7 @@ Keep the original archive. Do not convert, repack or modify a research dataset a
 
 ## An image is slow to open or says No image data
 
-A selected archived image must be prepared in the image cache before it opens. Tar member reads can require a sequential scan. A large 4D NIfTI can show its first volume while the rest loads; volume navigation becomes available when loading completes.
+A selected archived image must be prepared in the image cache before it opens. Tar member reads can require a sequential scan. A large 4D NIfTI can show its first volume while the rest loads; volume navigation and playback become available when loading completes. The signal plot marks pending volumes while loading. Playback pauses when the image is hidden.
 
 The current viewer accepts up to 1 GiB decoded data, with a 128 MiB first-frame budget. Selected archive extraction is limited to 512 MiB per member. Large studies also need enough workspace-host storage for caches. Exceeding a limit should produce an explanation; record that message when reporting a problem.
 

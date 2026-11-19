@@ -37,9 +37,11 @@ Register the raw and derivative folders and add the derivative folder to the raw
 
 Select a NIfTI image, then choose **Image controls** to open **Imaging**.
 
+- **Review a 4D run.** Once all volumes have loaded, choose **Play**. Adjust **Playback speed (volumes/s)** or choose **Pause** to stop on a volume. Moving the **Volume** slider pauses playback at your selection. Display speed is independent of acquisition timing.
+- **Inspect the signal at one voxel.** Move the crosshair to choose a voxel and read **Signal at crosshair**. The trace shows its values across volumes; playback and the Volume slider move the marker. Click the plot or use Left and Right to select a volume. The axis uses seconds when timing is established and volume numbers otherwise. Long runs show at most 4,096 evenly spaced samples, with a visible coverage note.
 - **Read a voxel value.** Expand **Position and voxel value**. Move the crosshair with the axis buttons or enter X, Y and Z and choose **Go to position**. The value follows the crosshair and the current volume of a 4D scan. For coordinates in image space, choose **Physical image coordinates**.
 - **Compare slices.** Choose **Lightbox** in **Layout**, select a plane, set the first slice, last slice and spacing, then choose **Apply slice range**. Use **Slice orientation** to choose **Neurological (left on left)** or **Radiological (left on right)**.
-- **See inside the 3D volume.** In a layout with a 3D panel, choose **Crosshair cutaway** under **3D display**. Pick the anatomical corner you want to remove and move the crosshair to move the cuts.
+- **See inside the 3D volume.** In a layout with a 3D panel, use the default **Crosshair cutaway** under **3D display**. Pick the anatomical corner you want to remove and move the crosshair to move the cuts.
 - **Save the displayed view.** Choose **Save screenshot** above the image, then choose a destination for the PNG. The caption includes the source filename, which may contain a participant label. Review it before sharing.
 
 For a diffusion scan, select its `.bval` or `.bvec` file to inspect the matching pair. If the pair comes from elsewhere in the study, use **Inspect Metadata and Related Files** on the DWI image and choose **Preview resolved diffusion gradients** when both sources resolve. [Imaging controls and export details](EXPLORER_REFERENCE.md#native-imaging-view)

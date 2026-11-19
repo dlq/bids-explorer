@@ -13,7 +13,7 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 ## What you can do
 
 - **Navigate a study:** browse participants, sessions, anatomical and functional scans, diffusion data and processing outputs. Multi-echo acquisitions keep their echoes together.
-- **View images:** open NIfTI images in the built-in viewer. Read voxel values, compare slices in Lightbox, inspect the volume with a 3D cutaway, browse 4D volumes, and save the current view as a PNG.
+- **View images:** open NIfTI images in the built-in viewer. Read voxel values, compare slices in Lightbox, inspect the volume with a 3D cutaway, play through 4D volumes, plot the signal at the crosshair, and save the current view as a PNG.
 - **Understand metadata:** inspect TR, TE and other recorded parameters, see inherited JSON values and trace them to their original files. Preview participant tables, event timing and diffusion gradients.
 - **Find usable coverage:** filter participant availability by raw sessions and processing outputs, including explicitly linked derivative datasets.
 - **Browse data where it lives:** use local folders or VS Code Remote SSH, including ZIP, supported tarballs and SquashFS collections. Selected archive images are prepared in a cache without unpacking the entire study.

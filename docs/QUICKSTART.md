@@ -32,7 +32,7 @@ For an archive collection, start with the folder containing the ZIP, tar or Squa
 
 ## 3. View an image
 
-Expand **01 → Anatomical** and select **T1-weighted**. You should see three orthogonal planes and a 3D view. Choose **Image controls** for dimensions, voxel spacing and display controls.
+Expand **01 → Anatomical** and select **T1-weighted**. You should see three orthogonal planes and a 3D cutaway view facing the removed corner. Choose **Image controls** for dimensions, voxel spacing and display controls.
 
 To put the controls on the right, right-click **Imaging** and choose **Move To → Secondary Side Bar**. Try changing the layout or colour map, then choose **Reset display**. Expand **Position and voxel value** to move the crosshair with its X, Y and Z buttons.
 
