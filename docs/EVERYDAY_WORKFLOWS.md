@@ -37,6 +37,10 @@ Register the raw and derivative folders and add the derivative folder to the raw
 
 Select a NIfTI image, then choose **Image controls** to open **Imaging**.
 
+![Functional MRI in the default crosshair cutaway layout, with playback controls and the signal at the crosshair in Imaging.](images/study-explorer.png)
+
+_Public [OpenNeuro ds007661](https://openneuro.org/datasets/ds007661) example. The orange marker in the signal plot and the Volume slider both indicate volume 87 of 210._
+
 - **Review a 4D run.** Once all volumes have loaded, choose **Play**. Adjust **Playback speed (volumes/s)** or choose **Pause** to stop on a volume. Moving the **Volume** slider pauses playback at your selection. Display speed is independent of acquisition timing.
 - **Inspect the signal at one voxel.** Move the crosshair to choose a voxel and read **Signal at crosshair**. The trace shows its values across volumes; playback and the Volume slider move the marker. Click the plot or use Left and Right to select a volume. The axis uses seconds when timing is established and volume numbers otherwise. Long runs show at most 4,096 evenly spaced samples, with a visible coverage note.
 - **Read a voxel value.** Expand **Position and voxel value**. Move the crosshair with the axis buttons or enter X, Y and Z and choose **Go to position**. The value follows the crosshair and the current volume of a 4D scan. For coordinates in image space, choose **Physical image coordinates**.

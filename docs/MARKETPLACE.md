@@ -4,9 +4,9 @@
 
 BIDS Explorer is a read-only study browser for datasets organized using the Brain Imaging Data Structure (BIDS). View MRI images, understand acquisition metadata and find participants with the sessions or processing outputs you need. Browse ordinary folders, ZIP files, supported tarballs and SquashFS collections in one logical study tree.
 
-![BIDS Explorer with a functional MRI selected in the participant tree, three orthogonal image planes and a 3D view, and acquisition information and controls on the right.](https://raw.githubusercontent.com/dlq/bids-explorer/main/docs/images/study-explorer.png)
+![BIDS Explorer showing a functional scan in three orthogonal slices and a 3D crosshair cutaway, with the Volume slider, playback controls and voxel signal plot on the right.](https://raw.githubusercontent.com/dlq/bids-explorer/main/docs/images/study-explorer.png)
 
-_Public functional MRI example from [OpenNeuro ds007661](https://openneuro.org/datasets/ds007661). Study navigation is on the left; image information and controls are on the right._
+_Public functional MRI example from [OpenNeuro ds007661](https://openneuro.org/datasets/ds007661). The BIDS tree is on the left. Imaging on the right includes playback and the signal across all 210 volumes at the crosshair; the orange marker follows the selected volume._
 
 ## Install and try it
 

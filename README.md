@@ -6,9 +6,9 @@
 
 View MRI images, read acquisition metadata and find participants with the sessions or processing outputs you need. BIDS Explorer brings folders and supported archives into one logical study tree, while keeping original filenames and sources accessible. Browsing leaves your dataset unchanged.
 
-![BIDS Explorer showing a participant’s functional scan, three orthogonal slices and a 3D view, with scan parameters and viewing controls on the right.](docs/images/study-explorer.png)
+![BIDS Explorer showing a functional scan in three orthogonal slices and a 3D crosshair cutaway, with the Volume slider, playback controls and voxel signal plot on the right.](docs/images/study-explorer.png)
 
-_Functional MRI example from the public [OpenNeuro ds007661 dataset](https://openneuro.org/datasets/ds007661). The BIDS tree is on the left; image information and controls are on the right._
+_Functional MRI example from the public [OpenNeuro ds007661 dataset](https://openneuro.org/datasets/ds007661). The BIDS tree is on the left. Imaging on the right includes playback and the signal across all 210 volumes at the crosshair; the orange marker follows the selected volume._
 
 ## What you can do
 
