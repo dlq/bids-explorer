@@ -346,12 +346,14 @@ suite('Progressive NIfTI viewer', () => {
           assert.equal(report.display.minimum, 10);
           assert.equal(report.display.frame, 2);
           assert.equal(report.display.colormap, 'viridis');
-          await panel.webview.postMessage({ type: 'imageControl', control: { action: 'reset' } });
-          while (Number(report.display.frame) !== 1 || String(report.display.layout) !== 'quad') {
-            assert.ok(Date.now() < controlsDeadline);
-            await panel.webview.postMessage('inspect');
-            await new Promise((resolve) => setTimeout(resolve, 30));
-          }
+          await setControl(
+            { action: 'reset' },
+            () =>
+              report.display?.frame === 1 &&
+              report.display.layout === 'quad' &&
+              report.clipPlanes?.length === 3 &&
+              report.camera?.join() === '225,35',
+          );
           assert.equal(report.display.orientation, 'neurological');
           await panel.webview.postMessage('inspect');
           await new Promise((resolve) => setTimeout(resolve, 50));
