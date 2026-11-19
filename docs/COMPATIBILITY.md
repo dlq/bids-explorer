@@ -137,10 +137,12 @@ The images contained 24 volumes of 16 × 16 × 16 float32 voxels with known valu
 
 The initial broader minimum-version run timed out waiting for Lightbox PNG capture. A repeat with the test window kept visible passed, including PNG capture. Animation and capture checks need a visible renderer. These checks cover small synthetic images. Large-4D throughput and memory/GPU profiling remain tracked in [issue #28](https://github.com/dlq/bids-explorer/issues/28) tracks that work.
 
-The candidate is `dist/bids-explorer-1.4.0.vsix`, 2,243,389 bytes, SHA-256 `b0b8403a0c3c98ea879c9eeceff841ec3f95f98fe1ca7fbbd131df6cb60f1e43`. Its uploaded Remote SSH copy had the same checksum. Disposable test windows were closed and the temporary Rorqual fixture directory was removed.
+The original pre-release candidate was 2,243,389 bytes, SHA-256 `b0b8403a0c3c98ea879c9eeceff841ec3f95f98fe1ca7fbbd131df6cb60f1e43`. Its uploaded Remote SSH copy had the same checksum. Disposable test windows were closed and the temporary Rorqual fixture directory was removed.
 
 ### 1.4.0 release packaging
 
 The release preparation updates the Marketplace description and changelog. A comparison of every file in the final local VSIX against the tested candidate found changes only in `extension/readme.md` and `extension/changelog.md`. All runtime and dependency files are identical. The [GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.4.0) carries the published VSIX and its SHA-256 checksum.
 
 Hosted stable-VS-Code CI exposed an observation race in the NIfTI regression test. A routine image update could replace inspection-only camera and clip-plane fields before an assertion read them. The observer now retains the latest inspection fields across routine updates and waits for the expected reset camera snapshot, preserving the cutaway assertions. This correction changes test code only.
+
+The released version is tagged at `f1c1c61`. [CI](https://github.com/dlq/bids-explorer/actions/runs/44586835440), [CodeQL](https://github.com/dlq/bids-explorer/actions/runs/44586835332) and the [publication workflow](https://github.com/dlq/bids-explorer/actions/runs/44587161077) passed. The validated Marketplace catalog listed 1.4.0 on November 19, 2026. Its public VSIX matches the GitHub release asset byte for byte, SHA-256 `3f24a88dad72397267fe370e3f5c062e1236860cf935264d459624da7d3bcb16`.

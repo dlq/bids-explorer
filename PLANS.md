@@ -52,7 +52,7 @@ Update this plan when direction or release scope changes. Update the issue while
 
 | Review point                | Decision                                                                                                                                                                                                                                                                                                         |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| During 1.4.0                | Use [large-4D profiling (#28)](https://github.com/dlq/bids-explorer/issues/28) to inform playback and plot limits. Reproduce [unexpected SSH-loss recovery (#27)](https://github.com/dlq/bids-explorer/issues/27) when the host is available and schedule any fix independently.                                 |
+| Carry forward into 1.5.0    | Use [large-4D profiling (#28)](https://github.com/dlq/bids-explorer/issues/28) to inform playback and plot limits. Reproduce [unexpected SSH-loss recovery (#27)](https://github.com/dlq/bids-explorer/issues/27) when the host is available and schedule any fix independently.                                 |
 | During 1.5.0–1.6.0          | Use the recording preview investigation to decide which EEG/MEG formats and archive/SSH workflows are practical. Review additional [SquashFS compression (#26)](https://github.com/dlq/bids-explorer/issues/26) against actual source needs and continue reviewing what remote data is retained.                 |
 | After the 1.4.0 viewer work | Evaluate [NiiVue plugins (#20)](https://github.com/dlq/bids-explorer/issues/20) and [derivative overlays (#21)](https://github.com/dlq/bids-explorer/issues/21) independently. Bring forward an implementation target once there is a practitioner workflow and evidence for supported APIs and resource limits. |
 | After whole-study review    | Revisit workflow awareness against actual Availability use. Start with a Nipoppy status-table example and a CBRAIN portal link. Use those findings to judge the value of Slurm status and BIDS Apps terminal guidance.                                                                                           |
@@ -72,7 +72,7 @@ Schedule compatible fixes in the next appropriate patch once verified. Keep conc
 
 ## Beginner workflow documentation
 
-For 1.1.0, improve orientation in the existing quickstart with a short **Find your way around** section and one annotated screenshot identifying the native file tree, logical BIDS tree, image viewer and Imaging controls. Show which folder to open with a concrete `dataset_description.json` example and distinguish the starting point for archive collections. State the expected sample result so readers can tell setup succeeded. Add a small glossary for participant, session, acquisition, derivative and inherited metadata; explain read-only browsing, external caches and the separate act of editing an original. Give short recovery pointers for hidden views, display reset, refresh and troubleshooting. Add a short example that opens a scan from its `scans.tsv` row.
+The [Quickstart](docs/QUICKSTART.md), shipped in 1.1.0, includes an annotated workspace screenshot, a glossary, recovery pointers and a scan-row navigation example. Keep these instructions aligned with the current release.
 
 Match screenshots and visible labels to the documented release. The sidebar is titled Imaging starting in 1.0.4. Distinguish upcoming main-branch instructions from the installed release and update screenshots and links during release closeout.
 
@@ -92,7 +92,7 @@ Make recorded relationships useful for navigation while keeping interpretation d
 - [Event and recording preview design (#24)](https://github.com/dlq/bids-explorer/issues/24).
 - [Bounded scan summaries for tree descriptions (#25)](https://github.com/dlq/bids-explorer/issues/25).
 
-- **Jump to the source of a finding.** Start with recorded scan references in 1.1.0. For inherited values, extend the pattern later to the source file and field or row where available. Preserve source choices for ambiguous matches. Reuse this navigation in the future explicit validation workflow.
+- **Jump to the source of a finding.** Recorded scan navigation shipped in 1.1.0. For inherited values, extend the pattern later to the source file and field or row where available. Preserve source choices for ambiguous matches. Reuse this navigation in the future explicit validation workflow.
 - **Start EEG/MEG preview with a recording summary (tentative 1.5.0).** Show channels, sampling rate, duration and related event files when available. Under recording preview design (#24), evaluate loading a bounded time window on demand, with channel selection and event markers. Measure the data needed to open a small window over SSH before choosing how to handle compressed and archived recordings.
 
 Recognize existing participant/run QC reports and derivative confound tables as useful related resources. Start with explicit report access and recorded motion/FD/DVARS plots, with units, missing values and source evidence. This is a medium-priority follow-up to event/recording preview design (#24), not execution of MRIQC/fMRIPrep or an automatic quality verdict. Scope report-resource handling and safe opening, especially over SSH/from archives, before implementing it.
@@ -131,15 +131,9 @@ Preserve browsing and useful completed work as sources grow, use unsupported com
 
 ## Viewer capabilities
 
-Keep a useful built-in viewer with optional external editors. Prioritize everyday image inspection in later feature releases:
+Versions 1.3.0 and 1.4.0 shipped coordinate entry, voxel values, orientation controls, Lightbox, PNG export, Crosshair cutaway, 4D playback and the voxel signal plot. Current behavior and limits belong in the [Imaging reference](docs/EXPLORER_REFERENCE.md#native-imaging-view). The next tentative feature target is recording previews in 1.5.0.
 
-- **Position, values and orientation (1.3.0).** direct voxel/physical-coordinate entry, the selected voxel value, and an explicit radiological/neurological display convention. Respect recorded spatial units and transforms, distinguish image coordinates from a named template space, and explain missing or conflicting transform information. Display controls must not rewrite image orientation or headers.
-- **3D display modes (1.3.0).** Offer **Full volume** and **Crosshair cutaway** in both the 3D-only and combined layouts. In cutaway mode, the axial, coronal and sagittal cut planes meet at the crosshair and follow it as it moves. Choose the corner to remove by selecting one direction on each anatomical axis (left or right, anterior or posterior, superior or inferior). Keep that choice tied to the image anatomy as the 3D view rotates or the display convention changes.
-- **Lightbox and screenshot export (1.3.0).** inspect a bounded set of slices with understandable plane/range/spacing controls, and save the displayed view to a user-selected destination. Keep orientation, scale and source context available; exported pictures are separate from dataset images.
-- **[4D playback (#44)](https://github.com/dlq/bids-explorer/issues/44), 1.4.0.** Play and Pause advance through volumes automatically. The Volume slider still selects which volume to display.
-- **[Voxel signal plot (#45)](https://github.com/dlq/bids-explorer/issues/45), 1.4.0.** The crosshair selects which voxel to plot. The current volume marks a point on the trace. Show seconds when timing is established and volume numbers otherwise.
-
-Use documented APIs in the packaged NiiVue version. Library capability does not establish extension support or a tested archive/SSH workflow. Investigate selected NiiVue plugins and explicit derivative overlays separately after the 1.4.0 viewer work. Implementation remains unscheduled. Neither automatically brings the other into a release. Spatial relationships and resource limits must be established before richer scenes or synchronization are enabled.
+Use documented APIs in the packaged NiiVue version. Evaluate selected plugins and derivative overlays as separate investigations, with practitioner workflows, spatial relationships and resource measurements informing any implementation target.
 
 - [NiiVue plugin evaluation and enablement recommendation (#20)](https://github.com/dlq/bids-explorer/issues/20).
 - [Explicit derivative image overlay design (#21)](https://github.com/dlq/bids-explorer/issues/21).
