@@ -4,6 +4,10 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Plot the signal at the crosshair across 4D volumes, with a marker following playback and volume selection, recorded timing where available, and bounded sampling for long runs.
+
+- Default 3D rendering to Crosshair cutaway, facing the removed corner. Changing the corner turns the volume toward the exposed cut surfaces.
+
 - Play and pause fully loaded 4D images with adjustable speed in Imaging. Playback defaults to five volumes per second. The Volume slider follows playback and pauses it when moved.
 
 ## [1.3.0] - 2026-11-16

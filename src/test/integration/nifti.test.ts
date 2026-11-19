@@ -67,6 +67,9 @@ suite('Progressive NIfTI viewer', () => {
           blackPadding?: Record<string, number>;
           renderedPanels?: number[];
           clipPlanes?: number[][];
+          camera?: number[];
+          signal?: { frames: number[]; values: (number | null)[]; x: number[]; axis: string };
+          signalPosition?: number;
           slicePositions?: number[];
           lightbox?: { count: number; error?: string };
           information?: { label: string; value: string }[];
@@ -142,6 +145,22 @@ suite('Progressive NIfTI viewer', () => {
             () => report.coordinates?.voxel.join() === '1,0,0',
           );
           assert.equal(report.voxelValue, '20');
+          const signalDeadline = Date.now() + 5000;
+          while (report.signal?.values.join() !== '20,123') {
+            assert.ok(Date.now() < signalDeadline, JSON.stringify(report.signal));
+            await panel.webview.postMessage('inspect');
+            await new Promise((resolve) => setTimeout(resolve, 30));
+          }
+          assert.deepEqual(report.signal.frames, [1, 2]);
+          assert.equal(report.signal.axis, 'Volume');
+          await setControl(
+            { action: 'signalTiming', value: { starts: [0, 3.5], units: 'Bq/mL' } },
+            () => report.signal?.axis === 'Time (s) · JSON frame times',
+          );
+          assert.deepEqual(report.signal.x, [0, 3.5]);
+          await setControl({ action: 'frame', value: 2 }, () => report.signalPosition === 3.5);
+          await setControl({ action: 'frame', value: 1 }, () => report.signalPosition === 0);
+
           await setControl(
             { action: 'position', value: { space: 'voxel', coordinates: [2, 0, 0] } },
             () => /outside/.test(report.positionError ?? ''),
@@ -335,7 +354,8 @@ suite('Progressive NIfTI viewer', () => {
           assert.equal(report.display.orientation, 'neurological');
           await panel.webview.postMessage('inspect');
           await new Promise((resolve) => setTimeout(resolve, 50));
-          assert.deepEqual(report.clipPlanes, []);
+          assert.equal(report.clipPlanes?.length, 3);
+          assert.deepEqual(report.camera, [225, 35]);
           assert.deepEqual([report.display.minimum, report.display.maximum], originalWindow);
           assert.deepEqual([...report.renderedPanels].sort(), [0, 1, 2, 4]);
           await panel.webview.postMessage({

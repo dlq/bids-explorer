@@ -29,6 +29,8 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
   private view?: vscode.WebviewView;
   private readonly sessions = new Map<vscode.WebviewPanel, ImageSession>();
   private selected?: ImageSession;
+  private publishedSignal?: ImageState['signal'];
+  private publishedTarget = '';
   constructor(
     private readonly extension: vscode.Uri,
     private readonly load: (
@@ -38,6 +40,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
   ) {}
   resolveWebviewView(view: vscode.WebviewView): void {
     this.view = view;
+    this.publishedTarget = '';
     view.webview.options = {
       enableScripts: true,
       localResourceRoots: [
@@ -69,6 +72,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
 <label>Anterior or posterior<select id="cutaway-y"><option value="anterior">Anterior</option><option value="posterior">Posterior</option></select></label>
 <label>Superior or inferior<select id="cutaway-z"><option value="superior">Superior</option><option value="inferior">Inferior</option></select></label></div></fieldset>
 <div id="volume-control" hidden><label>Volume <output id="frame-value">1</output><input id="frame" type="range" min="1" value="1" max="1" disabled></label><div class="action-row"><button id="play" type="button" disabled>Play</button><button id="pause" type="button" disabled>Pause</button></div><label>Playback speed (volumes/s)<select id="playback-rate"><option value="1">1</option><option value="2">2</option><option value="5" selected>5</option><option value="10">10</option></select></label><p class="hint">Stops at the last volume.</p></div>
+<section id="voxel-signal" hidden aria-labelledby="signal-title"><h3 id="signal-title">Signal at crosshair</h3><canvas id="signal-plot" tabindex="0" role="img" aria-label="Voxel signal across volumes"></canvas><p id="signal-axis" class="hint"></p><output id="signal-current"></output><p id="signal-coverage" class="hint"></p></section>
 <details id="position-details"><summary>Position and voxel value</summary><div class="position-readout"><output id="position" aria-live="polite"></output><p id="voxel-value"></p></div><label class="check"><input id="crosshair" type="checkbox" checked>Show crosshair</label><fieldset><legend>Move crosshair by one voxel</legend><div class="axis-buttons">${['X', 'Y', 'Z'].map((axis) => `<button type="button" data-axis="${axis.toLowerCase()}" data-step="-1" aria-label="Decrease ${axis} by one voxel">${axis} −</button><button type="button" data-axis="${axis.toLowerCase()}" data-step="1" aria-label="Increase ${axis} by one voxel">${axis} +</button>`).join('')}</div></fieldset>
 <label>Coordinate type<select id="position-space"><option value="voxel">Voxel indices (zero-based, RAS)</option><option value="physical">Physical image coordinates</option></select></label>
 <p class="hint" id="position-transform"></p><div class="coordinate-fields">${['X', 'Y', 'Z'].map((axis) => `<label>${axis}<input type="number" step="any" id="position-${axis.toLowerCase()}"></label>`).join('')}</div>
@@ -155,7 +159,7 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
         return;
       }
       if (message.type !== 'imageState') return;
-      session.state = message;
+      session.state = { ...message, signal: message.signal ?? session.state?.signal };
       if (this.selected === session) this.publish();
     });
     panel.onDidChangeViewState(() => {
@@ -196,6 +200,8 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
     if (!this.view?.visible) return;
     const session = this.selected;
     if (!session) {
+      this.publishedTarget = '';
+      this.publishedSignal = undefined;
       void this.view.webview.postMessage({ type: 'image', image: null });
       return;
     }
@@ -215,6 +221,11 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
         ? `Derivative · ${model.scope.pipelineName}`
         : 'Dataset: ' + session.entry.datasetUri.split('/').pop(),
     );
+    const signal = session.state?.signal;
+    const signalUpdate = this.publishedTarget !== session.token || this.publishedSignal !== signal;
+    this.publishedTarget = session.token;
+    this.publishedSignal = signal;
+    const state = session.state ? { ...session.state, signal: undefined } : undefined;
     void this.view.webview.postMessage({
       type: 'image',
       image: {
@@ -223,7 +234,8 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
         details: displayFileDetails(session.entry),
         context: context.join(' · '),
         source: session.entry.archive ? entryArchiveUri(session.entry) : session.entry.uri,
-        state: session.state,
+        state: session.state ? state : undefined,
+        ...(signalUpdate ? { signal: signal ?? null } : {}),
         metadata: session.metadata,
         metadataStatus: session.metadataStatus,
         related: session.sources.map((entry, index) => ({
@@ -245,6 +257,22 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
             ? 'Applicable JSON values, including inheritance.'
             : 'No applicable JSON values recorded.'
           : `Values withheld: ${result.issues.join(' ').slice(0, 1000) || 'Metadata coverage is incomplete or ambiguous.'}`;
+      const value = (key: string) => {
+        const field =
+          result.status === 'resolved'
+            ? result.fields.find((field) => field.key === key)?.value
+            : undefined;
+        return field ? (JSON.parse(field.valueText) as unknown) : undefined;
+      };
+      const timing = {
+        starts: value('VolumeTiming') ?? value('FrameTimesStart'),
+        step: value('RepetitionTime'),
+        units: value('Units'),
+      };
+      await session.panel.webview.postMessage({
+        type: 'imageControl',
+        control: { action: 'signalTiming', value: timing },
+      });
       const labels = new Map([
         ['RepetitionTime', 'TR (s)'],
         ['EchoTime', 'TE (s)'],
@@ -299,5 +327,6 @@ export class ImageView implements vscode.WebviewViewProvider, vscode.Disposable 
     for (const session of this.sessions.values()) session.controller.abort();
     this.sessions.clear();
     this.selected = undefined;
+    this.publishedSignal = undefined;
   }
 }

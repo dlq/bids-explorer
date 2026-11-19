@@ -1,3 +1,4 @@
+import type { VoxelSignal } from './voxelSignal';
 export type CutawaySide = 'left' | 'right' | 'anterior' | 'posterior' | 'superior' | 'inferior';
 
 export interface LightboxSettings {
@@ -30,6 +31,8 @@ export interface ImageState {
   navigationEnabled: boolean;
   playing?: boolean;
   playbackRate?: number;
+  signal?: VoxelSignal;
+  signalPosition?: number;
   information: readonly { label: string; value: string }[];
   display: {
     layout: string;
@@ -54,6 +57,7 @@ export interface ImageControl {
     | 'play'
     | 'pause'
     | 'playbackRate'
+    | 'signalTiming'
     | 'move'
     | 'position'
     | 'orientation'

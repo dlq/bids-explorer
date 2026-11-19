@@ -67,6 +67,11 @@ suite('Native Imaging view', () => {
         text?: string;
         controlsEnabled?: boolean;
         frameValue?: string;
+        signalText?: string;
+        signalCoverage?: string;
+        signalAxis?: string;
+        signalVisible?: boolean;
+        signalDrawn?: boolean;
         playbackRate?: string;
         playDisabled?: boolean;
         pauseDisabled?: boolean;
@@ -103,6 +108,15 @@ suite('Native Imaging view', () => {
         assert.match(report.text!, /TE \(ms\)/);
         assert.match(report.text!, /30/);
         assert.equal(report.volumeVisible, true);
+        await wait(
+          () =>
+            !!report.signalCoverage?.includes('All 2 volumes') &&
+            !!report.signalAxis?.includes('JSON RepetitionTime'),
+        );
+        assert.equal(report.signalVisible, true);
+        assert.equal(report.signalDrawn, true);
+        assert.match(report.signalText!, /Volume 1/);
+
         assert.equal(report.positionExpanded, false);
         assert.equal(report.sourceGroups, 1);
         assert.equal(report.metadataBeforeControls, true);
@@ -123,7 +137,7 @@ suite('Native Imaging view', () => {
         await view.webview.postMessage({ type: 'testAction', id: 'pause' });
         await wait(() => report.pauseDisabled === true);
         await view.webview.postMessage({ type: 'testAction', id: 'frame', value: '2' });
-        await wait(() => report.frameValue === '2');
+        await wait(() => report.frameValue === '2' && !!report.signalText?.includes('Volume 2'));
         let display: { layout?: string; minimum?: number; maximum?: number } | undefined;
         const imageListener = panels[0].webview.onDidReceiveMessage(
           (message: { display: typeof display }) => {
@@ -162,6 +176,7 @@ suite('Native Imaging view', () => {
             !!report.text.includes('No applicable JSON'),
         );
         assert.doesNotMatch(report.text!, /TR \(s\)|not executable/);
+        assert.equal(report.signalVisible, false);
         let secondMap = '';
         const secondListener = panels[1].webview.onDidReceiveMessage(
           (message: { display?: { colormap: string } }) => {

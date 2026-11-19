@@ -1,3 +1,5 @@
+import { updateSignalPlot, bindSignalPlot } from './signalPlotClient.js';
+import type { VoxelSignal } from './voxelSignal';
 import type { ImageState, ImageControl } from './imageViewTypes';
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
@@ -9,6 +11,7 @@ function send(type: string, extra: object = {}) {
 function control(action: ImageControl['action'], value?: unknown) {
   send('control', { control: { action, value } });
 }
+bindSignalPlot((frame) => control('frame', frame));
 for (const id of ['layout', 'colormap', 'orientation'] as const)
   element<HTMLSelectElement>(id).onchange = () => control(id, element<HTMLSelectElement>(id).value);
 const lightboxPlane = element<HTMLSelectElement>('lightbox-plane');
@@ -130,6 +133,7 @@ window.addEventListener(
         context: string;
         source: string;
         state?: ImageState;
+        signal?: VoxelSignal | null;
         metadata: {
           label: string;
           value: string;
@@ -155,6 +159,20 @@ window.addEventListener(
         controlsEnabled: !element<HTMLFieldSetElement>('controls').disabled,
         volumeVisible: !element('volume-control').hidden,
         positionExpanded: element<HTMLDetailsElement>('position-details').open,
+        signalDrawn: Array.from(
+          element<HTMLCanvasElement>('signal-plot')
+            .getContext('2d')!
+            .getImageData(
+              0,
+              0,
+              element<HTMLCanvasElement>('signal-plot').width,
+              element<HTMLCanvasElement>('signal-plot').height,
+            ).data,
+        ).some((value, index) => index % 4 === 3 && value > 0),
+        signalText: element('signal-current').textContent,
+        signalCoverage: element('signal-coverage').textContent,
+        signalAxis: element('signal-axis').textContent,
+        signalVisible: !element('voxel-signal').hidden,
         sourceGroups: element('provenance').children.length,
         metadataBeforeControls: !!(
           element('metadata').compareDocumentPosition(element('controls')) &
@@ -171,10 +189,15 @@ window.addEventListener(
     document.querySelector('main')!.hidden = !image;
     if (!image) {
       target = '';
+      updateSignalPlot(undefined, null);
       element<HTMLFieldSetElement>('controls').disabled = true;
       return;
     }
     const changed = target !== image.target;
+    updateSignalPlot(
+      image.state,
+      image.signal !== undefined ? image.signal : changed ? null : undefined,
+    );
     target = image.target;
     if (changed) element('control-error').textContent = '';
     element('acquisition').textContent = [image.name, image.details].filter(Boolean).join(' · ');

@@ -1,4 +1,5 @@
 import { Niivue, NVImage, MULTIPLANAR_TYPE, SHOW_RENDER } from '@niivue/niivue';
+import { readVoxelSignal, signalTime, type SignalTiming } from './voxelSignal.js';
 import { readNiftiStream } from './niftiStream.js';
 import type { CutawaySide, ImageControl, ImageState, LightboxSettings } from './imageViewTypes';
 
@@ -42,11 +43,15 @@ const state: ImageState = {
     crosshair: true,
     frame: 1,
     orientation: 'neurological',
-    volumeMode: 'full',
+    volumeMode: 'cutaway',
     cutawayCorner: defaultCorner,
   },
 };
+let lastPublishedSignal: ImageState['signal'];
 function publish(inspect = false) {
+  const { signal, ...summary } = state;
+  const signalUpdate = inspect || signal !== lastPublishedSignal ? { signal } : {};
+  lastPublishedSignal = signal;
   state.status = status.textContent ?? '';
   const bounds = inspect
     ? document.querySelector('.image-canvas')!.getBoundingClientRect()
@@ -79,10 +84,12 @@ function publish(inspect = false) {
         }
       : {}),
     type: 'imageState',
-    ...state,
+    ...summary,
+    ...signalUpdate,
     ...(inspect
       ? {
           clipPlanes: viewer.scene.clipPlaneDepthAziElevs,
+          camera: [viewer.scene.renderAzimuth, viewer.scene.renderElevation],
           slicePositions: viewer.screenSlices.map((slice) => slice.sliceFrac),
         }
       : {}),
@@ -199,6 +206,70 @@ const spatialUnits = new Map([
   [3, 'µm'],
 ]);
 
+let metadataTiming: SignalTiming = {};
+let signalKey = '';
+let signalGeneration = 0;
+function currentTiming(): SignalTiming {
+  const total = Math.max(state.loadedFrames, state.previewFrames);
+  if (metadataTiming.starts?.length === total)
+    return { ...metadataTiming, source: 'JSON frame times' };
+  if (metadataTiming.step && Number.isFinite(metadataTiming.step * (total - 1)))
+    return { ...metadataTiming, starts: undefined, source: 'JSON RepetitionTime' };
+  const header = volume?.hdr;
+  const scale = new Map([
+    [8, 1],
+    [16, 0.001],
+    [24, 0.000001],
+  ]).get((header?.xyzt_units ?? 0) & 56);
+  const step = (header?.pixDims[4] ?? 0) * (scale ?? 0);
+  return {
+    units: metadataTiming.units,
+    ...(step > 0 && Number.isFinite(step * (total - 1) + (header?.toffset ?? 0) * (scale ?? 0))
+      ? {
+          step,
+          offset: Number.isFinite(header?.toffset) ? header!.toffset * scale! : 0,
+          source: 'NIfTI header',
+        }
+      : {}),
+  };
+}
+function updateSignal(voxel: readonly number[]) {
+  const total = Math.max(state.loadedFrames, state.previewFrames);
+  if (!volume || total < 2) return;
+  const timing = currentTiming();
+  state.signalPosition = timing.source
+    ? signalTime(state.display.frame - 1, timing)
+    : state.display.frame;
+  const key = [voxel.join(','), state.loadedFrames, state.previewFrames, signalGeneration].join(
+    ':',
+  );
+  if (key === signalKey) return;
+  signalKey = key;
+  state.signal = {
+    voxel,
+    total,
+    frames: [],
+    x: [],
+    values: [],
+    axis: '',
+    units: '',
+    pending: true,
+  };
+  const image = volume;
+  void readVoxelSignal(
+    voxel,
+    total,
+    state.loadedFrames || 1,
+    (frame) => image.getValue(voxel[0], voxel[1], voxel[2], frame),
+    timing,
+    () => signalKey !== key || controller.signal.aborted,
+  ).then((signal) => {
+    if (!signal || signalKey !== key) return;
+    state.signal = signal;
+    publish();
+  });
+}
+
 function updatePosition() {
   if (!volume) return;
   const voxel = Array.from(viewer.frac2vox(viewer.scene.crosshairPos));
@@ -232,6 +303,7 @@ function updatePosition() {
     transform,
   };
   state.position = `Voxel position X ${voxel[0]}, Y ${voxel[1]}, Z ${voxel[2]}.`;
+  updateSignal(voxel);
   const intensity = volume.getValue(voxel[0], voxel[1], voxel[2], state.display.frame - 1);
   state.voxelValue = Number.isFinite(intensity)
     ? String(Number(intensity.toPrecision(8)))
@@ -278,6 +350,12 @@ function goToPosition(image: NVImage, value: unknown) {
   viewer.moveCrosshairInVox(voxel[0] - current[0], voxel[1] - current[1], voxel[2] - current[2]);
 }
 
+function faceCutaway() {
+  const [x, y, z] = state.display.cutawayCorner ?? defaultCorner;
+  const azimuth =
+    180 + (Math.atan2(x === 'right' ? 1 : -1, y === 'anterior' ? 1 : -1) * 180) / Math.PI;
+  viewer.setRenderAzimuthElevation(azimuth, z === 'superior' ? 35 : -35);
+}
 function updateCutaway() {
   const enabled = state.display.volumeMode === 'cutaway';
   if (!enabled && !viewer.opts.isClipPlanesCutaway) return;
@@ -376,8 +454,30 @@ function applyControl(control: ImageControl) {
     controller.abort();
     return;
   }
-  if (!volume || !state.navigationEnabled) return;
   const { action, value } = control;
+  if (action === 'signalTiming' && value && typeof value === 'object') {
+    const timing = value as SignalTiming;
+    const starts = timing.starts;
+    metadataTiming = {
+      starts:
+        Array.isArray(starts) &&
+        starts.length > 1 &&
+        starts.length <= 100000 &&
+        starts.every((time, i) => Number.isFinite(time) && (i === 0 || time > starts[i - 1]))
+          ? starts
+          : undefined,
+      step:
+        typeof timing.step === 'number' && Number.isFinite(timing.step) && timing.step > 0
+          ? timing.step
+          : undefined,
+      units: typeof timing.units === 'string' ? timing.units.slice(0, 80) : undefined,
+    };
+    signalGeneration++;
+    updatePosition();
+    publish();
+    return;
+  }
+  if (!volume || !state.navigationEnabled) return;
   if (action === 'pause') pausePlayback();
   if (action === 'playbackRate' && typeof value === 'number' && [1, 2, 5, 10].includes(value)) {
     state.playbackRate = value;
@@ -398,6 +498,7 @@ function applyControl(control: ImageControl) {
   if (action === 'volumeMode' && (value === 'full' || value === 'cutaway')) {
     state.display.volumeMode = value;
     updateCutaway();
+    if (value === 'cutaway') faceCutaway();
   }
   if (action === 'cutawayCorner' && Array.isArray(value) && value.length === 3) {
     const [x, y, z] = value as unknown[];
@@ -408,6 +509,7 @@ function applyControl(control: ImageControl) {
     ) {
       state.display.cutawayCorner = [x, y, z];
       updateCutaway();
+      faceCutaway();
     }
   }
   if (action === 'orientation' && (value === 'neurological' || value === 'radiological')) {
@@ -487,7 +589,7 @@ function applyControl(control: ImageControl) {
     pausePlayback();
     state.positionError = undefined;
     state.display.cutawayCorner = defaultCorner;
-    applyControl({ action: 'volumeMode', value: 'full' });
+    applyControl({ action: 'volumeMode', value: 'cutaway' });
     applyControl({ action: 'orientation', value: 'neurological' });
     applyControl({ action: 'layout', value: 'quad' });
     state.lightbox = undefined;
@@ -575,6 +677,7 @@ function show(image: NVImage, frames: number, restore = false) {
   const previous = { ...state.display };
   volume = image;
   viewer.addVolume(image);
+  if (!restore) faceCutaway();
   state.navigationEnabled = true;
   if (!screenshotStatus.textContent) screenshot.disabled = false;
   const min = image.cal_min ?? 0,

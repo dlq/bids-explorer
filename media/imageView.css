@@ -226,3 +226,18 @@ button:hover:not(:disabled) {
   padding-inline-start: 10px;
   margin-block-start: 8px;
 }
+
+#voxel-signal {
+  margin-block: 12px;
+}
+#signal-plot {
+  display: block;
+  width: 100%;
+  height: 160px;
+}
+#signal-plot:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+#signal-current {
+  display: block;
+}
