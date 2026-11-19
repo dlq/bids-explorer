@@ -28,6 +28,8 @@ export interface ImageState {
   voxelValue?: string;
   positionError?: string;
   navigationEnabled: boolean;
+  playing?: boolean;
+  playbackRate?: number;
   information: readonly { label: string; value: string }[];
   display: {
     layout: string;
@@ -49,6 +51,9 @@ export interface ImageControl {
     | 'window'
     | 'crosshair'
     | 'frame'
+    | 'play'
+    | 'pause'
+    | 'playbackRate'
     | 'move'
     | 'position'
     | 'orientation'

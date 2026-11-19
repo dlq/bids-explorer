@@ -24,7 +24,12 @@ suite('Native Imaging view', () => {
     try {
       const scaled = gunzipSync(niftiFixture());
       scaled.writeFloatLE(1.1234567, 112);
-      await writeFile(join(folder, 'sub-01_task-test_bold.nii.gz'), gzipSync(scaled));
+      scaled.writeInt16LE(4, 40);
+      scaled.writeInt16LE(2, 48);
+      await writeFile(
+        join(folder, 'sub-01_task-test_bold.nii.gz'),
+        gzipSync(Buffer.concat([scaled, Buffer.alloc(8, 123)])),
+      );
       await writeFile(join(folder, 'sub-02_T1w.nii.gz'), niftiFixture());
       await writeFile(
         join(folder, 'task-test_bold.json'),
@@ -56,11 +61,15 @@ suite('Native Imaging view', () => {
       const nonce = /nonce="([a-f0-9]+)"/.exec(view.webview.html)![1];
       view.webview.html = view.webview.html.replace(
         '</body>',
-        `<script nonce="${nonce}">const testApi=acquireVsCodeApi();window.acquireVsCodeApi=()=>testApi;let imageToken='';window.addEventListener('message',event=>{if(event.data?.type==='image')imageToken=event.data.image?.target??'';if(event.data?.type==='testToken')testApi.postMessage({type:'testToken',token:imageToken});if(event.data?.type==='testReplay')testApi.postMessage({type:'control',target:event.data.token,control:{action:'colormap',value:'hot'}});if(event.data?.type==='testAction'){const el=document.getElementById(event.data.id);if(event.data.value!==undefined){el.value=event.data.value;el.dispatchEvent(new Event('change'));}else el.click();}});</script></body>`,
+        `<script nonce="${nonce}">const testApi=acquireVsCodeApi();window.acquireVsCodeApi=()=>testApi;let imageToken='';window.addEventListener('message',event=>{if(event.data?.type==='image')imageToken=event.data.image?.target??'';if(event.data?.type==='testToken')testApi.postMessage({type:'testToken',token:imageToken});if(event.data?.type==='testReplay')testApi.postMessage({type:'control',target:event.data.token,control:{action:'colormap',value:'hot'}});if(event.data?.type==='testAction'){const el=document.getElementById(event.data.id);if(event.data.value!==undefined){el.value=event.data.value;el.dispatchEvent(new Event('change'));el.dispatchEvent(new Event('input'));}else el.click();}});</script></body>`,
       );
       let report: {
         text?: string;
         controlsEnabled?: boolean;
+        frameValue?: string;
+        playbackRate?: string;
+        playDisabled?: boolean;
+        pauseDisabled?: boolean;
         volumeVisible?: boolean;
         positionExpanded?: boolean;
         sourceGroups?: number;
@@ -93,7 +102,7 @@ suite('Native Imaging view', () => {
         assert.match(report.text!, /2 × 2 × 2 voxels/);
         assert.match(report.text!, /TE \(ms\)/);
         assert.match(report.text!, /30/);
-        assert.equal(report.volumeVisible, false);
+        assert.equal(report.volumeVisible, true);
         assert.equal(report.positionExpanded, false);
         assert.equal(report.sourceGroups, 1);
         assert.equal(report.metadataBeforeControls, true);
@@ -102,6 +111,19 @@ suite('Native Imaging view', () => {
           /Cancel loading|Move crosshair by one voxel|Voxel position/,
         );
         assert.match(report.text!, /<script>not executable<\/script>/);
+        await wait(() => report.playDisabled === false);
+        assert.equal(report.playbackRate, '5');
+        await view.webview.postMessage({ type: 'testAction', id: 'playback-rate', value: '2' });
+        await wait(() => report.playbackRate === '2');
+        await view.webview.postMessage({ type: 'testAction', id: 'play' });
+        await wait(() => report.pauseDisabled === false);
+        await wait(() => report.frameValue === '2' && report.pauseDisabled === true);
+        await view.webview.postMessage({ type: 'testAction', id: 'play' });
+        await wait(() => report.frameValue === '1' && report.pauseDisabled === false);
+        await view.webview.postMessage({ type: 'testAction', id: 'pause' });
+        await wait(() => report.pauseDisabled === true);
+        await view.webview.postMessage({ type: 'testAction', id: 'frame', value: '2' });
+        await wait(() => report.frameValue === '2');
         let display: { layout?: string; minimum?: number; maximum?: number } | undefined;
         const imageListener = panels[0].webview.onDidReceiveMessage(
           (message: { display: typeof display }) => {

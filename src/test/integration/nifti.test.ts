@@ -61,6 +61,8 @@ suite('Progressive NIfTI viewer', () => {
           voxelValue?: string;
           positionError?: string;
           navigationEnabled?: boolean;
+          playing?: boolean;
+          playbackRate?: number;
           edgePadding?: Record<string, number>;
           blackPadding?: Record<string, number>;
           renderedPanels?: number[];
@@ -245,6 +247,44 @@ suite('Progressive NIfTI viewer', () => {
             { action: 'layout', value: 'quad' },
             () => report.renderedPanels?.length === 4,
           );
+          assert.equal(report.playbackRate, 5);
+          await setControl({ action: 'playbackRate', value: 2 }, () => report.playbackRate === 2);
+          await panel.webview.postMessage({
+            type: 'imageControl',
+            control: { action: 'playbackRate', value: 0 },
+          });
+          await panel.webview.postMessage('inspect');
+          await new Promise((resolve) => setTimeout(resolve, 40));
+          assert.equal(report.playbackRate, 2);
+          await setControl({ action: 'play' }, () => report.playing === true);
+          await setControl(
+            { action: 'playbackRate', value: 1 },
+            () => report.playing === true && report.playbackRate === 1,
+          );
+          await setControl({ action: 'pause' }, () => report.playing === false);
+          await setControl({ action: 'playbackRate', value: 2 }, () => report.playbackRate === 2);
+          const pausedFrame = report.display.frame;
+          await new Promise((resolve) => setTimeout(resolve, 650));
+          await panel.webview.postMessage('inspect');
+          await new Promise((resolve) => setTimeout(resolve, 40));
+          assert.equal(report.display.frame, pausedFrame, 'Pause must stop volume changes');
+          await setControl({ action: 'play' }, () => report.playing === true);
+          await setControl(
+            { action: 'frame', value: 1 },
+            () => report.playing === false && report.display?.frame === 1,
+          );
+          await setControl({ action: 'play' }, () => report.playing === true);
+          const playbackDeadline = Date.now() + 5000;
+          while (report.playing || report.display.frame !== 2) {
+            assert.ok(Date.now() < playbackDeadline, 'Playback must stop at the last volume');
+            await panel.webview.postMessage('inspect');
+            await new Promise((resolve) => setTimeout(resolve, 30));
+          }
+          await setControl(
+            { action: 'play' },
+            () => report.playing === true && report.display?.frame === 1,
+          );
+          await setControl({ action: 'pause' }, () => report.playing === false);
           const originalWindow = [report.display.minimum, report.display.maximum];
           for (const control of [
             { action: 'layout', value: 'axial' },
@@ -341,6 +381,14 @@ suite('Progressive NIfTI viewer', () => {
             await panel.webview.postMessage('inspect');
             await new Promise((resolve) => setTimeout(resolve, 30));
           }
+          await setControl({ action: 'frame', value: 1 }, () => report.display?.frame === 1);
+          await setControl({ action: 'play' }, () => report.playing === true);
+          await setControl({ action: 'cancel' }, () => report.playing === false);
+          const cancelledFrame = report.display.frame;
+          await new Promise((resolve) => setTimeout(resolve, 650));
+          await panel.webview.postMessage('inspect');
+          await new Promise((resolve) => setTimeout(resolve, 40));
+          assert.equal(report.display.frame, cancelledFrame, 'Cancellation must clear playback');
         } finally {
           listener.dispose();
           panel.dispose();

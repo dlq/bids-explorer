@@ -28,6 +28,7 @@ const sideDirections: Record<CutawaySide, readonly [number, number, number]> = {
 };
 const state: ImageState = {
   status: 'Loading image…',
+  playbackRate: 5,
   previewFrames: 0,
   loadedFrames: 0,
   position: 'Image position available after loading.',
@@ -88,7 +89,40 @@ function publish(inspect = false) {
     renderedPanels: viewer.screenSlices.map((slice) => slice.axCorSag),
   });
 }
+let playbackTimer = 0;
+let nextPlaybackFrame = 0;
+function pausePlayback() {
+  cancelAnimationFrame(playbackTimer);
+  playbackTimer = 0;
+  state.playing = false;
+}
+function selectFrame(frame: number) {
+  state.display.frame = frame;
+  viewer.setFrame4D(volume!.id, frame - 1);
+  updatePosition();
+}
+function advancePlayback() {
+  playbackTimer = requestAnimationFrame((now) => {
+    if (now >= nextPlaybackFrame) {
+      nextPlaybackFrame = now + 1000 / (state.playbackRate ?? 5);
+      selectFrame(state.display.frame + 1);
+      if (state.display.frame === state.loadedFrames) pausePlayback();
+      publish();
+    }
+    if (state.playing) advancePlayback();
+  });
+}
 const controller = new AbortController();
+controller.signal.addEventListener('abort', () => {
+  pausePlayback();
+  publish();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pausePlayback();
+    publish();
+  }
+});
 cancel.onclick = () => controller.abort();
 document.getElementById('image-controls')!.onclick = () =>
   api.postMessage({ type: 'showImageControls' });
@@ -344,6 +378,21 @@ function applyControl(control: ImageControl) {
   }
   if (!volume || !state.navigationEnabled) return;
   const { action, value } = control;
+  if (action === 'pause') pausePlayback();
+  if (action === 'playbackRate' && typeof value === 'number' && [1, 2, 5, 10].includes(value)) {
+    state.playbackRate = value;
+    if (state.playing) {
+      cancelAnimationFrame(playbackTimer);
+      nextPlaybackFrame = performance.now() + 1000 / value;
+      advancePlayback();
+    }
+  }
+  if (action === 'play' && state.loadedFrames > 1 && !controller.signal.aborted && !state.playing) {
+    if (state.display.frame === state.loadedFrames) selectFrame(1);
+    state.playing = true;
+    nextPlaybackFrame = performance.now() + 1000 / (state.playbackRate ?? 5);
+    advancePlayback();
+  }
   if (action === 'lightbox' && state.display.layout === 'lightbox') setLightbox(volume, value);
   if (action === 'position') goToPosition(volume, value);
   if (action === 'volumeMode' && (value === 'full' || value === 'cutaway')) {
@@ -417,9 +466,8 @@ function applyControl(control: ImageControl) {
     value >= 1 &&
     value <= state.loadedFrames
   ) {
-    viewer.setFrame4D(volume.id, value - 1);
-    state.display.frame = value;
-    updatePosition();
+    pausePlayback();
+    selectFrame(value);
   }
   if (
     action === 'move' &&
@@ -436,6 +484,7 @@ function applyControl(control: ImageControl) {
       value.axis === 'z' ? value.step : 0,
     );
   if (action === 'reset') {
+    pausePlayback();
     state.positionError = undefined;
     state.display.cutawayCorner = defaultCorner;
     applyControl({ action: 'volumeMode', value: 'full' });

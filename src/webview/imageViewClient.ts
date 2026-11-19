@@ -42,6 +42,10 @@ for (const side of corner)
     );
 element<HTMLInputElement>('crosshair').onchange = () =>
   control('crosshair', element<HTMLInputElement>('crosshair').checked);
+element('play').onclick = () => control('play');
+element('pause').onclick = () => control('pause');
+element<HTMLSelectElement>('playback-rate').onchange = () =>
+  control('playbackRate', Number(element<HTMLSelectElement>('playback-rate').value));
 element<HTMLInputElement>('frame').oninput = () =>
   control('frame', element<HTMLInputElement>('frame').valueAsNumber);
 element('window').onclick = () => {
@@ -144,6 +148,10 @@ window.addEventListener(
         type: 'rendered',
         text: document.body.innerText,
         frameDisabled: element<HTMLInputElement>('frame').disabled,
+        frameValue: element<HTMLInputElement>('frame').value,
+        playbackRate: element<HTMLSelectElement>('playback-rate').value,
+        playDisabled: element<HTMLButtonElement>('play').disabled,
+        pauseDisabled: element<HTMLButtonElement>('pause').disabled,
         controlsEnabled: !element<HTMLFieldSetElement>('controls').disabled,
         volumeVisible: !element('volume-control').hidden,
         positionExpanded: element<HTMLDetailsElement>('position-details').open,
@@ -309,6 +317,14 @@ window.addEventListener(
     element<HTMLInputElement>('crosshair').checked = state.display.crosshair;
     const frame = element<HTMLInputElement>('frame');
     frame.disabled = state.loadedFrames < 2;
+    const speed = element<HTMLSelectElement>('playback-rate');
+    const rate = String(state.playbackRate ?? 5);
+    if (changed || speed.dataset.rate !== rate) {
+      speed.value = rate;
+      speed.dataset.rate = rate;
+    }
+    element<HTMLButtonElement>('play').disabled = frame.disabled || !!state.playing;
+    element<HTMLButtonElement>('pause').disabled = !state.playing;
     frame.max = String(Math.max(1, state.loadedFrames));
     frame.value = String(state.display.frame);
     element('frame-value').textContent =

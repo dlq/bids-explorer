@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Play and pause fully loaded 4D images with adjustable speed in Imaging. Playback defaults to five volumes per second. The Volume slider follows playback and pauses it when moved.
+
 ## [1.3.0] - 2026-11-16
 
 - Group Imaging controls by task and distinguish viewer actions from status messages.
