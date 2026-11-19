@@ -87,7 +87,8 @@ suite('Progressive NIfTI viewer', () => {
         const listener = panel.webview.onDidReceiveMessage((state: typeof report) => {
           if (state.status?.startsWith('Showing frame 1 of 2.') && !state.loadedFrames)
             showedFirstFrame = true;
-          report = state;
+          // Routine image updates omit inspection-only fields such as camera and clip planes.
+          report = { ...report, ...state, signal: state.signal ?? report.signal };
         });
         try {
           await assertHostMessages(panel.webview, 'inspect');
