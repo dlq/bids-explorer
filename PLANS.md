@@ -1,6 +1,6 @@
 # BIDS Explorer roadmap
 
-Updated November 19, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
+Updated November 20, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
 
 ## Purpose and supported core
 
@@ -137,6 +137,14 @@ Use documented APIs in the packaged NiiVue version. Evaluate selected plugins an
 
 - [NiiVue plugin evaluation and enablement recommendation (#20)](https://github.com/dlq/bids-explorer/issues/20).
 - [Explicit derivative image overlay design (#21)](https://github.com/dlq/bids-explorer/issues/21).
+
+### Surface browsing and viewing — release not yet assigned
+
+Extend the logical derivative view and built-in viewer to surface meshes, including GIFTI `.surf.gii` and native FreeSurfer surfaces such as `lh.white`, `rh.pial` and inflated surfaces, including files supplied with a `.surf` extension. Determine the actual format rather than assuming that every `.surf` file has the same encoding. BIDS describes GIFTI surface geometry in its [derivatives format conventions](https://bids-specification.readthedocs.io/en/stable/derivatives/introduction.html#gifti-surface-data-format); native pipeline outputs may coexist under `derivatives/` without following those conventions. Keep format support and BIDS conformance separate.
+
+Present surfaces within participant/session and pipeline context, with readable hemisphere and surface-type labels. Preserve exact filenames, physical sources and choices between duplicate logical paths. Start with opening and inspecting an individual mesh, with rotation, zoom and useful geometry/source information. Evaluate documented APIs in the packaged NiiVue library before choosing the implementation. Surface scalar maps, parcellations and surface-to-volume overlays need separate scope; do not infer spatial alignment from matching participant labels.
+
+Before implementation, create a scoped issue and choose small public or synthetic GIFTI and native FreeSurfer examples. Check recognition and viewing across loose files, ZIP, tar and SquashFS, locally and over Remote SSH. Measure selected-member reads, transfer and mesh memory costs, with cancellation and explicit unsupported-format messages. Keep dataset access read-only and avoid bulk extraction or automatic surface conversion. Assign a release after format/API investigation establishes a practical first scope.
 
 ## Validation and later editing workflows
 
