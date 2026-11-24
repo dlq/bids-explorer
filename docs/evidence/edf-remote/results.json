@@ -1,0 +1,1543 @@
+{
+  "date": "2026-11-24",
+  "commit": "ef7175f",
+  "build": "Unreleased EDF development build; package manifest 1.4.0, intended release scope 1.5.0",
+  "vscode": "1.147.0",
+  "remoteSSH": "0.128.0",
+  "remoteNode": "v24.22.1",
+  "cases": [
+    {
+      "variant": "edf",
+      "format": "loose",
+      "repeat": 0,
+      "browsingMs": 5.964864000000034,
+      "firstRenderedMs": 467.5336480000001,
+      "nextRenderedMs": 118.28940300000068,
+      "eventJumpRenderedMs": 201.80110500000046,
+      "firstBridgeJsonBytes": 156222,
+      "totalBridgeJsonBytes": 552363,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 4.610373999999865,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.9688619999997172,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.968482000000222,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 50.257134999999835,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 4.31716200000028,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "loose",
+      "repeat": 1,
+      "firstRenderedMs": 371.87891500000023,
+      "nextRenderedMs": 107.0192390000002,
+      "eventJumpRenderedMs": 195.00473500000044,
+      "firstBridgeJsonBytes": 156222,
+      "totalBridgeJsonBytes": 552363,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.5899890000000596,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.3925570000001244,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.091276000000107,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.9870169999994687,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.9779580000003989,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "loose",
+      "repeat": 2,
+      "firstRenderedMs": 279.35581399999955,
+      "nextRenderedMs": 125.25707500000044,
+      "eventJumpRenderedMs": 199.15997600000082,
+      "firstBridgeJsonBytes": 156222,
+      "totalBridgeJsonBytes": 552363,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 3.837678999999298,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.7792140000001382,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.9702699999998003,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 45.430709000000206,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.9751079999996364,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "zip",
+      "repeat": 0,
+      "browsingMs": 8.083930000000692,
+      "firstRenderedMs": 271.98732999999993,
+      "nextRenderedMs": 168.59201800000028,
+      "eventJumpRenderedMs": 136.34211699999923,
+      "firstBridgeJsonBytes": 158897,
+      "totalBridgeJsonBytes": 479752,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 3.93648900000062,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.51319599999988,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.0987130000003162,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.975521999999728,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.24640100000033271,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "zip",
+      "repeat": 1,
+      "firstRenderedMs": 262.5265789999994,
+      "nextRenderedMs": 120.74229099999957,
+      "eventJumpRenderedMs": 133.95850900000005,
+      "firstBridgeJsonBytes": 158897,
+      "totalBridgeJsonBytes": 479752,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.5724600000003193,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.2193639999995867,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.282933999999841,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 3.134172999999464,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.30244300000049407,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "zip",
+      "repeat": 2,
+      "firstRenderedMs": 214.92587400000048,
+      "nextRenderedMs": 131.73002300000007,
+      "eventJumpRenderedMs": 122.82457599999907,
+      "firstBridgeJsonBytes": 158897,
+      "totalBridgeJsonBytes": 479752,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.5426989999996295,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.6997670000000653,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.174203000000489,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.8461610000013025,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13885099999970407,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tar",
+      "repeat": 0,
+      "browsingMs": 24.24981099999968,
+      "firstRenderedMs": 243.77682900000036,
+      "nextRenderedMs": 118.59860500000104,
+      "eventJumpRenderedMs": 120.13414600000033,
+      "firstBridgeJsonBytes": 158987,
+      "totalBridgeJsonBytes": 479842,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.2357470000006288,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.0017040000002453,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.5612619999992603,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.4531000000006316,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.1588209999990795,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tar",
+      "repeat": 1,
+      "firstRenderedMs": 250.90573199999926,
+      "nextRenderedMs": 120.90132199999971,
+      "eventJumpRenderedMs": 86.07323200000064,
+      "firstBridgeJsonBytes": 158987,
+      "totalBridgeJsonBytes": 479842,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.2780500000008033,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.0208050000001094,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.4749709999996412,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.343150999999125,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13486100000045553,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tar",
+      "repeat": 2,
+      "firstRenderedMs": 261.45879100000093,
+      "nextRenderedMs": 124.57790999999997,
+      "eventJumpRenderedMs": 212.3200539999998,
+      "firstBridgeJsonBytes": 158987,
+      "totalBridgeJsonBytes": 479842,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.3175999999984924,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.631892000001244,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.7417640000003303,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.3570199999994657,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.15163100000063423,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tgz",
+      "repeat": 0,
+      "browsingMs": 68.98346499999934,
+      "firstRenderedMs": 401.65317700000014,
+      "nextRenderedMs": 126.34396200000083,
+      "eventJumpRenderedMs": 131.77508399999897,
+      "firstBridgeJsonBytes": 159061,
+      "totalBridgeJsonBytes": 479916,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.204325999999128,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.945051999999123,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.451148000000103,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.2288860000007844,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14437100000031933,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tgz",
+      "repeat": 1,
+      "firstRenderedMs": 323.69772600000033,
+      "nextRenderedMs": 129.82374900000104,
+      "eventJumpRenderedMs": 126.93819700000131,
+      "firstBridgeJsonBytes": 159061,
+      "totalBridgeJsonBytes": 479916,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.0223650000007183,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.68949000000066,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.509405999999217,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.4237580000008165,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13290100000085658,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "tgz",
+      "repeat": 2,
+      "firstRenderedMs": 322.0846139999994,
+      "nextRenderedMs": 131.3744599999991,
+      "eventJumpRenderedMs": 134.51370400000087,
+      "firstBridgeJsonBytes": 159061,
+      "totalBridgeJsonBytes": 479916,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.9255339999999705,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.8676809999997204,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.1829060000000027,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.2223159999994095,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.2029419999998936,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "sqfs",
+      "repeat": 0,
+      "browsingMs": 4.2297620000008465,
+      "firstRenderedMs": 229.9927059999991,
+      "nextRenderedMs": 129.22527400000035,
+      "eventJumpRenderedMs": 118.98094800000035,
+      "firstBridgeJsonBytes": 158673,
+      "totalBridgeJsonBytes": 479528,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.1032480000012583,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.4349510000010923,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.1882690000002185,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.1550179999994725,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14462099999946076,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "sqfs",
+      "repeat": 1,
+      "firstRenderedMs": 218.65205200000128,
+      "nextRenderedMs": 132.0387150000006,
+      "eventJumpRenderedMs": 125.41570599999977,
+      "firstBridgeJsonBytes": 158673,
+      "totalBridgeJsonBytes": 479528,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.0614279999990686,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.6107130000000325,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.194349000001239,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.125108000000182,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13790100000005623,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edf",
+      "format": "sqfs",
+      "repeat": 2,
+      "firstRenderedMs": 216.85376800000085,
+      "nextRenderedMs": 125.08774300000005,
+      "eventJumpRenderedMs": 100.35449900000094,
+      "firstBridgeJsonBytes": 158673,
+      "totalBridgeJsonBytes": 479528,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.0321879999992234,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.498740999999427,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.3311699999994744,
+          "recordBytes": 324000,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.0828880000008212,
+          "recordBytes": 324000,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14836100000138686,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "loose",
+      "repeat": 0,
+      "browsingMs": 0.806696000001466,
+      "firstRenderedMs": 210.41489999999976,
+      "nextRenderedMs": 127.68521300000066,
+      "eventJumpRenderedMs": 120.16896700000143,
+      "firstBridgeJsonBytes": 156517,
+      "totalBridgeJsonBytes": 552712,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 0.6868549999999232,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 0.6526350000003731,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 0.6916950000013458,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.8146159999996598,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.6663449999996374,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "loose",
+      "repeat": 1,
+      "firstRenderedMs": 228.18608200000017,
+      "nextRenderedMs": 125.20972400000028,
+      "eventJumpRenderedMs": 143.02066800000102,
+      "firstBridgeJsonBytes": 156517,
+      "totalBridgeJsonBytes": 552712,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.050997999998799,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 0.8705569999983709,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 0.8204060000007303,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.576814000000013,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.6452450000033423,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "loose",
+      "repeat": 2,
+      "firstRenderedMs": 236.07543099999748,
+      "nextRenderedMs": 116.63044000000082,
+      "eventJumpRenderedMs": 126.34659300000203,
+      "firstBridgeJsonBytes": 156517,
+      "totalBridgeJsonBytes": 552712,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 0.8874370000012277,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 0.8856269999996584,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 0.6853760000012699,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.6445450000028359,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.5901640000010957,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 590,
+          "end": 600
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "zip",
+      "repeat": 0,
+      "browsingMs": 4.497353999999177,
+      "firstRenderedMs": 224.25539299999946,
+      "nextRenderedMs": 127.62531200000012,
+      "eventJumpRenderedMs": 120.71008100000108,
+      "firstBridgeJsonBytes": 159189,
+      "totalBridgeJsonBytes": 480105,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.540699000001041,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.419956000001548,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.9326419999997597,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.8871110000000044,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14327100000082282,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "zip",
+      "repeat": 1,
+      "firstRenderedMs": 246.5509099999981,
+      "nextRenderedMs": 128.72365100000025,
+      "eventJumpRenderedMs": 140.71156899999914,
+      "firstBridgeJsonBytes": 159189,
+      "totalBridgeJsonBytes": 480105,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.2933669999983977,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.64170699999886,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.8568110000014713,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.8564409999999043,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14102099999945494,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "zip",
+      "repeat": 2,
+      "firstRenderedMs": 244.92911800000002,
+      "nextRenderedMs": 169.59171499999866,
+      "eventJumpRenderedMs": 120.41845900000044,
+      "firstBridgeJsonBytes": 159189,
+      "totalBridgeJsonBytes": 480105,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.324187999998685,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.6566769999990356,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.8869310000009136,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.746470000001864,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13566100000025472,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tar",
+      "repeat": 0,
+      "browsingMs": 18.461427999998705,
+      "firstRenderedMs": 262.5967290000008,
+      "nextRenderedMs": 160.8370700000014,
+      "eventJumpRenderedMs": 132.9493419999999,
+      "firstBridgeJsonBytes": 159292,
+      "totalBridgeJsonBytes": 480208,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.2831489999989572,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.880224000000453,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.5196209999994608,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.3078390000009676,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13102100000105565,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tar",
+      "repeat": 1,
+      "firstRenderedMs": 294.5356270000011,
+      "nextRenderedMs": 128.8989619999993,
+      "eventJumpRenderedMs": 133.7962179999995,
+      "firstBridgeJsonBytes": 159292,
+      "totalBridgeJsonBytes": 480208,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.2701299999971525,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.6361619999988761,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.328880000000936,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.2608900000013818,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.1422309999979916,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tar",
+      "repeat": 2,
+      "firstRenderedMs": 285.39870900000096,
+      "nextRenderedMs": 128.2568080000019,
+      "eventJumpRenderedMs": 123.89762400000109,
+      "firstBridgeJsonBytes": 159292,
+      "totalBridgeJsonBytes": 480208,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.428180999999313,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 1.8859539999975823,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 1.4603309999984049,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.3093899999985297,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.1476409999995667,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tgz",
+      "repeat": 0,
+      "browsingMs": 83.53941400000258,
+      "firstRenderedMs": 397.9111890000022,
+      "nextRenderedMs": 158.54799300000013,
+      "eventJumpRenderedMs": 154.40115200000218,
+      "firstBridgeJsonBytes": 159366,
+      "totalBridgeJsonBytes": 480282,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.441048000000592,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.590207000001101,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.063603000002331,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.901451999998244,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.15463099999760743,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tgz",
+      "repeat": 1,
+      "firstRenderedMs": 429.94449800000075,
+      "nextRenderedMs": 133.3324250000005,
+      "eventJumpRenderedMs": 135.95858399999997,
+      "firstBridgeJsonBytes": 159366,
+      "totalBridgeJsonBytes": 480282,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.558908999999403,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.637707000001683,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.00959199999852,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.8334609999983513,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14715099999739323,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "tgz",
+      "repeat": 2,
+      "firstRenderedMs": 361.6568589999988,
+      "nextRenderedMs": 205.25218099999984,
+      "eventJumpRenderedMs": 127.88114399999904,
+      "firstBridgeJsonBytes": 159366,
+      "totalBridgeJsonBytes": 480282,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 2.3409470000005967,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 3.708117999998649,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 3.2432240000016463,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 3.009652000000642,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.15503099999841652,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "sqfs",
+      "repeat": 0,
+      "browsingMs": 1.9828849999976228,
+      "firstRenderedMs": 255.45856600000116,
+      "nextRenderedMs": 175.778581999999,
+      "eventJumpRenderedMs": 137.4736449999982,
+      "firstBridgeJsonBytes": 158961,
+      "totalBridgeJsonBytes": 479877,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.6671119999991788,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.52603900000031,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.1011859999998705,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.863494000001083,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.14127100000041537,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "sqfs",
+      "repeat": 1,
+      "firstRenderedMs": 238.02681600000142,
+      "nextRenderedMs": 164.60619799999768,
+      "eventJumpRenderedMs": 132.83617199999935,
+      "firstBridgeJsonBytes": 158961,
+      "totalBridgeJsonBytes": 479877,
+      "bridgeMessages": 8,
+      "reads": [
+        {
+          "ms": 1.7053429999978107,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.574728999999934,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.191876000000775,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 2.0582760000033886,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.1523909999996249,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        }
+      ]
+    },
+    {
+      "variant": "edfc",
+      "format": "sqfs",
+      "repeat": 2,
+      "firstRenderedMs": 219.46537800000078,
+      "nextRenderedMs": 94.42678499999965,
+      "eventJumpRenderedMs": 132.331976999998,
+      "firstBridgeJsonBytes": 158961,
+      "totalBridgeJsonBytes": 551325,
+      "bridgeMessages": 9,
+      "reads": [
+        {
+          "ms": 1.5995220000004338,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 0,
+          "end": 10
+        },
+        {
+          "ms": 2.416298000000097,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 10,
+          "end": 20
+        },
+        {
+          "ms": 2.1435460000029707,
+          "recordBytes": 324640,
+          "points": 3280,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 1.8636939999996684,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 5,
+          "end": 15
+        },
+        {
+          "ms": 0.13546100000166916,
+          "error": "Error: Archive signal window exceeds the 16 MiB prefix-scan budget."
+        },
+        {
+          "ms": 1.5578920000007201,
+          "recordBytes": 324640,
+          "points": 2000,
+          "start": 0,
+          "end": 10
+        }
+      ]
+    }
+  ],
+  "medians": [
+    {
+      "variant": "edf",
+      "format": "loose",
+      "runs": 3,
+      "firstRenderedMs": 371.88,
+      "nextRenderedMs": 118.29,
+      "eventJumpRenderedMs": 199.16,
+      "firstBridgeJsonBytes": 156222
+    },
+    {
+      "variant": "edf",
+      "format": "zip",
+      "runs": 3,
+      "firstRenderedMs": 262.53,
+      "nextRenderedMs": 131.73,
+      "eventJumpRenderedMs": 133.96,
+      "firstBridgeJsonBytes": 158897
+    },
+    {
+      "variant": "edf",
+      "format": "tar",
+      "runs": 3,
+      "firstRenderedMs": 250.91,
+      "nextRenderedMs": 120.9,
+      "eventJumpRenderedMs": 120.13,
+      "firstBridgeJsonBytes": 158987
+    },
+    {
+      "variant": "edf",
+      "format": "tgz",
+      "runs": 3,
+      "firstRenderedMs": 323.7,
+      "nextRenderedMs": 129.82,
+      "eventJumpRenderedMs": 131.78,
+      "firstBridgeJsonBytes": 159061
+    },
+    {
+      "variant": "edf",
+      "format": "sqfs",
+      "runs": 3,
+      "firstRenderedMs": 218.65,
+      "nextRenderedMs": 129.23,
+      "eventJumpRenderedMs": 118.98,
+      "firstBridgeJsonBytes": 158673
+    },
+    {
+      "variant": "edfc",
+      "format": "loose",
+      "runs": 3,
+      "firstRenderedMs": 228.19,
+      "nextRenderedMs": 125.21,
+      "eventJumpRenderedMs": 126.35,
+      "firstBridgeJsonBytes": 156517
+    },
+    {
+      "variant": "edfc",
+      "format": "zip",
+      "runs": 3,
+      "firstRenderedMs": 244.93,
+      "nextRenderedMs": 128.72,
+      "eventJumpRenderedMs": 120.71,
+      "firstBridgeJsonBytes": 159189
+    },
+    {
+      "variant": "edfc",
+      "format": "tar",
+      "runs": 3,
+      "firstRenderedMs": 285.4,
+      "nextRenderedMs": 128.9,
+      "eventJumpRenderedMs": 132.95,
+      "firstBridgeJsonBytes": 159292
+    },
+    {
+      "variant": "edfc",
+      "format": "tgz",
+      "runs": 3,
+      "firstRenderedMs": 397.91,
+      "nextRenderedMs": 158.55,
+      "eventJumpRenderedMs": 135.96,
+      "firstBridgeJsonBytes": 159366
+    },
+    {
+      "variant": "edfc",
+      "format": "sqfs",
+      "runs": 3,
+      "firstRenderedMs": 238.03,
+      "nextRenderedMs": 164.61,
+      "eventJumpRenderedMs": 132.84,
+      "firstBridgeJsonBytes": 158961
+    }
+  ],
+  "persistenceScans": [
+    {
+      "phase": "baseline-connected",
+      "files": 103,
+      "bytes": 20735194,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "previews-open",
+      "files": 129,
+      "bytes": 20923498,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "previews-closed",
+      "files": 129,
+      "bytes": 20923588,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "after-remote-workspace-reload",
+      "files": 135,
+      "bytes": 21001737,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "remote-workspace-closed",
+      "files": 159,
+      "bytes": 30245916,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "reconnected-no-previews",
+      "files": 163,
+      "bytes": 30304354,
+      "hits": 0,
+      "skipped": 0
+    },
+    {
+      "phase": "audit-window-closed",
+      "files": 188,
+      "bytes": 30411498,
+      "hits": 0,
+      "skipped": 0
+    }
+  ],
+  "sourceVerification": {
+    "files": 18,
+    "changed": 0
+  },
+  "bridgeByteMeaning": "JSON-equivalent outbound webview messages, excluding static assets and inbound diagnostics; not SSH TCP/wire bytes"
+}
