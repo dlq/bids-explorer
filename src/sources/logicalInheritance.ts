@@ -11,7 +11,7 @@ function resource(entry: DirectoryEntry): DirectoryEntry {
 }
 
 /** Inspect the same logical ancestors that the browser exposes, retaining physical choices. */
-export async function loadLogicalInheritance(
+export async function loadLogicalInventory(
   source: LogicalDirectorySource,
   selection: DirectoryEntry,
   signal: AbortSignal,
@@ -81,7 +81,9 @@ export async function loadLogicalInheritance(
         )
       )
         incomplete ??= 'Paged metadata coverage is incomplete.';
-      const candidates = physicalEntries.filter((entry) => /\.(json|bval|bvec)$/.test(entry.name));
+      const candidates = physicalEntries.filter((entry) =>
+        /\.(json|bval|bvec|tsv)$/.test(entry.name),
+      );
       levels.push({
         relativePath: path,
         coverage: incomplete ? 'incomplete' : 'complete',
@@ -91,21 +93,38 @@ export async function loadLogicalInheritance(
     }
     if (part !== undefined) path = path ? path + '/' + part : part;
   }
-  const result = await resolveInheritance(
+  return {
     target,
     levels,
+    track,
+    verify: async () => {
+      for (const { entry, revision } of revisions.values()) {
+        signal.throwIfAborted();
+        const current = await source.revision(entry);
+        if (current.size !== revision.size || current.modifiedAt !== revision.modifiedAt)
+          throw new Error('Source changed during metadata inspection. Run Inspect again.');
+      }
+      signal.throwIfAborted();
+    },
+  };
+}
+
+/** Selected-file JSON inspection reuses the bounded logical ancestor inventory. */
+export async function loadLogicalInheritance(
+  source: LogicalDirectorySource,
+  selection: DirectoryEntry,
+  signal: AbortSignal,
+) {
+  const inventory = await loadLogicalInventory(source, selection, signal);
+  const result = await resolveInheritance(
+    inventory.target,
+    inventory.levels,
     async (entry, abort) => {
-      await track(entry);
+      await inventory.track(entry);
       return parseJsonMetadata(await readTextSnapshot(entry.uri, abort), abort);
     },
     signal,
   );
-  for (const { entry, revision } of revisions.values()) {
-    signal.throwIfAborted();
-    const current = await source.revision(entry);
-    if (current.size !== revision.size || current.modifiedAt !== revision.modifiedAt)
-      throw new Error('Source changed during metadata inspection. Run Inspect again.');
-  }
-  signal.throwIfAborted();
+  await inventory.verify();
   return result;
 }

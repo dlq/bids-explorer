@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { basename } from 'node:path';
 import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { loadRecordingHeader } from '../sources/recordingHeader';
+import type { RecordingMetadataAccess } from '../sources/recordingMetadata';
 import { DocumentPreviewManager } from './documentPreview';
 import { RecordingWaveformManager } from './recordingWaveform';
 
@@ -22,6 +23,7 @@ export class RecordingPreviewManager implements vscode.Disposable {
     uri: vscode.Uri,
     inspect?: () => Promise<unknown>,
     key = uri.toString(),
+    metadata?: RecordingMetadataAccess,
   ): Promise<vscode.WebviewPanel> {
     if (!isEdfRecording(uri)) throw new Error('Select an EDF recording.');
     const controller = new AbortController();
@@ -30,7 +32,7 @@ export class RecordingPreviewManager implements vscode.Disposable {
       const { header } = await loadRecordingHeader(uri.toString(), controller.signal);
       controller.signal.throwIfAborted();
       return header.format !== 'EDF+D' && !!header.recordCount
-        ? await this.waveforms.open(uri, key, inspect)
+        ? await this.waveforms.open(uri, key, inspect, metadata)
         : await this.openSummary(uri, inspect, key);
     } finally {
       this.routing.delete(controller);

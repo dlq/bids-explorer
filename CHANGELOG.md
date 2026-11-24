@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Integrate source-qualified channels.tsv metadata and BIDS event timelines in the EDF waveform editor. Show recorded channel status and header/TSV differences, filter and page event rows, jump to events, and choose between matching physical table sources without merging them.
+
 - Open supported EDF recordings directly to a bounded waveform preview, with logical EEG tree labels, compact controls, accurate channel counts and recording/source details in the same editor.
 
 - Open EDF/EDF+ recordings from the logical BIDS tree in read-only previews with a technical summary fallback, with per-channel sampling rates and units, explicit header-only coverage, and access to inherited JSON. Bounded prefix reads support loose files and supported ZIP, tar/gzip tar and SquashFS sources without extracting a whole recording. Event/channel-table integration remains planned.

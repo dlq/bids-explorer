@@ -24,6 +24,7 @@ import { ArchiveInventoryCache } from './sources/archiveInventoryCache';
 import { AvailabilityCache } from './sources/availabilityCache';
 import { directoryRoot, recognizeLocalDataset } from './sources/localDirectory';
 import { LogicalDirectorySource, savedArchivePlacements } from './sources/logicalDirectory';
+import { loadRecordingMetadata } from './sources/recordingMetadata';
 import { loadLogicalInheritance } from './sources/logicalInheritance';
 import { readTextSnapshot } from './sources/textSnapshotReader';
 import { loadTreeDescription } from './sources/treeDescriptionLoader';
@@ -358,7 +359,12 @@ export function activate(context: vscode.ExtensionContext): {
     const uri = entryUri(entry);
     if (isNiftiFileName(resourcePath(uri.toString()))) return await openImage(entry);
     if (isEdfRecording(uri))
-      return await recordings.open(uri, () => inheritance.open(entry), entryKey(entry));
+      return await recordings.open(uri, () => inheritance.open(entry), entryKey(entry), {
+        load: (signal, choices) => loadRecordingMetadata(source, entry, signal, choices),
+        open: async (candidate) => {
+          await openEntry(candidate);
+        },
+      });
     if (isGradientFile(uri)) return previewGradients(uri);
     if (isHistoryFile(uri))
       return await previewOrOpenText(

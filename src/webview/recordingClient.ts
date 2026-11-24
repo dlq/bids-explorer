@@ -1,3 +1,10 @@
+import { eventsInWindow, eventNumber } from '../core/recordingEvents.js';
+import type {
+  RecordingMetadata,
+  ChannelMetadata,
+  RecordingEvent,
+  RecordingTableKind,
+} from '../core/recordingMetadataTypes';
 import type {
   RecordingViewSnapshot,
   RecordingWindow,
@@ -12,6 +19,203 @@ let snapshot: RecordingViewSnapshot | undefined,
   first = true,
   page = 0;
 const selected = new Set<number>();
+let metadata: RecordingMetadata | undefined,
+  tablesToken = '',
+  tablesBusy = false,
+  eventPage = 0;
+let channelRows = new Map<string, ChannelMetadata>();
+let events: readonly RecordingEvent[] = [];
+function tableAction(type: string, kind: RecordingTableKind, index: number): void {
+  api.postMessage({ type, token: snapshot?.token, tablesToken, kind, index });
+}
+function channelDetails(index: number): string {
+  const channel = snapshot!.header.signals[index];
+  if (!metadata || metadata.channels.status !== 'resolved') return '';
+  const duplicate =
+    snapshot!.header.signals.filter((c) => !c.annotations && c.label === channel.label).length > 1;
+  const row = duplicate ? undefined : channelRows.get(channel.label);
+  if (!row) return 'No unique matching channels.tsv row';
+  const v = Object.fromEntries(
+    Object.entries(row.values).map(([key, value]) => [
+      key,
+      value.length > 200 ? value.slice(0, 200) + '…' : value,
+    ]),
+  );
+  const details = [
+    v.type && `Type ${v.type}`,
+    v.status && `Recorded status: ${v.status}`,
+    v.status_description,
+    v.description,
+    v.reference && `Reference ${v.reference}`,
+  ].filter(Boolean);
+  const units = (s: string) => s.replace(/[µμ]/g, 'u');
+  if (v.units && v.units !== 'n/a' && units(v.units) !== units(channel.unit))
+    details.push(
+      `Unit differs: TSV ${v.units}; EDF ${channel.unit || 'not recorded'} (EDF calibration retained)`,
+    );
+  const rate = eventNumber(v.sampling_frequency ?? '');
+  if (v.sampling_frequency && v.sampling_frequency !== 'n/a' && rate !== channel.samplingFrequency)
+    details.push(
+      `Sampling rate differs: TSV ${v.sampling_frequency} Hz; EDF ${channel.samplingFrequency} Hz (EDF timing retained)`,
+    );
+  return `channels.tsv line ${row.line} · ${details.join(' · ')}`;
+}
+function renderSources(): void {
+  node('table-sources').replaceChildren();
+  if (!metadata) return;
+  for (const kind of ['channels', 'events'] as const) {
+    const source = metadata[kind],
+      box = document.createElement('div'),
+      title = document.createElement('h3'),
+      note = document.createElement('p');
+    title.textContent = kind === 'channels' ? 'Channel metadata' : 'BIDS events';
+    note.textContent = `${source.status} · ${source.message}${source.table?.duplicateIds.length ? ' · Duplicate channel names are not matched automatically.' : ''}`;
+    if (kind === 'channels' && source.status === 'resolved' && snapshot) {
+      const signals = snapshot.header.signals.filter((c) => !c.annotations);
+      const matched = signals.filter(
+        (c) =>
+          channelRows.has(c.label) &&
+          signals.filter((other) => other.label === c.label).length === 1,
+      ).length;
+      note.textContent += ` · ${matched} of ${signals.length} EDF signal channels have a unique name match`;
+    }
+    box.append(title, note);
+    if (source.candidates.length) {
+      const label = document.createElement('label'),
+        select = document.createElement('select'),
+        placeholder = document.createElement('option');
+      select.id = kind + '-source';
+      label.textContent = `${kind === 'channels' ? 'Channels' : 'Events'} source `;
+      placeholder.value = '';
+      placeholder.textContent = 'Choose a physical source';
+      select.append(placeholder);
+      source.candidates.forEach((candidate, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = `${candidate.relativePath} — ${candidate.archive?.sourceUri ?? candidate.uri}`;
+        select.append(option);
+      });
+      select.value = source.selected === undefined ? '' : String(source.selected);
+      select.disabled = tablesBusy || source.status === 'unknown';
+      select.addEventListener('change', () => {
+        if (select.value !== '') tableAction('chooseTable', kind, Number(select.value));
+      });
+      label.append(select);
+      box.append(label);
+      if (source.selected !== undefined) {
+        const open = document.createElement('button');
+        open.textContent = `Open ${kind} table`;
+        open.id = `open-${kind}-table`;
+        open.disabled = tablesBusy;
+        open.addEventListener('click', () => tableAction('openTable', kind, source.selected!));
+        box.append(open);
+      }
+    }
+    node('table-sources').append(box);
+  }
+}
+function jump(event: RecordingEvent): void {
+  if (busy || event.onset === undefined || !snapshot) return;
+  node<HTMLInputElement>('start').value = String(
+    Math.max(
+      0,
+      Math.min(
+        event.onset,
+        Math.max(0, (snapshot.header.recordedSeconds ?? 0) - inputNumber('duration')),
+      ),
+    ),
+  );
+  load();
+}
+function renderEvents(): void {
+  node('event-timeline').replaceChildren();
+  node('events-table').replaceChildren();
+  const table = metadata?.events.table;
+  const visible = windowData
+    ? eventsInWindow(events, windowData.startSeconds, windowData.endSeconds)
+    : [];
+  node('event-count').textContent = `${events.length} rows`;
+  const invalid = events.filter(
+    (e) => e.onset === undefined || (e.duration !== undefined && e.duration < 0),
+  ).length;
+  const missing = events.filter((e) => e.duration === undefined).length;
+  node('events-coverage').textContent =
+    `${events.length} event rows checked · ${visible.length} overlap the loaded window · ${invalid} rows have unavailable/invalid timing · ${missing} have unknown duration. Unknown duration is shown as an onset marker, not a zero-length interval. Sample values remain source values, not timing conversions.`;
+  if (windowData && visible.length) {
+    const description = document.createElement('p'),
+      track = document.createElement('div');
+    description.textContent = `BIDS events · ${visible.length} overlap ${windowData.startSeconds}–${windowData.endSeconds} s${visible.length > 200 ? ' · First 200 markers shown; use the event list for all rows' : ''}`;
+    track.className = 'event-track';
+    visible.slice(0, 200).forEach((event, index) => {
+      const button = document.createElement('button');
+      const start = Math.max(windowData!.startSeconds, event.onset!),
+        end = Math.min(windowData!.endSeconds, event.onset! + (event.duration ?? 0)),
+        span = windowData!.endSeconds - windowData!.startSeconds;
+      button.className = 'event-marker';
+      button.style.left = `${(100 * (start - windowData!.startSeconds)) / span}%`;
+      button.style.width = `${Math.max(0, (100 * (end - start)) / span)}%`;
+      button.style.top = `${(index % 3) * 20}px`;
+      button.title = `${event.label.slice(0, 160)} · Onset ${event.onset} s · Duration ${event.duration === undefined ? 'unknown' : event.duration + ' s'} · Source line ${event.line}`;
+      button.setAttribute('aria-label', button.title);
+      button.addEventListener('click', () => jump(event));
+      track.append(button);
+    });
+    node('event-timeline').append(description, track);
+  }
+  const filter = node<HTMLInputElement>('event-filter').value.toLowerCase();
+  const rows = events.filter((event) =>
+    event.values.some((value) => value.toLowerCase().includes(filter)),
+  );
+  eventPage = Math.max(0, Math.min(eventPage, Math.ceil(rows.length / 50) - 1));
+  node('events-page').textContent =
+    `${rows.length ? eventPage * 50 + 1 : 0}–${Math.min(rows.length, (eventPage + 1) * 50)} of ${rows.length} matching event rows`;
+  node<HTMLButtonElement>('events-previous').disabled = eventPage === 0;
+  node<HTMLButtonElement>('events-next').disabled = (eventPage + 1) * 50 >= rows.length;
+  if (!table) {
+    node('events-coverage').textContent =
+      'Events are not resolved. An empty timeline does not establish that no events were recorded.';
+    return;
+  }
+  const grid = document.createElement('table'),
+    head = document.createElement('thead'),
+    heading = document.createElement('tr'),
+    body = document.createElement('tbody');
+  const columns = table.columns.slice(0, 8);
+  for (const name of ['Source line', ...columns, 'Navigate']) {
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.textContent = name === 'onset' || name === 'duration' ? name + ' (s)' : name;
+    heading.append(th);
+  }
+  head.append(heading);
+  for (const event of rows.slice(eventPage * 50, eventPage * 50 + 50)) {
+    const tr = document.createElement('tr');
+    for (const value of [String(event.line), ...event.values.slice(0, 8)]) {
+      const td = document.createElement('td');
+      td.textContent = value.length > 300 ? value.slice(0, 300) + '…' : value;
+      tr.append(td);
+    }
+    const td = document.createElement('td'),
+      button = document.createElement('button');
+    button.textContent = 'Show in waveform';
+    button.id = 'event-' + event.line;
+    button.disabled =
+      busy || event.onset === undefined || event.onset >= (snapshot?.header.recordedSeconds ?? 0);
+    button.setAttribute('aria-label', `Show event from source line ${event.line} in waveform`);
+    button.addEventListener('click', () => jump(event));
+    td.append(button);
+    tr.append(td);
+    body.append(tr);
+  }
+  grid.append(head, body);
+  node('events-table').append(grid);
+  if (table.columns.length > 8) {
+    const note = document.createElement('p');
+    note.textContent = `Showing 8 of ${table.columns.length} columns. Open the source table for all columns.`;
+    node('events-table').append(note);
+  }
+}
+
 const inputNumber = (id: string): number => {
   const value = node<HTMLInputElement>(id).value;
   return value.trim() ? Number(value) : NaN;
@@ -23,6 +227,7 @@ function setBusy(value: boolean): void {
   for (const id of ['start', 'duration', 'load', 'previous', 'next', 'reload'])
     node<HTMLButtonElement | HTMLInputElement>(id).disabled = value;
   node<HTMLButtonElement>('cancel').disabled = !value;
+  renderEvents();
   if (!value && snapshot) {
     node<HTMLButtonElement>('previous').disabled =
       Number(node<HTMLInputElement>('start').value) <= 0;
@@ -73,6 +278,12 @@ function renderChannels(): void {
         `${selected.size} of ${snapshot!.header.signals.filter((c) => !c.annotations).length} signal channels selected · up to 8 at once`;
     });
     text.textContent = `${index + 1}. ${channel.label || '(unnamed channel)'} · ${channel.samplingFrequency} Hz · ${channel.unit || 'Unit not recorded'}`;
+    const detail = channelDetails(index);
+    if (detail) {
+      const info = document.createElement('small');
+      info.textContent = detail;
+      text.append(document.createElement('br'), info);
+    }
     label.append(input, text);
     node('channels').append(label);
   }
@@ -170,7 +381,10 @@ function renderPlots(): void {
       `${trace.label || 'Unnamed channel'}, ${trace.samplingFrequency} Hz. ${trace.sampleCount} samples from ${windowData.startSeconds} to ${windowData.endSeconds} seconds. Minimum ${trace.minimum.toPrecision(4)}, maximum ${trace.maximum.toPrecision(4)} ${trace.unit || '(unit not recorded)'}.`,
     );
     caption.textContent = `${trace.samplingFrequency} Hz · ${trace.sampleCount.toLocaleString()} samples checked · ${trace.points.length.toLocaleString()} displayed points${trace.sampleCount > trace.points.length ? ' (min/max envelope)' : ''}`;
-    figure.append(title, canvas, caption);
+    const detail = document.createElement('p');
+    detail.className = 'channel-metadata';
+    detail.textContent = channelDetails(trace.index);
+    figure.append(title, detail, canvas, caption);
     node('plots').append(figure);
     draw(canvas, trace);
   }
@@ -205,6 +419,14 @@ function report(): void {
     selection: node('selection').textContent,
     channelLabels: [...node('channels').querySelectorAll('label')].map((n) => n.textContent),
     title: node('recording-title').textContent,
+    tablesBusy,
+    tablesStatus: node('tables-status').textContent,
+    channelDetails: snapshot?.header.signals.map((_, index) => channelDetails(index)),
+    eventRows: events.length,
+    eventText: node('events-table').textContent,
+    eventScriptCount: node('events-table').querySelectorAll('script').length,
+    eventMarkers: node('event-timeline').querySelectorAll('button').length,
+    eventPage: node('events-page').textContent,
   });
 }
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
@@ -218,6 +440,12 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   if (message.type === 'snapshot' && 'snapshot' in message) {
     snapshot = message.snapshot as RecordingViewSnapshot;
     windowData = undefined;
+    metadata = undefined;
+    channelRows.clear();
+    events = [];
+    tablesToken = '';
+    renderSources();
+    renderEvents();
     selected.clear();
     page = 0;
     snapshot.header.signals.forEach((channel, index) => {
@@ -253,6 +481,42 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     return;
   }
   if (!snapshot || !('token' in message) || message.token !== snapshot.token) return;
+  if (message.type === 'tablesLoading') {
+    tablesBusy = true;
+    node('tables-status').textContent = 'Checking applicable channels and events tables…';
+    node<HTMLButtonElement>('reload-tables').disabled = true;
+    node<HTMLButtonElement>('cancel-tables').disabled = false;
+    renderSources();
+    report();
+    return;
+  }
+  if (message.type === 'tables' && 'metadata' in message && 'tablesToken' in message) {
+    metadata = message.metadata as RecordingMetadata;
+    tablesToken = String(message.tablesToken);
+    tablesBusy = false;
+    eventPage = 0;
+    channelRows = new Map(metadata.channels.channelRows?.map((row) => [row.values.name, row]));
+    events = metadata.events.events ?? [];
+    node('tables-status').textContent =
+      'BIDS table snapshots checked independently of the EDF header. Recorded bad status does not hide a channel; EDF calibration and timing remain in use.';
+    node<HTMLButtonElement>('reload-tables').disabled = false;
+    node<HTMLButtonElement>('cancel-tables').disabled = true;
+    renderSources();
+    renderChannels();
+    renderPlots();
+    renderEvents();
+    report();
+    return;
+  }
+  if (message.type === 'tablesError' && 'message' in message) {
+    tablesBusy = false;
+    node('tables-status').textContent = String(message.message);
+    node<HTMLButtonElement>('reload-tables').disabled = false;
+    node<HTMLButtonElement>('cancel-tables').disabled = true;
+    renderSources();
+    report();
+    return;
+  }
   if (message.type === 'window' && 'window' in message) {
     windowData = message.window as RecordingWindow;
     node('status').textContent =
@@ -260,6 +524,7 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     node('error').hidden = true;
     setBusy(false);
     renderPlots();
+    renderEvents();
     report();
   }
   if (
@@ -275,6 +540,20 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     setBusy(false);
     report();
   }
+});
+node('reload-tables').addEventListener('click', () => send('reloadTables'));
+node('cancel-tables').addEventListener('click', () => send('cancelTables'));
+node('event-filter').addEventListener('input', () => {
+  eventPage = 0;
+  renderEvents();
+});
+node('events-previous').addEventListener('click', () => {
+  eventPage--;
+  renderEvents();
+});
+node('events-next').addEventListener('click', () => {
+  eventPage++;
+  renderEvents();
 });
 node('metadata').addEventListener('click', () => send('metadata'));
 node('load').addEventListener('click', load);

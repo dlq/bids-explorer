@@ -12,6 +12,7 @@ import { squashfsFile } from '../squashfsFixture';
 import { archiveResourceUri, entryArchiveUri } from '../../core/archiveUri';
 import { LogicalDirectorySource } from '../../sources/logicalDirectory';
 import { loadRecordingWindow } from '../../sources/recordingWindow';
+import { loadRecordingMetadata } from '../../sources/recordingMetadata';
 import { RecordingPreviewManager } from '../../ui/recordingPreview';
 import { RecordingWaveformManager } from '../../ui/recordingWaveform';
 import type { RecordingTrace } from '../../core/recordingTypes';
@@ -57,6 +58,7 @@ function controls(panel: vscode.WebviewPanel): void {
     if(event.data.request){testApi.postMessage({type:'loadWindow',token:event.data.stale?'old-token':testToken,request:event.data.request});return;}
     if(event.data.id==='pixels'){const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let blue=0;for(let i=0;i<d.length;i+=4)if(d[i+2]>150&&d[i+2]>d[i]*1.2&&d[i+3])blue++;testApi.postMessage({type:'pixels',blue});return;}
     const target=document.getElementById(event.data.id);
+    if(target instanceof HTMLSelectElement){target.value=event.data.value;target.dispatchEvent(new Event('change'));return;}
     if(target instanceof HTMLInputElement&&target.type!=='checkbox'){target.value=event.data.value;target.dispatchEvent(new Event('input'));}else target?.click();
   });</script></head>`,
   );
@@ -159,6 +161,117 @@ suite('EDF waveform windows', () => {
       await panel.webview.postMessage({ type: 'testControl', id: 'load' });
       await state(panel, (s) => s.traceCount === 2 && !s.busy);
       assert.deepEqual(await readFile(file), original);
+    } finally {
+      manager.dispose();
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+
+  test('integrates source-backed channel status and events without replacing EDF calibration or blocking waveform loading', async function () {
+    this.timeout(40000);
+    const extension = vscode.extensions.getExtension(extensionId)!;
+    await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-recording-metadata-ui-'));
+    const source = new LogicalDirectorySource(),
+      manager = new RecordingWaveformManager(extension.extensionUri);
+    let paused = false,
+      opened = '';
+    try {
+      await mkdir(join(folder, 'sub-01/eeg'), { recursive: true });
+      const file = join(folder, 'sub-01/eeg/sub-01_task-rest_eeg.edf');
+      const channels = join(folder, 'sub-01/eeg/sub-01_task-rest_channels.tsv');
+      const eventPath = join(folder, 'task-rest_events.tsv');
+      await writeFile(file, edfRecordingFixture());
+      await writeFile(
+        channels,
+        'name\ttype\tunits\tsampling_frequency\tstatus\tstatus_description\nECG\tECG\tmV\t100\tgood\tn/a\nFz\tEEG\tV\t999\tbad\tRecorded noisy channel\n',
+      );
+      await writeFile(
+        eventPath,
+        'onset\tduration\ttrial_type\tsample\n-1\t2\ttraining\t0001\n5\t0\t<script>cue</script>\t0002\n15\tn/a\tresponse\t0003\n' +
+          Array.from({ length: 60 }, (_, i) => `11\t1\textra-${i}\t${i}\n`).join(''),
+      );
+      let target = await source.root(vscode.Uri.file(folder).toString());
+      for (const part of ['sub-01', 'eeg', 'sub-01_task-rest_eeg.edf'])
+        target = (await source.children(target, new AbortController().signal)).find(
+          (e) => e.name === part,
+        )!;
+      const panel = await manager.open(vscode.Uri.file(file), 'metadata', undefined, {
+        load: (signal, choices) =>
+          paused
+            ? new Promise((_, reject) =>
+                signal.addEventListener('abort', () => reject(new Error('Cancelled')), {
+                  once: true,
+                }),
+              )
+            : loadRecordingMetadata(source, target, signal, choices),
+        open: (entry) => {
+          opened = entry.uri;
+          return Promise.resolve();
+        },
+      });
+      controls(panel);
+      await assertHostMessages(panel.webview);
+      const initial = await state(
+        panel,
+        (s) => s.traceCount === 2 && s.eventRows === 63 && !s.tablesBusy,
+      );
+      assert.match(
+        (initial.channelDetails as string[])[0],
+        /Type EEG.*Recorded status: bad.*Recorded noisy channel/,
+      );
+      assert.match((initial.channelDetails as string[])[0], /TSV V; EDF uV/);
+      assert.match((initial.channelDetails as string[])[0], /TSV 999 Hz; EDF 200 Hz/);
+      assert.equal((initial.firstTrace as RecordingTrace).unit, 'uV');
+      assert.equal((initial.firstTrace as RecordingTrace).samplingFrequency, 200);
+      assert.equal(
+        initial.eventMarkers,
+        2,
+        'Negative intervals overlap the window, future events remain off the timeline',
+      );
+      assert.match(String(initial.eventPage), /1–50 of 63/);
+      await panel.webview.postMessage({ type: 'testControl', id: 'events-next' });
+      await state(panel, (s) => String(s.eventPage).startsWith('51–63'));
+      await panel.webview.postMessage({
+        type: 'testControl',
+        id: 'event-filter',
+        value: 'response',
+      });
+      await state(panel, (s) => String(s.eventPage).includes('1–1 of 1'));
+      await panel.webview.postMessage({ type: 'testControl', id: 'event-4' });
+      const jumped = await state(panel, (s) => s.startSeconds === 10 && !s.busy);
+      assert.equal(jumped.eventMarkers, 61);
+      assert.ok(String(initial.eventText).includes('<script>cue</script>'));
+      assert.equal(initial.eventScriptCount, 0);
+      await panel.webview.postMessage({ type: 'testControl', id: 'open-events-table' });
+      const openDeadline = Date.now() + 5000;
+      while (!opened) {
+        assert.ok(Date.now() < openDeadline);
+        await new Promise((r) => setTimeout(r, 20));
+      }
+      assert.equal(opened, vscode.Uri.file(eventPath).toString());
+      await writeFile(channels, 'name\ttype\tunits\nFz\tEEG\tuV\nFz\tEEG\tuV\n');
+      source.refresh();
+      await panel.webview.postMessage({ type: 'testControl', id: 'reload-tables' });
+      await state(panel, (s) =>
+        String((s.channelDetails as string[])?.[0]).includes('No unique matching'),
+      );
+      paused = true;
+      await panel.webview.postMessage({ type: 'testControl', id: 'reload-tables' });
+      await state(panel, (s) => s.tablesBusy === true);
+      await panel.webview.postMessage({ type: 'testControl', id: 'cancel-tables' });
+      const cancelled = await state(
+        panel,
+        (s) => String(s.tablesStatus).includes('cancelled') && !s.tablesBusy,
+      );
+      assert.equal(cancelled.eventRows, 63);
+      assert.equal(cancelled.traceCount, 2);
+      paused = false;
+      await writeFile(eventPath, 'bad\tcolumns\nx\ty\n');
+      source.refresh();
+      await panel.webview.postMessage({ type: 'testControl', id: 'reload-tables' });
+      await state(panel, (s) => s.eventRows === 0 && !s.tablesBusy);
+      assert.deepEqual(await readFile(file), edfRecordingFixture());
     } finally {
       manager.dispose();
       await rm(folder, { recursive: true, force: true });
