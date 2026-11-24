@@ -229,6 +229,28 @@ suite('EDF waveform windows', () => {
         2,
         'Negative intervals overlap the window, future events remain off the timeline',
       );
+      assert.match(
+        String(initial.eventTimelineText),
+        /training · -1–1 s · Partly outside this window/,
+      );
+      assert.match(
+        String(initial.eventTimelineText),
+        /<script>cue<\/script> · 5 s \(instantaneous\).*Go to event/,
+      );
+      assert.equal(
+        initial.eventAxisStart,
+        initial.waveformAxisStart,
+        'Event and waveform axes share the same pixel origin',
+      );
+      assert.equal(
+        initial.eventAxisEnd,
+        initial.waveformAxisEnd,
+        'Event and waveform axes share the same endpoint',
+      );
+      await panel.webview.postMessage({ type: 'testControl', id: 'goto-event-3' });
+      await state(panel, (s) => s.startSeconds === 5 && !s.busy);
+      await panel.webview.postMessage({ type: 'testControl', id: 'previous' });
+      await state(panel, (s) => s.startSeconds === 0 && !s.busy);
       assert.match(String(initial.eventPage), /1–50 of 63/);
       await panel.webview.postMessage({ type: 'testControl', id: 'events-next' });
       await state(panel, (s) => String(s.eventPage).startsWith('51–63'));
@@ -240,7 +262,8 @@ suite('EDF waveform windows', () => {
       await state(panel, (s) => String(s.eventPage).includes('1–1 of 1'));
       await panel.webview.postMessage({ type: 'testControl', id: 'event-4' });
       const jumped = await state(panel, (s) => s.startSeconds === 10 && !s.busy);
-      assert.equal(jumped.eventMarkers, 61);
+      assert.equal(jumped.eventMarkers, 12);
+      assert.match(String(jumped.eventTimelineText), /61 overlap.*First 12 intervals/);
       assert.ok(String(initial.eventText).includes('<script>cue</script>'));
       assert.equal(initial.eventScriptCount, 0);
       await panel.webview.postMessage({ type: 'testControl', id: 'open-events-table' });

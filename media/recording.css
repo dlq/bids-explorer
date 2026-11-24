@@ -176,21 +176,68 @@ select {
 #events-table button {
   white-space: nowrap;
 }
+:root {
+  --recording-axis-left: 72px;
+  --recording-axis-right: 18px;
+}
+.event-timeline {
+  padding: 10px;
+  border: 1px solid var(--vscode-panel-border, #8888);
+  border-radius: 3px;
+}
+.event-axis,
 .event-track {
   position: relative;
-  margin: 8px 28px 8px 82px;
-  height: 60px;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-left: var(--recording-axis-left);
+  margin-right: var(--recording-axis-right);
 }
-.event-marker {
+.event-axis {
+  height: 24px;
+  border-top: 1px solid var(--vscode-panel-border);
+  font-size: 12px;
+}
+.event-axis span {
   position: absolute;
-  min-width: 8px;
-  max-width: 100%;
+  top: 4px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.event-axis span:first-child {
+  transform: none;
+}
+.event-axis span:last-child {
+  transform: translateX(-100%);
+}
+.event-row + .event-row {
+  margin-top: 12px;
+}
+.event-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 4px 0;
+}
+.event-heading > span {
+  overflow-wrap: anywhere;
+}
+.event-heading button {
+  flex-shrink: 0;
+}
+.event-track {
   height: 16px;
-  padding: 0;
-  border: 1px solid var(--vscode-charts-orange, #d77a2a);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  overflow: hidden;
+}
+.event-interval {
+  position: absolute;
+  box-sizing: border-box;
+  min-width: 2px;
+  height: 12px;
+  top: 2px;
+  border: 2px solid var(--vscode-charts-orange, #d77a2a);
   background: var(--vscode-charts-orange, #d77a2a);
-  opacity: 0.8;
 }
 #event-timeline p {
   font-size: 12px;

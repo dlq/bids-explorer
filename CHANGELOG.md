@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Label event intervals with their names and recorded times, align the event and waveform time axes, and provide explicit Go to event buttons. Dense timelines show the first 12 intervals with coverage stated; the paged event list retains all checked rows.
+
 - Integrate source-qualified channels.tsv metadata and BIDS event timelines in the EDF waveform editor. Show recorded channel status and header/TSV differences, filter and page event rows, jump to events, and choose between matching physical table sources without merging them.
 
 - Open supported EDF recordings directly to a bounded waveform preview, with logical EEG tree labels, compact controls, accurate channel counts and recording/source details in the same editor.

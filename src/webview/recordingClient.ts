@@ -127,6 +127,18 @@ function jump(event: RecordingEvent): void {
   );
   load();
 }
+function eventNavigation(event: RecordingEvent): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.textContent = 'Go to event';
+  button.disabled =
+    busy || event.onset === undefined || event.onset >= (snapshot?.header.recordedSeconds ?? 0);
+  button.setAttribute(
+    'aria-label',
+    `Go to event: ${event.label.slice(0, 160)}, ${event.onset === undefined ? 'onset unavailable' : event.onset + ' seconds'}, source line ${event.line}`,
+  );
+  button.addEventListener('click', () => jump(event));
+  return button;
+}
 function renderEvents(): void {
   node('event-timeline').replaceChildren();
   node('events-table').replaceChildren();
@@ -143,24 +155,62 @@ function renderEvents(): void {
     `${events.length} event rows checked · ${visible.length} overlap the loaded window · ${invalid} rows have unavailable/invalid timing · ${missing} have unknown duration. Unknown duration is shown as an onset marker, not a zero-length interval. Sample values remain source values, not timing conversions.`;
   if (windowData && visible.length) {
     const description = document.createElement('p'),
-      track = document.createElement('div');
-    description.textContent = `BIDS events · ${visible.length} overlap ${windowData.startSeconds}–${windowData.endSeconds} s${visible.length > 200 ? ' · First 200 markers shown; use the event list for all rows' : ''}`;
-    track.className = 'event-track';
-    visible.slice(0, 200).forEach((event, index) => {
-      const button = document.createElement('button');
+      timeline = document.createElement('div'),
+      axis = document.createElement('div');
+    description.textContent = `BIDS events · ${visible.length} overlap ${windowData.startSeconds}–${windowData.endSeconds} s${visible.length > 12 ? ' · First 12 intervals shown; use the event list for all rows' : ''}. Recorded timing is read-only.`;
+    timeline.className = 'event-timeline';
+    axis.className = 'event-axis';
+    axis.setAttribute('aria-label', 'Event time axis in seconds');
+    for (let tick = 0; tick <= 4; tick++) {
+      const label = document.createElement('span');
+      label.style.left = `${tick * 25}%`;
+      label.textContent =
+        (
+          windowData.startSeconds +
+          ((windowData.endSeconds - windowData.startSeconds) * tick) / 4
+        ).toFixed(2) + ' s';
+      axis.append(label);
+    }
+    timeline.append(axis);
+    visible.slice(0, 12).forEach((event) => {
+      const row = document.createElement('div'),
+        header = document.createElement('div'),
+        label = document.createElement('span'),
+        track = document.createElement('div'),
+        interval = document.createElement('span');
+      row.className = 'event-row';
+      header.className = 'event-heading';
+      track.className = 'event-track';
+      interval.className = 'event-interval';
+      const endTime = event.duration === undefined ? undefined : event.onset! + event.duration;
+      const timing =
+        event.duration === undefined
+          ? `${event.onset} s (duration unknown)`
+          : event.duration === 0
+            ? `${event.onset} s (instantaneous)`
+            : `${event.onset}–${endTime} s`;
+      label.textContent = `${event.label.slice(0, 160)} · ${timing}`;
+      if (
+        event.onset! < windowData!.startSeconds ||
+        (endTime !== undefined && endTime > windowData!.endSeconds)
+      )
+        label.textContent += ' · Partly outside this window';
+      const go = eventNavigation(event);
+      go.id = 'goto-event-' + event.line;
+      header.append(label, go);
       const start = Math.max(windowData!.startSeconds, event.onset!),
-        end = Math.min(windowData!.endSeconds, event.onset! + (event.duration ?? 0)),
+        end = Math.min(windowData!.endSeconds, endTime ?? event.onset!),
         span = windowData!.endSeconds - windowData!.startSeconds;
-      button.className = 'event-marker';
-      button.style.left = `${(100 * (start - windowData!.startSeconds)) / span}%`;
-      button.style.width = `${Math.max(0, (100 * (end - start)) / span)}%`;
-      button.style.top = `${(index % 3) * 20}px`;
-      button.title = `${event.label.slice(0, 160)} · Onset ${event.onset} s · Duration ${event.duration === undefined ? 'unknown' : event.duration + ' s'} · Source line ${event.line}`;
-      button.setAttribute('aria-label', button.title);
-      button.addEventListener('click', () => jump(event));
-      track.append(button);
+      interval.style.left = `${(100 * (start - windowData!.startSeconds)) / span}%`;
+      interval.style.width = `${Math.max(0, (100 * (end - start)) / span)}%`;
+      interval.title = `${label.textContent} · Source line ${event.line}`;
+      interval.setAttribute('role', 'img');
+      interval.setAttribute('aria-label', interval.title);
+      track.append(interval);
+      row.append(header, track);
+      timeline.append(row);
     });
-    node('event-timeline').append(description, track);
+    node('event-timeline').append(description, timeline);
   }
   const filter = node<HTMLInputElement>('event-filter').value.toLowerCase();
   const rows = events.filter((event) =>
@@ -196,13 +246,8 @@ function renderEvents(): void {
       tr.append(td);
     }
     const td = document.createElement('td'),
-      button = document.createElement('button');
-    button.textContent = 'Show in waveform';
+      button = eventNavigation(event);
     button.id = 'event-' + event.line;
-    button.disabled =
-      busy || event.onset === undefined || event.onset >= (snapshot?.header.recordedSeconds ?? 0);
-    button.setAttribute('aria-label', `Show event from source line ${event.line} in waveform`);
-    button.addEventListener('click', () => jump(event));
     td.append(button);
     tr.append(td);
     body.append(tr);
@@ -306,8 +351,8 @@ function draw(canvas: HTMLCanvasElement, trace: RecordingTrace): void {
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, w, h);
   const style = getComputedStyle(document.body),
-    left = 72,
-    right = w - 18,
+    left = parseFloat(style.getPropertyValue('--recording-axis-left')),
+    right = w - parseFloat(style.getPropertyValue('--recording-axis-right')),
     top = 18,
     bottom = h - 30;
   const scale = Math.max(Math.abs(trace.minimum), Math.abs(trace.maximum), 1e-300);
@@ -425,7 +470,20 @@ function report(): void {
     eventRows: events.length,
     eventText: node('events-table').textContent,
     eventScriptCount: node('events-table').querySelectorAll('script').length,
-    eventMarkers: node('event-timeline').querySelectorAll('button').length,
+    eventMarkers: node('event-timeline').querySelectorAll('.event-interval').length,
+    eventTimelineText: node('event-timeline').textContent,
+    eventAxisStart: node('event-timeline').querySelector('.event-axis')?.getBoundingClientRect()
+      .left,
+    eventAxisEnd: node('event-timeline').querySelector('.event-axis')?.getBoundingClientRect()
+      .right,
+    waveformAxisEnd: node('plots').querySelector('canvas')
+      ? node('plots').querySelector('canvas')!.getBoundingClientRect().right -
+        parseFloat(getComputedStyle(document.body).getPropertyValue('--recording-axis-right'))
+      : undefined,
+    waveformAxisStart: node('plots').querySelector('canvas')
+      ? node('plots').querySelector('canvas')!.getBoundingClientRect().left +
+        parseFloat(getComputedStyle(document.body).getPropertyValue('--recording-axis-left'))
+      : undefined,
     eventPage: node('events-page').textContent,
   });
 }
