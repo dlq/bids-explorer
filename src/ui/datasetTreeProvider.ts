@@ -303,6 +303,7 @@ export class DatasetTreeProvider
       );
     }
     if (isNifti) item.iconPath = niftiIcon(this.extensionUri);
+    else if (entry.name.endsWith('.edf')) item.iconPath = new vscode.ThemeIcon('pulse');
     else if (displayFileType(entry))
       item.iconPath = new vscode.ThemeIcon(entry.name.endsWith('.json') ? 'json' : 'list-flat');
     if (entry.logical && entry.logical.kind !== 'resource') {

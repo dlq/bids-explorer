@@ -100,11 +100,13 @@ The built-in NIfTI viewer reads the selected loose file or a verified extracted 
 
 The native Image view receives selected-image state through the extension host and renders dataset text using text nodes. Its script/style roots are packaged resources and its CSP denies network access. Per-image tokens reject stale sidebar actions after image selection changes. Source actions select host-held entries by checked index; sidebar messages cannot supply a URI. Renderer controls accept fixed actions, finite ordered intensity limits, valid loaded-frame indices and allowlisted layouts/colour maps. Closing a viewer cancels its sidebar metadata read.
 
-## Recording header reads (Unreleased)
+## Recording previews (Unreleased)
 
 EDF summaries run on the workspace host, retain at most a 262,400-byte technical header (1,024 signals), and omit patient/recording identification fields and dates. Loose reads use no-follow ordinary-file handles and before/after descriptor/path revision checks. Archive prefixes preserve ordinal/inode identity and source revision checks. ZIP bounds encoded member input to 16 MiB and may decompress a stream block beyond the requested prefix; SquashFS decodes only required blocks/fragments. Tar prefix scans bound both encoded and decoded work to 16 MiB. No whole recording extraction, new recording cache or waveform transfer is involved.
 
 Prefix reads are explicitly labelled header-only: unread payloads, full ZIP CRCs, tar terminators and gzip trailers are not certified. Separate prefix APIs keep existing full-payload verification mandatory for ordinary archive previews and extraction. Regression tests show that a bad ZIP CRC or incomplete tar terminator can leave a readable header while the full member read still fails. Cancellation or revision changes prevent publication; binary failures never fall back to the text preview. Inherited JSON remains a separate source-backed inspection.
+
+Waveform loading accepts only host-validated channel/time requests against a host-held source snapshot. It bounds requests to eight channels, 30 seconds, one million selected samples and 16 MiB of record data; decoding yields cooperatively and reduces display data to at most 2,048 points per channel. Loose reads seek directly; archive ranges currently use prefix scans capped at 16 MiB. No whole-recording cache is created. Device/inode/change-time and size/modification-time checks reject header/sample revision mixing, and source paths cannot be supplied through webview messages. Per-panel tokens reject stale actions, while serialized requests, cancellation and disposal bound concurrent work. The renderer uses packaged scripts/styles under a network-denying CSP and checks message origins. Bounded calibrated traces enter webview memory; this does not guarantee that VS Code or the OS never retains remote data, and a synthetic Remote SSH trace-persistence audit remains pending.
 
 ## CodeQL review
 

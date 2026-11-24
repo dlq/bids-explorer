@@ -74,6 +74,7 @@ export async function loadRecordingHeader(
       sourceUri: uri,
       archiveSource: archive,
       revision: { size: before.size, modifiedAt: before.mtimeMs },
+      identity: { dev: before.dev, ino: before.ino, ctimeMs: before.ctimeMs },
       capturedAt: new Date().toISOString(),
       memberBytes,
       header,

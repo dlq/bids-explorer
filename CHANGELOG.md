@@ -4,7 +4,11 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
-- Open EDF/EDF+ recordings from the logical BIDS tree in a read-only technical summary, with per-channel sampling rates and units, explicit header-only coverage, and access to inherited JSON. Bounded prefix reads support loose files and supported ZIP, tar/gzip tar and SquashFS sources without extracting a whole recording. Signal waveforms and event/channel-table integration remain planned.
+- Open supported EDF recordings directly to a bounded waveform preview, with logical EEG tree labels, compact controls, accurate channel counts and recording/source details in the same editor.
+
+- Open EDF/EDF+ recordings from the logical BIDS tree in read-only previews with a technical summary fallback, with per-channel sampling rates and units, explicit header-only coverage, and access to inherited JSON. Bounded prefix reads support loose files and supported ZIP, tar/gzip tar and SquashFS sources without extracting a whole recording. Event/channel-table integration remains planned.
+
+- View bounded signal windows from ordinary EDF and continuous EDF+ recordings, with channel selection, recorded units and calibration, time navigation, cancellation and peak-preserving display envelopes. Loose files use positional reads; supported archives use prefix scans capped at 16 MiB, so later archived windows may be unavailable. Discontinuous and unknown-duration recordings retain summary access.
 
 ## [1.4.0] - 2026-11-19
 

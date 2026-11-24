@@ -72,6 +72,9 @@ suite('EDF recording summaries', () => {
         kind: 'file',
       });
       assert.equal(provider.getTreeItem(entry).command?.command, 'bidsExplorer.openFile');
+      assert.equal(provider.getTreeItem(entry).label, 'EEG');
+      assert.equal((provider.getTreeItem(entry).iconPath as vscode.ThemeIcon).id, 'pulse');
+      assert.match(String(provider.getTreeItem(entry).description), /Task rest/);
       defaultPanel = await vscode.commands.executeCommand<vscode.WebviewPanel>(
         'bidsExplorer.openFile',
         entry,
@@ -87,7 +90,7 @@ suite('EDF recording summaries', () => {
       defaultPanel = undefined;
 
       let inspected = false;
-      const panel = await manager.open(uri, () => {
+      const panel = await manager.openSummary(uri, () => {
         inspected = true;
         return Promise.resolve();
       });
@@ -98,8 +101,8 @@ suite('EDF recording summaries', () => {
       );
       await assertHostMessages(panel.webview);
       await state(panel);
-      assert.equal(await manager.open(uri), panel);
-      const otherContext = await manager.open(uri, undefined, 'another-logical-placement');
+      assert.equal(await manager.openSummary(uri), panel);
+      const otherContext = await manager.openSummary(uri, undefined, 'another-logical-placement');
       assert.notEqual(
         otherContext,
         panel,
@@ -169,7 +172,7 @@ suite('EDF recording summaries', () => {
           format,
           revision: { size: stat.size, modifiedAt: stat.mtimeMs },
         });
-        const panel = await manager.open(vscode.Uri.parse(uri));
+        const panel = await manager.openSummary(vscode.Uri.parse(uri));
         const rendered = await state(panel);
         assert.match(String(rendered.firstText), /Signal channels: 2/);
         panel.dispose();
@@ -185,7 +188,7 @@ suite('EDF recording summaries', () => {
         await source.root(vscode.Uri.file(squashFolder).toString()),
         new AbortController().signal,
       );
-      const panel = await manager.open(vscode.Uri.parse(entryArchiveUri(entry)));
+      const panel = await manager.openSummary(vscode.Uri.parse(entryArchiveUri(entry)));
       assert.match(String((await state(panel)).firstText), /Signal channels: 2/);
       panel.dispose();
     } finally {

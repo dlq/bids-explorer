@@ -28,3 +28,16 @@ export function edfFixture(reserved = ''): Buffer {
   }
   return header;
 }
+
+/** Complete generated recording: alternating extremes in Fz, constant ECG, annotation storage. */
+export function edfRecordingFixture(): Buffer {
+  const chunks = [edfFixture('EDF+C')];
+  for (let record = 0; record < 10; record++) {
+    const data = Buffer.alloc(1240);
+    for (let sample = 0; sample < 400; sample++)
+      data.writeInt16LE(sample % 2 ? 32767 : -32768, sample * 2);
+    data.write('+' + record * 2 + '\x14\x14\0', 1200);
+    chunks.push(data);
+  }
+  return Buffer.concat(chunks);
+}

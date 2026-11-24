@@ -275,3 +275,15 @@ void test('logical entity vocabulary preserves indices and custom labels without
     assert.equal(JSON.stringify(source), before);
   }
 });
+
+void test('EDF recordings use logical acquisition labels without changing physical identity', () => {
+  const file = entry(
+    'sub-01/ses-02/eeg/sub-01_ses-02_task-rest_acq-fast_run-03_recording-scalp_eeg.edf',
+    'file',
+  );
+  const original = { ...file };
+  assert.equal(displayEntryLabel(file), 'EEG');
+  assert.equal(displayFileDetails(file), 'Task rest · Acquisition fast · Run 03 · Recording scalp');
+  assert.equal(displayFileType(file), 'EDF recording');
+  assert.deepEqual(file, original);
+});

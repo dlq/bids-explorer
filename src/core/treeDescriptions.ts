@@ -8,6 +8,7 @@ import type { SourceRevision } from './sourceRevision';
 export function displayFileType(entry: DirectoryEntry): string | undefined {
   if (entry.kind !== 'file' && !entry.metadataVersions) return undefined;
   if (/\.nii(?:\.gz)?$/.test(entry.name)) return 'NIfTI image';
+  if (/\.edf$/.test(entry.name)) return 'EDF recording';
   if (/\.json$/.test(entry.name)) return 'JSON metadata';
   if (/\.tsv$/.test(entry.name)) {
     if (entry.name === 'participants.tsv') return 'Participants table';
@@ -123,7 +124,7 @@ function fileDisplay(
       )
       .map((entity) => `${entity.key}-${entity.value}`),
   );
-  const stem = entry.name.replace(/\.(?:nii(?:\.gz)?|json|tsv|bval|bvec)$/, '');
+  const stem = entry.name.replace(/\.(?:nii(?:\.gz)?|json|tsv|bval|bvec|edf)$/, '');
   const tokens = stem
     .split('_')
     .filter((token) => !redundant.has(token) && !omitEntities.includes(token.split('-')[0]));

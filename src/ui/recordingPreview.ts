@@ -3,18 +3,40 @@ import { basename } from 'node:path';
 import { isArchiveUri, resourcePath } from '../core/archiveUri';
 import { loadRecordingHeader } from '../sources/recordingHeader';
 import { DocumentPreviewManager } from './documentPreview';
+import { RecordingWaveformManager } from './recordingWaveform';
 
 export function isEdfRecording(uri: vscode.Uri): boolean {
   return (uri.scheme === 'file' || isArchiveUri(uri.toString())) && uri.path.endsWith('.edf');
 }
 
-/** Technical summary only; binary originals never pass through a text-preview fallback. */
+/** Binary recordings use bounded previews, never a text-preview fallback. */
 export class RecordingPreviewManager implements vscode.Disposable {
   private readonly previews: DocumentPreviewManager;
+  private readonly waveforms: RecordingWaveformManager;
   constructor(extensionUri: vscode.Uri) {
     this.previews = new DocumentPreviewManager(extensionUri);
+    this.waveforms = new RecordingWaveformManager(extensionUri);
   }
-  open(
+  private readonly routing = new Set<AbortController>();
+  async open(
+    uri: vscode.Uri,
+    inspect?: () => Promise<unknown>,
+    key = uri.toString(),
+  ): Promise<vscode.WebviewPanel> {
+    if (!isEdfRecording(uri)) throw new Error('Select an EDF recording.');
+    const controller = new AbortController();
+    this.routing.add(controller);
+    try {
+      const { header } = await loadRecordingHeader(uri.toString(), controller.signal);
+      controller.signal.throwIfAborted();
+      return header.format !== 'EDF+D' && !!header.recordCount
+        ? await this.waveforms.open(uri, key, inspect)
+        : await this.openSummary(uri, inspect, key);
+    } finally {
+      this.routing.delete(controller);
+    }
+  }
+  openSummary(
     uri: vscode.Uri,
     inspect?: () => Promise<unknown>,
     key = uri.toString(),
@@ -26,11 +48,16 @@ export class RecordingPreviewManager implements vscode.Disposable {
         const data = await loadRecordingHeader(uri.toString(), signal);
         const { header } = data;
         const annotations = header.signals.filter((channel) => channel.annotations).length;
+        const waveformAvailable = header.format !== 'EDF+D' && !!header.recordCount;
         return {
           title: 'Recording summary',
           subtitle: basename(resourcePath(uri.toString())),
           notice:
-            'Technical header only. Signal samples, annotations and payload integrity have not been checked. No waveform is loaded. Channel types, bad-channel status and events have not been checked; browse their tables in BIDS.',
+            'Technical header only. Signal samples, annotations and payload integrity have not been checked here. ' +
+            (waveformAvailable
+              ? 'Choose View waveform to load a bounded signal window. '
+              : 'Waveform viewing requires a continuous recording with a known positive record count. ') +
+            'Channel types, bad-channel status and events have not been checked; browse their tables in BIDS.',
           records: [
             {
               title: 'Recording',
@@ -60,16 +87,26 @@ export class RecordingPreviewManager implements vscode.Disposable {
             },
           ],
           sources: [],
-          actions: inspect ? [{ id: 'metadata', label: 'Inspect recording JSON metadata' }] : [],
+          actions: [
+            ...(waveformAvailable ? [{ id: 'waveform', label: 'View waveform' }] : []),
+            ...(inspect ? [{ id: 'metadata', label: 'Inspect recording JSON metadata' }] : []),
+          ],
         };
       },
-      () => inspect?.() ?? Promise.resolve(),
+      (id) =>
+        id === 'waveform'
+          ? this.waveforms.open(uri, key, inspect)
+          : (inspect?.() ?? Promise.resolve()),
     );
   }
   cancelPending(): void {
+    for (const controller of this.routing) controller.abort();
     this.previews.cancelPending();
+    this.waveforms.cancelPending();
   }
   dispose(): void {
+    this.cancelPending();
     this.previews.dispose();
+    this.waveforms.dispose();
   }
 }

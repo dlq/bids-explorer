@@ -42,3 +42,39 @@ export async function readArchivePrefix(
   else await streamZipMemberPrefix(uri, signal, length, write, start);
   return { data: Buffer.concat(chunks), memberBytes };
 }
+
+/** Bounded sequential window; no whole-payload integrity claim or extraction cache. */
+export async function readArchiveRange(
+  uri: string,
+  signal: AbortSignal,
+  offset: number,
+  length: number,
+): Promise<Buffer> {
+  const end = offset + length;
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    !Number.isSafeInteger(length) ||
+    length < 1 ||
+    !Number.isSafeInteger(end) ||
+    end > 16 * 1024 ** 2
+  )
+    throw new Error('Archive signal window exceeds the 16 MiB prefix-scan budget.');
+  const ref = parseArchiveUri(uri);
+  const chunks: Buffer[] = [];
+  let seen = 0;
+  const write = (chunk: Buffer) => {
+    const from = Math.min(chunk.length, Math.max(0, offset - seen));
+    seen += chunk.length;
+    if (from < chunk.length) chunks.push(chunk.subarray(from));
+    return Promise.resolve();
+  };
+  const start = () => Promise.resolve();
+  if (ref.format === 'tar') await streamTarMemberPrefix(ref, signal, end, write, start);
+  else if (ref.format === 'squashfs')
+    await streamSquashfsMemberPrefix(ref, signal, end, write, start);
+  else await streamZipMemberPrefix(uri, signal, end, write, start);
+  const bytes = Buffer.concat(chunks);
+  if (bytes.length !== length) throw new Error('Truncated archive signal window.');
+  return bytes;
+}
