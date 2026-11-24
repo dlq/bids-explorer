@@ -195,7 +195,7 @@
         },
         {
           "command": "bidsExplorer.inspectMetadata",
-          "when": "view == bidsExplorer.datasets && (viewItem == file || viewItem == participants || viewItem == summaryTable || viewItem == archiveImage) && resourceFilename =~ /\\.(nii|tsv)(\\.gz)?$/",
+          "when": "view == bidsExplorer.datasets && (viewItem == file || viewItem == participants || viewItem == summaryTable || viewItem == archiveImage) && resourceFilename =~ /(\\.(nii|tsv)(\\.gz)?|\\.edf)$/",
           "group": "navigation"
         },
         {

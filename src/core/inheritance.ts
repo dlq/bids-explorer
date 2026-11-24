@@ -4,7 +4,7 @@ import type { DirectoryEntry } from './directory';
 import type { JsonMetadata, RecordedMetadataField } from './metadataTypes';
 
 const indexKeys = new Set(['run', 'echo', 'flip', 'inv', 'split', 'chunk']);
-const supported = new Set(['.nii', '.nii.gz', '.tsv', '.tsv.gz']);
+const supported = new Set(['.nii', '.nii.gz', '.tsv', '.tsv.gz', '.edf']);
 
 export interface MetadataLevel {
   /** Dataset-relative directory, ordered root to leaf. */
@@ -78,7 +78,9 @@ export function inheritanceBoundary(target: DirectoryEntry): string {
     !model.scope ||
     model.scope.kind === 'derivatives-container'
   )
-    throw new Error('Select an unambiguous NIfTI or TSV data file within a dataset.');
+    throw new Error(
+      'Select an unambiguous NIfTI or TSV data file, or EDF recording, within a dataset.',
+    );
   return model.scope.relativePath;
 }
 

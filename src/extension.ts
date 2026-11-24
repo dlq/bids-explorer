@@ -7,6 +7,7 @@ import { datasetAvailability } from './core/availability';
 import { DatasetBrowser } from './core/browser';
 import {
   describeEntry,
+  entryKey,
   folderEntities,
   isRecognizedBidsEntry,
   type DirectoryEntry,
@@ -37,6 +38,7 @@ import { HistoryPreviewManager, isHistoryFile } from './ui/historyPreview';
 import { ImageView } from './ui/imageView';
 import { InheritanceInspector } from './ui/inheritanceInspector';
 import { MetadataPreviewManager, isJsonMetadata } from './ui/metadataPreview';
+import { RecordingPreviewManager, isEdfRecording } from './ui/recordingPreview';
 import { isNiftiFileName, NiftiPreviewManager, progressiveNiftiViewType } from './ui/niftiPreview';
 import { TablePreviewManager, isSummaryTable } from './ui/tablePreview';
 import { WebviewPanelStore } from './ui/webviewPanelStore';
@@ -98,6 +100,8 @@ export function activate(context: vscode.ExtensionContext): {
   context.subscriptions.push(tables);
   const metadata = new MetadataPreviewManager(context.extensionUri);
   context.subscriptions.push(metadata);
+  const recordings = new RecordingPreviewManager(context.extensionUri);
+  context.subscriptions.push(recordings);
   const gradients = new GradientPreviewManager(context.extensionUri);
   context.subscriptions.push(gradients);
   const inventoryCache = new ArchiveInventoryCache(
@@ -353,6 +357,8 @@ export function activate(context: vscode.ExtensionContext): {
     await source.revision(entry);
     const uri = entryUri(entry);
     if (isNiftiFileName(resourcePath(uri.toString()))) return await openImage(entry);
+    if (isEdfRecording(uri))
+      return await recordings.open(uri, () => inheritance.open(entry), entryKey(entry));
     if (isGradientFile(uri)) return previewGradients(uri);
     if (isHistoryFile(uri))
       return await previewOrOpenText(
@@ -631,6 +637,7 @@ export function activate(context: vscode.ExtensionContext): {
       for (const controller of archiveWork) controller.abort();
       gradients.cancelPending();
       metadata.cancelPending();
+      recordings.cancelPending();
       history.cancelPending();
       tables.cancelPending();
       inheritance.cancelPending();
@@ -750,7 +757,7 @@ export function activate(context: vscode.ExtensionContext): {
       const element = selected(arg);
       if (element?.type !== 'entry' || element.entry.kind !== 'file') {
         void vscode.window.showInformationMessage(
-          'Select a NIfTI or TSV data file in BIDS Explorer to inspect its metadata.',
+          'Select a NIfTI, TSV or EDF file in BIDS to inspect its metadata.',
         );
         return undefined;
       }

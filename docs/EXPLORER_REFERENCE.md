@@ -96,6 +96,16 @@ The read-only preview shows recorded fields and the source URI/snapshot time, wi
 
 This is a selected-file snapshot: no inherited values, missing-field defaults, dataset relationships or BIDS conformance checks are applied. Limits are 1 MiB, 1,000 top-level fields and 32 nested value levels. Individual displayed values are shortened after 16,000 characters with a notice; **Open original JSON** provides the complete original. **Reload snapshot** explicitly rereads the file; if it fails, the previous preview stays visible with an error.
 
+## EDF recording summaries (Unreleased)
+
+In the development build, select an `.edf` recording in **BIDS** to open **Recording summary**. It shows technical header values: format, declared recorded duration, signal/annotation channel counts and a searchable channel list with each channel's sampling rate, unit and calibration ranges. Patient/recording identification fields and dates are omitted. **Inspect recording JSON metadata** opens the existing inheritance inspector; JSON values remain separate from header values. Physical source choices and source details remain available in the tree.
+
+This is not a waveform viewer. Signal samples, EDF+ annotations, channel types/bad-channel status and event tables are not checked by this summary. Unknown record count means unknown duration. For discontinuous EDF+D, the sum of record durations does not establish elapsed session time or gap timing. These capabilities are not included in the published 1.4.0 package.
+
+The summary retains only the technical header, up to 1,024 signals (262,400 bytes), plus its source revision. It uses the workspace host for loose and supported archive reads; no extracted recording cache is created. ZIP and gzip tar may decompress blocks beyond the header, and SquashFS reads the required blocks/fragments. ZIP header reads consume at most 16 MiB of encoded member data. Tar scans have 16 MiB encoded and decoded budgets and may decline a member far into an archive. Cancel pending work with the **BIDS** section's stop control. Reload rereads the summary; a failed reload keeps the previous snapshot.
+
+Header-only archive reads check source/member identity and revisions but do not verify unread payloads, complete ZIP CRCs, tar terminators or gzip trailers. Ordinary full-file previews/extractions retain their existing integrity checks. Unsupported, malformed or oversized headers report an error without opening binary data as text. Other EEG formats and MEG signal decoding are not yet supported by this preview.
+
 ## Task JSON and event files
 
 Click a task sidecar such as `task-rest_bold.json` for the same recorded-field JSON preview, including duplicate names, original numeric tokens, filtering/paging and raw-text access. The heading identifies the selected JSON file. This shows that file's recorded contents; use **Inspect Metadata and Related Files** on a data file for effective inherited values. Other recognized JSON dictionaries use this preview too. Native Explorer still opens raw JSON by default, with **Preview JSON Metadata** available explicitly.

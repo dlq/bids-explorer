@@ -1,6 +1,6 @@
 # BIDS Explorer roadmap
 
-Updated November 20, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
+Updated November 24, 2026. This document records direction, priorities and scope boundaries. GitHub issues carry individual work items; a roadmap entry or open issue is not a promise of a release or authorization to change datasets.
 
 ## Purpose and supported core
 
@@ -94,6 +94,8 @@ Make recorded relationships useful for navigation while keeping interpretation d
 
 - **Jump to the source of a finding.** Recorded scan navigation shipped in 1.1.0. For inherited values, extend the pattern later to the source file and field or row where available. Preserve source choices for ambiguous matches. Reuse this navigation in the future explicit validation workflow.
 - **Start EEG/MEG preview with a recording summary (tentative 1.5.0).** Show channels, sampling rate, duration and related event files when available. Under recording preview design (#24), evaluate loading a bounded time window on demand, with channel selection and event markers. Measure the data needed to open a small window over SSH before choosing how to handle compressed and archived recordings.
+
+The [first recording-preview design](RESEARCH.md#recording-previews-first-scope--november-24-2026) selects EDF/continuous EDF+ EEG as the initial binary format. Public artificial-signal headers have been checked; the development build now has a technical-header summary and checked prefix readers for loose files and supported archives. Waveform windows, related channel/event tables and efficient range access remain to implement and measure. MEG format support and signal decoding remain separate scope decisions; the initial EDF work does not provide them.
 
 Recognize existing participant/run QC reports and derivative confound tables as useful related resources. Start with explicit report access and recorded motion/FD/DVARS plots, with units, missing values and source evidence. This is a medium-priority follow-up to event/recording preview design (#24), not execution of MRIQC/fMRIPrep or an automatic quality verdict. Scope report-resource handling and safe opening, especially over SSH/from archives, before implementing it.
 

@@ -14,6 +14,28 @@ export function streamSquashfsMember(
   write: (chunk: Buffer) => Promise<void>,
   start: (header: { bytes: number }) => Promise<void>,
 ): Promise<void> {
+  return streamSquashfsPayload(ref, signal, limit, write, start, false);
+}
+
+/** Prefix only: decode the required blocks/fragments, not the remainder of the inode. */
+export function streamSquashfsMemberPrefix(
+  ref: ArchiveRef,
+  signal: AbortSignal,
+  limit: number,
+  write: (chunk: Buffer) => Promise<void>,
+  start: (header: { bytes: number }) => Promise<void>,
+): Promise<void> {
+  return streamSquashfsPayload(ref, signal, limit, write, start, true);
+}
+
+function streamSquashfsPayload(
+  ref: ArchiveRef,
+  signal: AbortSignal,
+  limit: number,
+  write: (chunk: Buffer) => Promise<void>,
+  start: (header: { bytes: number }) => Promise<void>,
+  prefixOnly: boolean,
+): Promise<void> {
   return withSquashfs(ref.sourceUri, signal, async (header, read, stat) => {
     if (stat.size !== ref.revision.size || stat.mtimeMs !== ref.revision.modifiedAt)
       throw new Error('SquashFS image changed. Refresh the tree before opening the member.');
@@ -35,7 +57,7 @@ export function streamSquashfsMember(
     const bytes = long ? Number(inode.readBigUInt64LE(8)) : inode.readUInt32LE(12);
     const fragment = inode.readUInt32LE(long ? 28 : 4);
     const tailOffset = inode.readUInt32LE(long ? 32 : 8);
-    if (!Number.isSafeInteger(bytes) || bytes > limit)
+    if (!Number.isSafeInteger(bytes) || (!prefixOnly && bytes > limit))
       throw new Error('SquashFS member exceeds the read size limit.');
     await start({ bytes });
 
@@ -61,18 +83,20 @@ export function streamSquashfsMember(
       fragment === noFragment
         ? Math.ceil(bytes / info.blockSize)
         : Math.floor(bytes / info.blockSize);
-    const sizes = await take(pos, blocks * 4, directoryTable);
-    for (let i = 0; i < blocks; i++) {
+    const wanted = prefixOnly ? Math.min(bytes, limit) : bytes;
+    const readBlocks = Math.min(blocks, Math.ceil(wanted / info.blockSize));
+    const sizes = await take(pos, readBlocks * 4, directoryTable);
+    for (let i = 0; i < readBlocks; i++) {
       signal.throwIfAborted();
       const flags = sizes.readUInt32LE(i * 4);
       const expected = Math.min(info.blockSize, bytes - i * info.blockSize);
       const chunk = flags ? await block(data, flags) : Buffer.alloc(expected);
       if (chunk.length !== expected) throw new Error('Invalid SquashFS data block length.');
-      await write(chunk);
+      await write(chunk.subarray(0, Math.min(expected, wanted - i * info.blockSize)));
       data += flags & (uncompressed - 1);
     }
 
-    if (fragment !== noFragment && tail) {
+    if (fragment !== noFragment && tail && wanted > blocks * info.blockSize) {
       const table = Number(header.readBigUInt64LE(80));
       const pointer = table + Math.floor(fragment / 512) * 8;
       if (fragment >= info.fragmentCount || table < directoryTable || pointer + 8 > info.bytesUsed)
@@ -83,7 +107,7 @@ export function streamSquashfsMember(
       const entry = await take({ block: metadata, offset: (fragment % 512) * 16 }, 16, table);
       const chunk = await block(Number(entry.readBigUInt64LE(0)), entry.readUInt32LE(8));
       if (tailOffset + tail > chunk.length) throw new Error('Invalid SquashFS fragment length.');
-      await write(chunk.subarray(tailOffset, tailOffset + tail));
+      await write(chunk.subarray(tailOffset, tailOffset + wanted - blocks * info.blockSize));
     }
   });
 }

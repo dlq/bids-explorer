@@ -46,6 +46,7 @@ function render(): void {
     `${rows.length ? page * 20 + 1 : 0}–${Math.min(rows.length, (page + 1) * 20)} of ${rows.length}`;
   node<HTMLButtonElement>('previous').disabled = page === 0;
   node<HTMLButtonElement>('next').disabled = (page + 1) * 20 >= rows.length;
+  node('source-heading').hidden = data.sources.length === 0;
   node('sources').replaceChildren();
   data.sources.forEach((source, index) => {
     const button = document.createElement('button');

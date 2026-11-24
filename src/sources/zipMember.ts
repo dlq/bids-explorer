@@ -2,7 +2,8 @@ import { sameFileRevision } from './fileRevision';
 import { constants } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { crc32 as nativeCrc32 } from 'node:zlib';
+import { crc32 as nativeCrc32, createInflateRaw } from 'node:zlib';
+import { pipeline } from 'node:stream';
 import type { ZipIndexIO } from './zipIndex';
 import { fromFdPromise, type Entry } from 'yauzl';
 import { assertArchivePath } from '../core/archive';
@@ -38,13 +39,36 @@ export interface MemberReadInfo {
 }
 
 /** Select by ordinal AND exact member name; never extract a path supplied by archive content. */
-export async function streamZipMember(
+export function streamZipMember(
   uri: string,
   signal: AbortSignal,
   maxBytes: number,
   onChunk: (chunk: Buffer) => Promise<void>,
   onStart: (info: MemberReadInfo) => Promise<void> = () => Promise.resolve(),
   io: ZipIndexIO = nativeIO,
+): Promise<MemberReadInfo> {
+  return streamZipPayload(uri, signal, maxBytes, onChunk, onStart, io, false);
+}
+
+/** Prefix only: checks source identity but cannot verify the unread member CRC. */
+export function streamZipMemberPrefix(
+  uri: string,
+  signal: AbortSignal,
+  maxBytes: number,
+  onChunk: (chunk: Buffer) => Promise<void>,
+  onStart: (info: MemberReadInfo) => Promise<void>,
+): Promise<MemberReadInfo> {
+  return streamZipPayload(uri, signal, maxBytes, onChunk, onStart, nativeIO, true);
+}
+
+async function streamZipPayload(
+  uri: string,
+  signal: AbortSignal,
+  maxBytes: number,
+  onChunk: (chunk: Buffer) => Promise<void>,
+  onStart: (info: MemberReadInfo) => Promise<void>,
+  io: ZipIndexIO,
+  prefixOnly: boolean,
 ): Promise<MemberReadInfo> {
   signal.throwIfAborted();
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 512 * 1024 * 1024)
@@ -97,7 +121,7 @@ export async function streamZipMember(
     if (selected.isEncrypted() || ![0, 8].includes(selected.compressionMethod))
       throw new Error('Encrypted or unsupported ZIP member compression.');
     if (
-      selected.uncompressedSize > maxBytes ||
+      (!prefixOnly && selected.uncompressedSize > maxBytes) ||
       selected.uncompressedSize > Math.max(1, selected.compressedSize) * 1000
     )
       throw new Error('ZIP member exceeds the size or compression-ratio limit.');
@@ -108,7 +132,22 @@ export async function streamZipMember(
     });
     await onStart(info);
     signal.throwIfAborted();
-    const stream = await zip.openReadStreamPromise(selected);
+    const encoded = await zip.openReadStreamPromise(
+      selected,
+      prefixOnly
+        ? {
+            decodeFileData: false,
+            start: 0,
+            end: Math.min(
+              selected.compressedSize,
+              selected.compressionMethod === 0 ? maxBytes : 16 * 1024 ** 2,
+            ),
+          }
+        : undefined,
+    );
+    const inflate = prefixOnly && selected.compressionMethod === 8 ? createInflateRaw() : undefined;
+    const stream = inflate ?? encoded;
+    if (inflate) pipeline(encoded, inflate, () => undefined);
     const cancel = (): void => {
       stream.destroy(new Error('Archive member read canceled.'));
     };
@@ -120,20 +159,25 @@ export async function streamZipMember(
       for await (const chunk of stream) {
         signal.throwIfAborted();
         if (!Buffer.isBuffer(chunk)) throw new Error('Invalid ZIP member stream.');
-        bytes += chunk.length;
+        const part = prefixOnly ? chunk.subarray(0, maxBytes - bytes) : chunk;
+        bytes += part.length;
         if (bytes > maxBytes || bytes > info.bytes)
           throw new Error('ZIP member output exceeds its declared size.');
-        crc = memberCrc32(chunk, crc);
-        await onChunk(chunk);
+        crc = memberCrc32(part, crc);
+        await onChunk(part);
+        if (prefixOnly && bytes === maxBytes) break;
       }
-      if (bytes !== info.bytes || crc !== info.crc32)
+      if (!prefixOnly && (bytes !== info.bytes || crc !== info.crc32))
         throw new Error('ZIP member size or CRC verification failed.');
+      if (prefixOnly && bytes !== Math.min(maxBytes, info.bytes))
+        throw new Error('Truncated ZIP member prefix.');
     } catch (error) {
       signal.throwIfAborted();
       throw error;
     } finally {
       signal.removeEventListener('abort', cancel);
       stream.destroy();
+      encoded.destroy();
     }
     const after = await handle.stat(),
       current = await io.stat(path);

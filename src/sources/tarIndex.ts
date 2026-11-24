@@ -2,6 +2,7 @@ import { sameFileRevision } from './fileRevision';
 import { constants } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
+import { Readable } from 'node:stream';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createGunzip } from 'node:zlib';
 import type { ArchiveRef } from '../core/archiveUri';
@@ -77,6 +78,7 @@ interface TarSelection {
   readonly maxBytes: number;
   readonly onChunk: (chunk: Buffer) => Promise<void>;
   readonly onStart: (info: { bytes: number }) => Promise<void>;
+  readonly prefixOnly?: boolean;
 }
 
 const defaults = { entries: maxEntries, scanBytes: maxScanBytes };
@@ -86,16 +88,43 @@ export function indexTar(uri: string, signal: AbortSignal, limits = defaults) {
 }
 
 /** Revalidate the complete stream before callers publish the selected payload. */
-export async function streamTarMember(
+export function streamTarMember(
   ref: ArchiveRef,
   signal: AbortSignal,
   maxBytes: number,
   onChunk: TarSelection['onChunk'],
   onStart: TarSelection['onStart'] = () => Promise.resolve(),
 ): Promise<void> {
+  return streamTarPayload(ref, signal, maxBytes, onChunk, onStart, false);
+}
+
+/** Prefix only, with 16 MiB encoded/decoded scan budgets; no trailer verification. */
+export function streamTarMemberPrefix(
+  ref: ArchiveRef,
+  signal: AbortSignal,
+  maxBytes: number,
+  onChunk: TarSelection['onChunk'],
+  onStart: TarSelection['onStart'],
+): Promise<void> {
+  return streamTarPayload(ref, signal, maxBytes, onChunk, onStart, true);
+}
+
+async function streamTarPayload(
+  ref: ArchiveRef,
+  signal: AbortSignal,
+  maxBytes: number,
+  onChunk: TarSelection['onChunk'],
+  onStart: TarSelection['onStart'],
+  prefixOnly: boolean,
+): Promise<void> {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 512 * 1024 ** 2)
     throw new Error('Invalid tar member read limit.');
-  await scanTar(ref.sourceUri, signal, defaults, { ref, maxBytes, onChunk, onStart });
+  await scanTar(
+    ref.sourceUri,
+    signal,
+    prefixOnly ? { entries: maxEntries, scanBytes: 16 * 1024 ** 2 } : defaults,
+    { ref, maxBytes, onChunk, onStart, prefixOnly },
+  );
 }
 
 async function scanTar(
@@ -127,7 +156,7 @@ async function scanTar(
   )
     throw new Error('Tar changed since listing. Refresh the BIDS tree.');
   if (!before.isFile()) throw new Error('Tar indexing requires an ordinary file.');
-  if (!before.size || before.size > limits.scanBytes)
+  if (!before.size || (!selection?.prefixOnly && before.size > limits.scanBytes))
     throw new Error('Tar source is empty or exceeds the scan limit.');
   // lstat is only a candidate snapshot: reject symlinks at open, then compare the
   // opened descriptor (including inode/device/ctime) before reading any bytes.
@@ -136,9 +165,28 @@ async function scanTar(
     if (!sameFileRevision(before, await handle.stat()))
       throw new Error('Tar source changed while opening.');
     signal.throwIfAborted();
-    const input = handle.createReadStream({ autoClose: false, end: before.size - 1 });
+    // Destroying a FileHandle read stream on an early stop can close its descriptor.
+    // Prefix scans own positional reads so the descriptor survives final revision checks.
+    async function* prefixChunks() {
+      let position = 0;
+      while (position < before.size) {
+        signal.throwIfAborted();
+        if (position >= limits.scanBytes) throw new Error('Tar exceeds the encoded scan limit.');
+        const buffer = Buffer.alloc(
+          Math.min(65536, before.size - position, limits.scanBytes - position),
+        );
+        const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
+        if (!bytesRead) throw new Error('Truncated tar prefix scan.');
+        position += bytesRead;
+        yield buffer.subarray(0, bytesRead);
+      }
+    }
+    const input = selection?.prefixOnly
+      ? Readable.from(prefixChunks())
+      : handle.createReadStream({ autoClose: false, end: before.size - 1 });
     const members: TarMember[] = [];
     let scanFailure: unknown;
+    let prefixDone = false;
     const scan = async (chunks: AsyncIterable<Buffer>): Promise<void> => {
       const header = Buffer.alloc(blockSize);
       let offset = 0;
@@ -160,6 +208,10 @@ async function scanTar(
               const payload = Math.min(take, remaining);
               await selection!.onChunk(chunk.subarray(cursor, cursor + payload));
               remaining -= payload;
+              if (selection!.prefixOnly && remaining === 0) {
+                prefixDone = true;
+                return;
+              }
             }
             skip -= take;
             cursor += take;
@@ -184,15 +236,25 @@ async function scanTar(
           if (memberIndex === limits.entries) throw new Error('Tar exceeds the entry limit.');
           const member = parseHeader(header, sourceUri, memberIndex++);
           skip = Math.ceil(member.bytes / blockSize) * blockSize;
-          if (skip > limits.scanBytes) throw new Error('Tar member exceeds the scan limit.');
+          if (
+            skip > limits.scanBytes &&
+            !(selection?.prefixOnly && selection.ref.memberIndex === member.resource.memberIndex)
+          )
+            throw new Error('Tar member exceeds the scan limit.');
           if (selection?.ref.memberIndex === member.resource.memberIndex) {
             if (member.kind !== 'file' || member.resource.memberPath !== selection.ref.memberPath)
               throw new Error('Tar member does not match the selected ordinary file.');
-            if (member.bytes > selection.maxBytes)
+            if (!selection.prefixOnly && member.bytes > selection.maxBytes)
               throw new Error('Tar member exceeds the read limit.');
             await selection.onStart({ bytes: member.bytes });
-            remaining = member.bytes;
+            remaining = selection.prefixOnly
+              ? Math.min(member.bytes, selection.maxBytes)
+              : member.bytes;
             found = true;
+            if (selection.prefixOnly && remaining === 0) {
+              prefixDone = true;
+              return;
+            }
           }
           if (!selection) members.push(member);
         }
@@ -200,6 +262,7 @@ async function scanTar(
       for await (const chunk of chunks) {
         try {
           await consume(chunk);
+          if (prefixDone) break;
         } catch (error) {
           // Closing a pipeline iterator can emit AbortError before the parser error reaches it.
           scanFailure = error;
@@ -207,14 +270,22 @@ async function scanTar(
         }
       }
       if (selection && !found) throw new Error('Selected tar member is absent.');
-      if (terminators !== 2) throw new Error('Truncated tar archive or missing terminator.');
+      if (!prefixDone && terminators !== 2)
+        throw new Error('Truncated tar archive or missing terminator.');
     };
     try {
       if (gzip) await pipeline(input, createGunzip(), scan, { signal });
       else await pipeline(input, scan, { signal });
     } catch (error) {
       signal.throwIfAborted();
-      throw scanFailure ?? error;
+      if (
+        !prefixDone ||
+        scanFailure ||
+        !(error instanceof Error) ||
+        !('code' in error) ||
+        error.code !== 'ABORT_ERR'
+      )
+        throw scanFailure ?? error;
     }
     if (
       !sameFileRevision(before, await handle.stat()) ||

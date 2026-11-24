@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Open EDF/EDF+ recordings from the logical BIDS tree in a read-only technical summary, with per-channel sampling rates and units, explicit header-only coverage, and access to inherited JSON. Bounded prefix reads support loose files and supported ZIP, tar/gzip tar and SquashFS sources without extracting a whole recording. Signal waveforms and event/channel-table integration remain planned.
+
 ## [1.4.0] - 2026-11-19
 
 - Plot the signal at the crosshair across 4D volumes, with a marker following playback and volume selection, recorded timing where available, and bounded sampling for long runs.
