@@ -1,3 +1,4 @@
+import { recordingDisplayGroups, type RecordingDisplayGroup } from '../core/recordingDisplay.js';
 import { eventsInWindow, eventNumber } from '../core/recordingEvents.js';
 import type {
   RecordingMetadata,
@@ -5,11 +6,7 @@ import type {
   RecordingEvent,
   RecordingTableKind,
 } from '../core/recordingMetadataTypes';
-import type {
-  RecordingViewSnapshot,
-  RecordingWindow,
-  RecordingTrace,
-} from '../core/recordingTypes';
+import type { RecordingViewSnapshot, RecordingWindow } from '../core/recordingTypes';
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
 const api = acquireVsCodeApi();
 const node = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -339,11 +336,42 @@ function renderChannels(): void {
   node<HTMLButtonElement>('channels-previous').disabled = page === 0;
   node<HTMLButtonElement>('channels-next').disabled = (page + 1) * 20 >= rows.length;
 }
-function draw(canvas: HTMLCanvasElement, trace: RecordingTrace): void {
+function recordedBad(label: string): boolean {
+  return (
+    channelRows.get(label)?.values.status === 'bad' &&
+    snapshot?.header.signals.filter((c) => !c.annotations && c.label === label).length === 1
+  );
+}
+let amplitudeGain = 1;
+const amplitudeRanges = new Map<string, number>();
+function displayGroups(): readonly RecordingDisplayGroup[] {
+  if (!windowData || !snapshot) return [];
+  const types = new Map<number, string>();
+  for (const trace of windowData.channels) {
+    const unique =
+      snapshot.header.signals.filter((c) => !c.annotations && c.label === trace.label).length === 1;
+    const type = unique ? channelRows.get(trace.label)?.values.type : undefined;
+    if (type) types.set(trace.index, type);
+  }
+  return recordingDisplayGroups(
+    windowData.channels,
+    types,
+    node<HTMLSelectElement>('trace-layout').value === 'stacked',
+  ).map((group) => {
+    const extent = amplitudeRanges.get(group.key) ?? group.extent;
+    amplitudeRanges.set(group.key, extent);
+    return { ...group, extent };
+  });
+}
+function draw(canvas: HTMLCanvasElement, group: RecordingDisplayGroup): void {
   if (!windowData) return;
   const ratio = window.devicePixelRatio || 1,
     w = Math.max(200, canvas.clientWidth),
-    h = 150;
+    rowHeight = node<HTMLSelectElement>('trace-layout').value === 'stacked' ? 64 : 140,
+    top = 8,
+    bottom = top + group.channels.length * rowHeight,
+    h = bottom + 30;
+  canvas.style.height = h + 'px';
   canvas.width = w * ratio;
   canvas.height = h * ratio;
   const ctx = canvas.getContext('2d');
@@ -352,28 +380,95 @@ function draw(canvas: HTMLCanvasElement, trace: RecordingTrace): void {
   ctx.clearRect(0, 0, w, h);
   const style = getComputedStyle(document.body),
     left = parseFloat(style.getPropertyValue('--recording-axis-left')),
-    right = w - parseFloat(style.getPropertyValue('--recording-axis-right')),
-    top = 18,
-    bottom = h - 30;
-  const scale = Math.max(Math.abs(trace.minimum), Math.abs(trace.maximum), 1e-300);
-  const minimum = trace.minimum / scale,
-    maximum = trace.maximum / scale;
-  const padding =
-    maximum === minimum ? Math.max(Math.abs(minimum) * 0.05, 1e-6) : (maximum - minimum) * 0.08;
-  const low = minimum - padding,
-    high = maximum + padding;
-  ctx.strokeStyle = style.getPropertyValue('--vscode-panel-border').trim() || '#888888';
-  ctx.lineWidth = 1;
+    right = w - parseFloat(style.getPropertyValue('--recording-axis-right'));
+  const xAt = (time: number) =>
+    left +
+    ((time - windowData!.startSeconds) / (windowData!.endSeconds - windowData!.startSeconds)) *
+      (right - left);
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(left, top);
-  ctx.lineTo(left, bottom);
-  ctx.lineTo(right, bottom);
-  ctx.stroke();
-  ctx.fillStyle = style.getPropertyValue('--vscode-foreground').trim() || '#888888';
+  ctx.rect(left, top, right - left, bottom - top);
+  ctx.clip();
+  if (node<HTMLInputElement>('shade-events').checked) {
+    ctx.fillStyle = ctx.strokeStyle =
+      style.getPropertyValue('--vscode-charts-orange').trim() || '#d77a2a';
+    for (const event of eventsInWindow(
+      events,
+      windowData.startSeconds,
+      windowData.endSeconds,
+    ).slice(0, 200)) {
+      if (event.duration !== undefined && event.duration > 0) {
+        ctx.globalAlpha = 0.14;
+        ctx.fillRect(
+          xAt(Math.max(windowData.startSeconds, event.onset!)),
+          top,
+          xAt(Math.min(windowData.endSeconds, event.onset! + event.duration)) -
+            xAt(Math.max(windowData.startSeconds, event.onset!)),
+          bottom - top,
+        );
+      }
+      if (event.onset! >= windowData.startSeconds) {
+        ctx.globalAlpha = 0.7;
+        ctx.setLineDash(event.duration === undefined ? [3, 3] : []);
+        ctx.beginPath();
+        ctx.moveTo(xAt(event.onset!), top);
+        ctx.lineTo(xAt(event.onset!), bottom);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
   ctx.font = '12px sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(trace.maximum.toPrecision(4), left - 8, top + 8);
-  ctx.fillText(trace.minimum.toPrecision(4), left - 8, bottom);
+  group.channels.forEach(({ trace, factor }, index) => {
+    const center = top + rowHeight * (index + 0.5),
+      half = rowHeight * 0.42;
+    ctx.strokeStyle = style.getPropertyValue('--vscode-panel-border').trim() || '#888888';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(left, center);
+    ctx.lineTo(right, center);
+    ctx.stroke();
+    ctx.fillStyle = style.getPropertyValue('--vscode-foreground').trim() || '#888888';
+    ctx.textAlign = 'right';
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, center - 16, left - 6, 32);
+    ctx.clip();
+    ctx.fillText(
+      (trace.label || 'Unnamed') + (recordedBad(trace.label) ? ' [bad]' : ''),
+      left - 8,
+      center + 4,
+    );
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(left, center - half, right - left, 2 * half);
+    ctx.clip();
+    ctx.strokeStyle = recordedBad(trace.label)
+      ? style.getPropertyValue('--vscode-charts-purple').trim() || '#aa6cde'
+      : style.getPropertyValue('--vscode-charts-blue').trim() || '#3794ff';
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    trace.points.forEach((point, i) => {
+      const x = xAt(point.timeSeconds),
+        y = center - ((point.value * factor) / group.extent) * amplitudeGain * half;
+      if (i) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+    // One labelled half-range scale bar per channel, using the group's shared physical scale.
+    ctx.strokeStyle = style.getPropertyValue('--vscode-foreground').trim() || '#888888';
+    ctx.beginPath();
+    ctx.moveTo(right - 6, center);
+    ctx.lineTo(right - 6, center - half);
+    ctx.moveTo(right - 10, center - half);
+    ctx.lineTo(right - 2, center - half);
+    ctx.stroke();
+  });
+  ctx.fillStyle = style.getPropertyValue('--vscode-foreground').trim() || '#888888';
   for (let tick = 0; tick <= 4; tick++) {
     const x = left + ((right - left) * tick) / 4;
     ctx.textAlign = tick === 0 ? 'left' : tick === 4 ? 'right' : 'center';
@@ -385,60 +480,68 @@ function draw(canvas: HTMLCanvasElement, trace: RecordingTrace): void {
       x,
       h - 7,
     );
-    ctx.beginPath();
-    ctx.moveTo(x, bottom);
-    ctx.lineTo(x, bottom + 4);
-    ctx.stroke();
   }
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(left, top, right - left, bottom - top);
-  ctx.clip();
-  ctx.strokeStyle = style.getPropertyValue('--vscode-charts-blue').trim() || '#3794ff';
-  ctx.lineWidth = 1.25;
-  ctx.beginPath();
-  trace.points.forEach((point, index) => {
-    const x =
-        left +
-        ((point.timeSeconds - windowData!.startSeconds) /
-          (windowData!.endSeconds - windowData!.startSeconds)) *
-          (right - left),
-      y = bottom - ((point.value / scale - low) / (high - low)) * (bottom - top);
-    if (index) ctx.lineTo(x, y);
-    else ctx.moveTo(x, y);
-  });
-  ctx.stroke();
-  ctx.restore();
 }
 function renderPlots(): void {
   node('plots').replaceChildren();
+  const shaded = windowData
+    ? eventsInWindow(events, windowData.startSeconds, windowData.endSeconds).length
+    : 0;
+  node('amplitude-state').textContent =
+    `Display gain ×${amplitudeGain}${node<HTMLInputElement>('shade-events').checked && shaded > 200 ? ' · First 200 overlapping events shaded; use the event list for all rows' : ''}`;
+  node<HTMLButtonElement>('amplitude-smaller').disabled = amplitudeGain <= 1 / 16;
+  node<HTMLButtonElement>('amplitude-larger').disabled = amplitudeGain >= 16;
   if (!windowData) return;
-  for (const trace of windowData.channels) {
+  for (const group of displayGroups()) {
     const figure = document.createElement('figure'),
       title = document.createElement('h3'),
       canvas = document.createElement('canvas'),
-      caption = document.createElement('figcaption');
-    title.textContent = `${trace.label || 'Unnamed channel'} · ${trace.unit || 'Unit not recorded'} · Auto scale`;
+      caption = document.createElement('figcaption'),
+      details = document.createElement('details'),
+      summary = document.createElement('summary');
+    const range = (group.extent / amplitudeGain || Number.MIN_VALUE).toPrecision(4),
+      unit = group.unit || '(unit not recorded)';
+    const names = group.channels
+      .map(
+        (c) =>
+          (c.trace.label || 'Unnamed channel') +
+          (recordedBad(c.trace.label) ? ' (recorded bad)' : ''),
+      )
+      .join(', ');
+    title.textContent = `${group.shared ? 'EEG · ' + group.channels.length + ' channels · Shared scale' : names} · ±${range} ${unit}`;
     canvas.setAttribute('role', 'img');
     canvas.tabIndex = 0;
     canvas.setAttribute(
       'aria-label',
-      `${trace.label || 'Unnamed channel'}, ${trace.samplingFrequency} Hz. ${trace.sampleCount} samples from ${windowData.startSeconds} to ${windowData.endSeconds} seconds. Minimum ${trace.minimum.toPrecision(4)}, maximum ${trace.maximum.toPrecision(4)} ${trace.unit || '(unit not recorded)'}.`,
+      `${names}. ${group.shared ? 'Shared' : 'Channel'} amplitude scale plus/minus ${range} ${unit}, zero-centred; ${windowData.startSeconds}–${windowData.endSeconds} seconds. Event shading ${node<HTMLInputElement>('shade-events').checked ? 'on' : 'off'}.`,
     );
-    caption.textContent = `${trace.samplingFrequency} Hz · ${trace.sampleCount.toLocaleString()} samples checked · ${trace.points.length.toLocaleString()} displayed points${trace.sampleCount > trace.points.length ? ' (min/max envelope)' : ''}`;
-    const detail = document.createElement('p');
-    detail.className = 'channel-metadata';
-    detail.textContent = channelDetails(trace.index);
-    figure.append(title, detail, canvas, caption);
+    const clipped = group.channels.filter(
+      (c) =>
+        (Math.max(Math.abs(c.trace.minimum * c.factor), Math.abs(c.trace.maximum * c.factor)) /
+          group.extent) *
+          amplitudeGain >
+        1,
+    ).length;
+    caption.textContent = `Scale bar: ${range} ${unit} from zero · ${clipped ? clipped + ' channels exceed the display range; use Smaller amplitude or Fit amplitude' : 'No values clipped'} · ${group.channels.reduce((n, c) => n + c.trace.sampleCount, 0).toLocaleString()} samples checked`;
+    summary.textContent = 'Channel details';
+    details.append(summary);
+    for (const { trace, factor } of group.channels) {
+      const p = document.createElement('p');
+      p.textContent = `${trace.label || 'Unnamed channel'} · ${trace.samplingFrequency} Hz · Source ${trace.unit || 'unit not recorded'}${factor !== 1 ? ' → display ' + unit + ' (×' + factor + ')' : ''} · ${trace.points.length.toLocaleString()} display points${trace.sampleCount > trace.points.length ? ' (min/max envelope)' : ''} · ${channelDetails(trace.index) || 'Channel metadata not resolved'}`;
+      details.append(p);
+    }
+    figure.append(title, canvas, caption, details);
     node('plots').append(figure);
-    draw(canvas, trace);
+    draw(canvas, group);
   }
 }
 new ResizeObserver(() => {
-  if (windowData)
-    node('plots')
-      .querySelectorAll('canvas')
-      .forEach((canvas, index) => draw(canvas, windowData!.channels[index]));
+  const groups = displayGroups();
+  node('plots')
+    .querySelectorAll('canvas')
+    .forEach((canvas, index) => {
+      if (groups[index]) draw(canvas, groups[index]);
+    });
 }).observe(node('plots'));
 function report(): void {
   const trace = windowData?.channels[0];
@@ -468,6 +571,20 @@ function report(): void {
     tablesStatus: node('tables-status').textContent,
     channelDetails: snapshot?.header.signals.map((_, index) => channelDetails(index)),
     eventRows: events.length,
+    displayGroups: displayGroups().map((g) => ({
+      key: g.key,
+      unit: g.unit,
+      shared: g.shared,
+      extent: g.extent,
+      channels: g.channels.map((c) => c.trace.index),
+    })),
+    amplitudeGain,
+    shading: node<HTMLInputElement>('shade-events').checked,
+    displayText: node('plots').textContent,
+    canvasCount: node('plots').querySelectorAll('canvas').length,
+    plotAccessibility: [...node('plots').querySelectorAll('canvas')].map((c) =>
+      c.getAttribute('aria-label'),
+    ),
     eventText: node('events-table').textContent,
     eventScriptCount: node('events-table').querySelectorAll('script').length,
     eventMarkers: node('event-timeline').querySelectorAll('.event-interval').length,
@@ -498,6 +615,8 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   if (message.type === 'snapshot' && 'snapshot' in message) {
     snapshot = message.snapshot as RecordingViewSnapshot;
     windowData = undefined;
+    amplitudeGain = 1;
+    amplitudeRanges.clear();
     metadata = undefined;
     channelRows.clear();
     events = [];
@@ -549,6 +668,7 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     return;
   }
   if (message.type === 'tables' && 'metadata' in message && 'tablesToken' in message) {
+    amplitudeRanges.clear();
     metadata = message.metadata as RecordingMetadata;
     tablesToken = String(message.tablesToken);
     tablesBusy = false;
@@ -576,7 +696,13 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     return;
   }
   if (message.type === 'window' && 'window' in message) {
-    windowData = message.window as RecordingWindow;
+    const nextWindow = message.window as RecordingWindow;
+    if (
+      windowData?.channels.map((c) => c.index).join() !==
+      nextWindow.channels.map((c) => c.index).join()
+    )
+      amplitudeRanges.clear();
+    windowData = nextWindow;
     node('status').textContent =
       `Showing ${windowData.startSeconds}–${windowData.endSeconds} s · ${windowData.channels.length} ${windowData.channels.length === 1 ? 'channel' : 'channels'}. Only this time window has been checked.`;
     node('error').hidden = true;
@@ -599,6 +725,21 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
     report();
   }
 });
+node('trace-layout').addEventListener('change', renderPlots);
+node('amplitude-smaller').addEventListener('click', () => {
+  amplitudeGain = Math.max(1 / 16, amplitudeGain / 2);
+  renderPlots();
+});
+node('amplitude-larger').addEventListener('click', () => {
+  amplitudeGain = Math.min(16, amplitudeGain * 2);
+  renderPlots();
+});
+node('amplitude-fit').addEventListener('click', () => {
+  amplitudeRanges.clear();
+  amplitudeGain = 1;
+  renderPlots();
+});
+node('shade-events').addEventListener('change', renderPlots);
 node('reload-tables').addEventListener('click', () => send('reloadTables'));
 node('cancel-tables').addEventListener('click', () => send('cancelTables'));
 node('event-filter').addEventListener('input', () => {

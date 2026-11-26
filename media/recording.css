@@ -242,3 +242,31 @@ select {
 #event-timeline p {
   font-size: 12px;
 }
+.display-controls,
+.display-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.display-controls {
+  margin: 12px 0;
+  gap: 12px;
+}
+.display-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.display-controls input[type='checkbox'] {
+  width: auto;
+}
+#plots details {
+  margin: 8px 0 0;
+  padding: 6px 0 0;
+}
+#plots details p {
+  margin: 5px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

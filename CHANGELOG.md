@@ -4,6 +4,8 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
+- Show compact stacked EEG traces with shared µV amplitude scales for compatible channels, fixed scales while paging, explicit amplitude/fit controls and BIDS event shading across traces. Other types and unresolved/incompatible units stay separate, with a separate-channel layout available. Display conversions and recorded bad-channel status remain explicit.
+
 - Label event intervals with their names and recorded times, align the event and waveform time axes, and provide explicit Go to event buttons. Dense timelines show the first 12 intervals with coverage stated; the paged event list retains all checked rows.
 
 - Integrate source-qualified channels.tsv metadata and BIDS event timelines in the EDF waveform editor. Show recorded channel status and header/TSV differences, filter and page event rows, jump to events, and choose between matching physical table sources without merging them.

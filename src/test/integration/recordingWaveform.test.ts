@@ -56,6 +56,7 @@ function controls(panel: vscode.WebviewPanel): void {
     if(event.data?.type==='snapshot')testToken=event.data.snapshot.token;
     if(event.data?.type!=='testControl')return;
     if(event.data.request){testApi.postMessage({type:'loadWindow',token:event.data.stale?'old-token':testToken,request:event.data.request});return;}
+    if(event.data.id==='shadePixels'){const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let orange=0;for(let i=0;i<d.length;i+=4)if(d[i]>150&&d[i]>d[i+1]&&d[i+1]>d[i+2]&&d[i+3])orange++;testApi.postMessage({type:'shadePixels',orange});return;}
     if(event.data.id==='pixels'){const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let blue=0;for(let i=0;i<d.length;i+=4)if(d[i+2]>150&&d[i+2]>d[i]*1.2&&d[i+3])blue++;testApi.postMessage({type:'pixels',blue});return;}
     const target=document.getElementById(event.data.id);
     if(target instanceof HTMLSelectElement){target.value=event.data.value;target.dispatchEvent(new Event('change'));return;}
@@ -221,6 +222,7 @@ suite('EDF waveform windows', () => {
         /Type EEG.*Recorded status: bad.*Recorded noisy channel/,
       );
       assert.match((initial.channelDetails as string[])[0], /TSV V; EDF uV/);
+      assert.match(String((initial.plotAccessibility as string[])[0]), /recorded bad/);
       assert.match((initial.channelDetails as string[])[0], /TSV 999 Hz; EDF 200 Hz/);
       assert.equal((initial.firstTrace as RecordingTrace).unit, 'uV');
       assert.equal((initial.firstTrace as RecordingTrace).samplingFrequency, 200);
@@ -295,6 +297,122 @@ suite('EDF waveform windows', () => {
       await panel.webview.postMessage({ type: 'testControl', id: 'reload-tables' });
       await state(panel, (s) => s.eventRows === 0 && !s.tablesBusy);
       assert.deepEqual(await readFile(file), edfRecordingFixture());
+    } finally {
+      manager.dispose();
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+
+  test('stacks compatible EEG channels with fixed shared scales, display gain and event shading', async function () {
+    this.timeout(30000);
+    const extension = vscode.extensions.getExtension(extensionId)!;
+    await extension.activate();
+    const folder = await mkdtemp(join(tmpdir(), 'bids-stacked-eeg-ui-')),
+      source = new LogicalDirectorySource(),
+      manager = new RecordingWaveformManager(extension.extensionUri);
+    try {
+      const file = join(folder, 'sub-01_task-rest_eeg.edf'),
+        original = edfRecordingFixture();
+      original.write('Cz'.padEnd(16), 272, 16, 'ascii');
+      for (let record = 0; record < 10; record++)
+        for (let sample = 0; sample < 400; sample++)
+          original.writeInt16LE(
+            (sample % 2 ? 1 : -1) * (record < 5 ? 6553 : 26213),
+            1024 + record * 1240 + sample * 2,
+          );
+      await writeFile(file, original);
+      await writeFile(
+        join(folder, 'sub-01_task-rest_channels.tsv'),
+        'name\ttype\tunits\nFz\tEEG\tuV\nCz\tEEG\tmV\n',
+      );
+      await writeFile(
+        join(folder, 'sub-01_task-rest_events.tsv'),
+        'onset\tduration\ttrial_type\n5\t1\tcue\n15\t0\tresponse\n',
+      );
+      const root = await source.root(vscode.Uri.file(folder).toString()),
+        target = (await source.children(root, new AbortController().signal)).find((e) =>
+          e.name.endsWith('.edf'),
+        )!;
+      const panel = await manager.open(vscode.Uri.file(file), 'stacked', undefined, {
+        load: (s, c) => loadRecordingMetadata(source, target, s, c),
+        open: () => Promise.resolve(),
+      });
+      controls(panel);
+      const initial = await state(
+        panel,
+        (s) => s.traceCount === 2 && s.eventRows === 2 && !s.busy && !s.tablesBusy,
+      );
+      const groups = initial.displayGroups as {
+        extent: number;
+        unit: string;
+        shared: boolean;
+        channels: number[];
+      }[];
+      assert.equal(initial.canvasCount, 1);
+      assert.equal(groups[0].unit, 'µV');
+      assert.equal(groups[0].shared, true);
+      assert.deepEqual(groups[0].channels, [0, 1]);
+      assert.match(String(initial.displayText), /Shared scale/);
+      assert.match(String(initial.displayText), /Source mV → display µV \(×1000\)/);
+      const pixels = async () => {
+        let result: number | undefined;
+        const listener = panel.webview.onDidReceiveMessage((m: unknown) => {
+          if (
+            m &&
+            typeof m === 'object' &&
+            'type' in m &&
+            m.type === 'shadePixels' &&
+            'orange' in m
+          )
+            result = Number(m.orange);
+        });
+        try {
+          await panel.webview.postMessage({ type: 'testControl', id: 'shadePixels' });
+          const deadline = Date.now() + 5000;
+          while (result === undefined) {
+            assert.ok(Date.now() < deadline);
+            await new Promise((r) => setTimeout(r, 20));
+          }
+          return result;
+        } finally {
+          listener.dispose();
+        }
+      };
+      assert.ok(
+        (await pixels()) > 100,
+        'Event interval is visibly shaded across the stacked traces',
+      );
+      await panel.webview.postMessage({ type: 'testControl', id: 'shade-events' });
+      await state(panel, (s) => s.shading === false);
+      assert.equal(await pixels(), 0);
+      await panel.webview.postMessage({ type: 'testControl', id: 'shade-events' });
+      await state(panel, (s) => s.shading === true);
+      await panel.webview.postMessage({ type: 'testControl', id: 'amplitude-larger' });
+      await state(panel, (s) => s.amplitudeGain === 2);
+      await panel.webview.postMessage({ type: 'testControl', id: 'amplitude-smaller' });
+      await state(panel, (s) => s.amplitudeGain === 1);
+      await panel.webview.postMessage({ type: 'testControl', id: 'next' });
+      const next = await state(panel, (s) => s.startSeconds === 10 && !s.busy);
+      assert.equal(
+        (next.displayGroups as typeof groups)[0].extent,
+        groups[0].extent,
+        'Paging retains the initial physical scale',
+      );
+      assert.match(String(next.displayText), /exceed the display range/);
+      await panel.webview.postMessage({ type: 'testControl', id: 'amplitude-fit' });
+      const fitted = await state(panel, (s) => (s.displayGroups as typeof groups)[0].extent > 70);
+      assert.equal(fitted.amplitudeGain, 1);
+      await panel.webview.postMessage({
+        type: 'testControl',
+        id: 'trace-layout',
+        value: 'individual',
+      });
+      const separate = await state(panel, (s) => s.canvasCount === 2);
+      assert.deepEqual(
+        (separate.displayGroups as typeof groups).map((g) => g.unit),
+        ['uV', 'mV'],
+      );
+      assert.deepEqual(await readFile(file), original);
     } finally {
       manager.dispose();
       await rm(folder, { recursive: true, force: true });
