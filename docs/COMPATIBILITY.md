@@ -158,4 +158,6 @@ The user completed the physiological EEG usability and VoiceOver checks and auth
 
 The local release package is 2,276,716 bytes, SHA-256 `5d8ff3d5285b895b2a0e22b193c2aea34b323c42c61362c4662a21a11db9742f`. All **417 runtime, media and dependency files** match the candidate tested on minimum/current VS Code and Rorqual byte for byte. Only the packaged README, changelog, manifest description/keywords and VSIX metadata changed for release. No new data-reader or viewer behavior was introduced after those checks.
 
+The fresh CodeQL scan raised three findings in synthetic unit-test readbacks/mutation; each was reviewed and dismissed as used in tests with individual evidence. No production exclusions were added. [Review record](CODEQL_REVIEW.md#150-edf-test-fixture-review)
+
 The Marketplace workflow runs minimum/current integration, quality, security and CodeQL checks on the release source before publishing its exact tested artifact. ZIP metadata can make that hosted artifact's checksum differ from the local package; the final distributed VSIX and its `SHA256SUMS` are attached to the [1.5.0 GitHub release](https://github.com/dlq/bids-explorer/releases/tag/v1.5.0). The [candidate report](evidence/edf-1.5.0/REPORT.md) records the opt-in test limits and the bounded persistence findings.

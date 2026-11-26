@@ -40,3 +40,15 @@ The checksum-matched security build also passed a synthetic Rorqual Remote SSH s
 [Alert 12](https://github.com/dlq/bids-explorer/security/code-scanning/12) flags the preliminary path stat followed by an open in the loose participant-table reader. The preliminary stat identifies the expected file revision. Open uses `O_NOFOLLOW` and `O_NONBLOCK`, and the reader compares the opened descriptor's file type, device, inode, size, mtime and ctime before reading any data. It reads through that descriptor and rechecks both descriptor and path before returning a completed page. A replacement or changed revision fails the scan. This is the same guarded open pattern reviewed for alert 3.
 
 Alerts 13–16 apply to writes in the unit test. The test creates its own private temporary directory, writes only synthetic fixtures, and intentionally changes and truncates the table to exercise revision and read failures. These writes are excluded from the extension package.
+
+## 1.5.0 EDF test-fixture review
+
+The November 26, 2026 scan of release preparation `d0a5286` raised three `js/file-system-race` findings, all classified as tests:
+
+| Alert                                                                | Operation                                           | Review                                                                                                                                                                                |
+| -------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [17](https://github.com/dlq/bids-explorer/security/code-scanning/17) | `recordingWindow.test.ts:58` reads back an archive  | A private `mkdtemp` fixture is reread to assert that waveform reading left its bytes unchanged. The earlier stat supplies revision metadata, not authorization for a production read. |
+| [18](https://github.com/dlq/bids-explorer/security/code-scanning/18) | `recordingHeader.test.ts:129` reads back an archive | The same controlled-fixture integrity assertion after a header read.                                                                                                                  |
+| [19](https://github.com/dlq/bids-explorer/security/code-scanning/19) | `recordingHeader.test.ts:132` appends fixture bytes | Deliberate mutation: line 133 asserts that the production header reader rejects the changed revision.                                                                                 |
+
+Each finding was dismissed as **used in tests**, with an individual explanation. All inputs are generated synthetic files inside private temporary directories, and these unit-test sources/outputs are excluded from the VSIX. No production file, entire test suite or query was excluded from CodeQL. The source passed all 222 unit tests, the minimum/current integration suites, Semgrep and dependency audit. The scan is retained; future findings still require review.
