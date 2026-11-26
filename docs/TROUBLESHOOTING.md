@@ -56,6 +56,12 @@ Choose **Image controls** in the built-in viewer. To place them on the right, ri
 
 The old development identifier is `bids-explorer-dev.bids-explorer`; the production identifier is `MCIN-dlq.bids-explorer`. Disable or uninstall the old development copy before installing the production one. In a remote window, check installed copies on both the local machine and server. Manual registrations and placements may need to be recreated because VS Code treats these as different extensions; ordinary dataset files are unchanged.
 
+## An EEG recording shows a summary or a late window will not load
+
+Waveforms support ordinary EDF and continuous EDF+ recordings with a known positive duration. Discontinuous EDF+D and unknown-duration recordings retain technical summaries; other EEG/MEG formats are not decoded. The event timeline needs an applicable BIDS `events.tsv`; EDF+ annotation text is not decoded.
+
+For a recording in an archive, reaching a later window may exceed the 16 MiB prefix-read budget. Try an earlier interval or an existing loose copy of the recording. The viewer retains the previous completed view after this refusal. An unavailable window is not a missing-data or quality verdict, and browsing does not unpack or rewrite the study. [Recording reference](EXPLORER_REFERENCE.md#edf-recording-previews)
+
 ## Report a reproducible problem
 
 Use the [problem-report form](https://github.com/dlq/bids-explorer/issues/new/choose) with the failing action, expected/resulting behavior, versions, operating systems and storage format. Share a small public/synthetic reproduction where possible. Remove participant identifiers, private paths and sensitive images or metadata from screenshots and logs. Use [private security reporting](https://github.com/dlq/bids-explorer/security/advisories/new) for suspected vulnerabilities.

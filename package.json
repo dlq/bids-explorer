@@ -1,8 +1,8 @@
 {
   "name": "bids-explorer",
   "displayName": "BIDS Explorer",
-  "description": "Browse BIDS studies, preview metadata and open NIfTI images locally or over SSH.",
-  "version": "1.4.0",
+  "description": "Explore BIDS studies, NIfTI images and EDF EEG recordings locally or over SSH.",
+  "version": "1.5.0",
   "publisher": "MCIN-dlq",
   "icon": "media/icon.png",
   "private": true,
@@ -427,6 +427,8 @@
     "MRI",
     "NIfTI",
     "SSH",
-    "SquashFS"
+    "SquashFS",
+    "EEG",
+    "EDF"
   ]
 }

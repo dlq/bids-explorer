@@ -58,6 +58,7 @@ function controls(panel: vscode.WebviewPanel): void {
     if(event.data.request){testApi.postMessage({type:'loadWindow',token:event.data.stale?'old-token':testToken,request:event.data.request});return;}
     if(event.data.id==='shadePixels'){const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let orange=0;for(let i=0;i<d.length;i+=4)if(d[i]>150&&d[i]>d[i+1]&&d[i+1]>d[i+2]&&d[i+3])orange++;testApi.postMessage({type:'shadePixels',orange});return;}
     if(event.data.id==='pixels'){const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let blue=0;for(let i=0;i<d.length;i+=4)if(d[i+2]>150&&d[i+2]>d[i]*1.2&&d[i+3])blue++;testApi.postMessage({type:'pixels',blue});return;}
+    if(event.data.id==='themePixels'){document.body.style.setProperty('--vscode-foreground','#00ff00');requestAnimationFrame(()=>requestAnimationFrame(()=>{const c=document.querySelector('canvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let green=0;for(let i=0;i<d.length;i+=4)if(d[i]<50&&d[i+1]>200&&d[i+2]<50&&d[i+3])green++;testApi.postMessage({type:'themePixels',green});}));return;}
     const target=document.getElementById(event.data.id);
     if(target instanceof HTMLSelectElement){target.value=event.data.value;target.dispatchEvent(new Event('change'));return;}
     if(target instanceof HTMLInputElement&&target.type!=='checkbox'){target.value=event.data.value;target.dispatchEvent(new Event('input'));}else target?.click();
@@ -412,6 +413,26 @@ suite('EDF waveform windows', () => {
         (separate.displayGroups as typeof groups).map((g) => g.unit),
         ['uV', 'mV'],
       );
+      let green = 0;
+      const themeListener = panel.webview.onDidReceiveMessage((m: unknown) => {
+        if (m && typeof m === 'object' && 'type' in m && m.type === 'themePixels' && 'green' in m)
+          green = Number(m.green);
+      });
+      try {
+        await panel.webview.postMessage({ type: 'testControl', id: 'themePixels' });
+        const deadline = Date.now() + 5000;
+        while (!green) {
+          assert.ok(Date.now() < deadline, 'Theme changes repaint labels and scale bars');
+          await new Promise((r) => setTimeout(r, 20));
+        }
+        assert.ok(green > 100, 'The canvas uses the updated foreground colour');
+        const themed = await state(panel);
+        assert.equal(themed.startSeconds, separate.startSeconds);
+        assert.equal(themed.amplitudeGain, separate.amplitudeGain);
+        assert.deepEqual(themed.displayGroups, separate.displayGroups);
+      } finally {
+        themeListener.dispose();
+      }
       assert.deepEqual(await readFile(file), original);
     } finally {
       manager.dispose();

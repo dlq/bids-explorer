@@ -2,7 +2,7 @@
 
 **Explore your neuroimaging study by participant, session and scan—locally or over SSH.**
 
-BIDS Explorer is a read-only study browser for datasets organized using the Brain Imaging Data Structure (BIDS). View MRI images, understand acquisition metadata and find participants with the sessions or processing outputs you need. Browse ordinary folders, ZIP files, supported tarballs and SquashFS collections in one logical study tree.
+BIDS Explorer is a read-only study browser for datasets organized using the Brain Imaging Data Structure (BIDS). View MRI images and EDF EEG recordings, understand acquisition metadata and find participants with the sessions or processing outputs you need. Browse ordinary folders, ZIP files, supported tarballs and SquashFS collections in one logical study tree.
 
 ![BIDS Explorer showing a functional scan in three orthogonal slices and a 3D crosshair cutaway, with the Volume slider, playback controls and voxel signal plot on the right.](https://raw.githubusercontent.com/dlq/bids-explorer/main/docs/images/study-explorer.png)
 
@@ -62,6 +62,16 @@ The sidebar includes:
 Choose **Save screenshot** above the image to export the displayed view and caption as a PNG. Review the caption for participant identifiers before sharing.
 
 Use **Reset display** to restore the default presentation. **Open Image With…** lets you choose another installed VS Code editor if you prefer. Reopening an already-open image returns to its existing viewer.
+
+## Inspect EEG recordings and events
+
+Expand a participant’s **EEG** branch and select an **EDF recording**. Ordinary EDF and continuous EDF+ recordings with a known duration open directly to the first ten seconds of two channels.
+
+1. Expand **Choose channels**, select up to eight signals, and choose **Apply channels and time window**. Use **Start (s)**, **Duration (s)** and **Previous/Next window** to move through the recording.
+2. Use **Larger amplitude**, **Smaller amplitude** or **Fit amplitude** to inspect the traces. Compatible EEG channels share a µV display scale; other signal types keep separate scales. The scale stays fixed across time navigation until you refit it.
+3. When applicable BIDS `events.tsv` and `channels.tsv` files are available, inspect channel information and named event intervals. Choose **Go to event** to move to its recorded time; **Shade BIDS events** toggles the overlay on the traces. Source selectors preserve choices when multiple tables match.
+
+This is a bounded, read-only preview, with no filtering or rereferencing. Archive windows require a prefix scan within 16 MiB, so later parts of a large archived recording may be unavailable. EDF+D and unknown-duration recordings keep technical summaries. Other EEG/MEG formats and EDF+ annotation decoding are not included; the timeline uses BIDS event tables. [Recording details and limits](https://github.com/dlq/bids-explorer/blob/main/docs/EXPLORER_REFERENCE.md#edf-recording-previews)
 
 ## Understand metadata, events and diffusion gradients
 

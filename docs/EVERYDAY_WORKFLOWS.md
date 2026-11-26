@@ -49,3 +49,9 @@ _Public [OpenNeuro ds007661](https://openneuro.org/datasets/ds007661) example. T
 - **Save the displayed view.** Choose **Save screenshot** above the image, then choose a destination for the PNG. The caption includes the source filename, which may contain a participant label. Review it before sharing.
 
 For a diffusion scan, select its `.bval` or `.bvec` file to inspect the matching pair. If the pair comes from elsewhere in the study, use **Inspect Metadata and Related Files** on the DWI image and choose **Preview resolved diffusion gradients** when both sources resolve. [Imaging controls and export details](EXPLORER_REFERENCE.md#native-imaging-view)
+
+## Find an EEG channel and a recorded event
+
+Open an **EDF recording** under a participant’s **EEG** branch. Expand **Choose channels**, find the recorded channel names you need and choose **Apply channels and time window**. Compatible EEG channels share a physical amplitude scale, so changing their relative sizes is meaningful within that display; use **Fit amplitude** if traces exceed the displayed range.
+
+When a matching BIDS events table is available, expand **Events**, filter its rows and choose **Go to event**. The waveform window moves to that event’s recorded time, with its interval shown above and shaded across the traces. Check **Channels source**, **Events source** and source details if several physical files match. The expected result is a bounded signal window with the chosen channels and the event’s original timing, without changing the recording or its tables. This workflow supports ordinary EDF and continuous EDF+; see the [EEG walkthrough](USER_GUIDE.md#inspect-an-eeg-recording) for format and archive-window limits.

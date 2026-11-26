@@ -535,14 +535,21 @@ function renderPlots(): void {
     draw(canvas, group);
   }
 }
-new ResizeObserver(() => {
+function redrawPlots(): void {
   const groups = displayGroups();
   node('plots')
     .querySelectorAll('canvas')
     .forEach((canvas, index) => {
       if (groups[index]) draw(canvas, groups[index]);
     });
-}).observe(node('plots'));
+}
+new ResizeObserver(redrawPlots).observe(node('plots'));
+// VS Code updates the webview's body classes and theme variables in place.
+// Canvas pixels need an explicit repaint; CSS changes alone cannot recolour them.
+new MutationObserver(redrawPlots).observe(document.body, {
+  attributes: true,
+  attributeFilter: ['class', 'style'],
+});
 function report(): void {
   const trace = windowData?.channels[0];
   api.postMessage({

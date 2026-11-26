@@ -1,0 +1,599 @@
+{
+  "date": "2026-11-26",
+  "baseCommit": "8451fa9",
+  "runtimeChange": "Uncommitted EEG canvas theme-redraw fix",
+  "artifact": {
+    "filename": "bids-explorer-1.5.0.vsix",
+    "bytes": 2276278,
+    "sha256": "2f0d24c4876a872e2bd4303eaf49272830610b44f1a67038d615a0b342190303"
+  },
+  "physiologicalExample": {
+    "source": "https://physionet.org/files/eegmmidb/1.0.0/S001/S001R03.edf",
+    "doi": "10.13026/C28G6P",
+    "license": "ODC-By-1.0",
+    "sha256": "3427c8d01bff1380bc9ab9f27a35ece2af5dfadf3e291bbc05eb66e4dadbfe2e",
+    "bytes": 2596896,
+    "duration": 125.0,
+    "numericChannels": 64
+  },
+  "localChecks": {
+    "1.96.0": {
+      "fullIntegration": {
+        "passed": 66,
+        "pendingOptIn": 2
+      },
+      "installedVsixCases": [
+        {
+          "name": "PhysioNet EDF+C eeg",
+          "passed": true,
+          "firstRenderedMs": 251.82854099999997,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 9975,
+            "orange": 61506,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C zip",
+          "passed": true,
+          "firstRenderedMs": 117.81333300000006,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 9975,
+            "orange": 61506,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C tar",
+          "passed": true,
+          "firstRenderedMs": 115.14337499999965,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 9975,
+            "orange": 61506,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C tgz",
+          "passed": true,
+          "firstRenderedMs": 151.75645799999984,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 9975,
+            "orange": 61506,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C sqfs",
+          "passed": true,
+          "firstRenderedMs": 117.94675000000007,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 9975,
+            "orange": 61506,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF edf",
+          "passed": true,
+          "firstRenderedMs": 115.12379199999941,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33509,
+            "orange": 3836,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF zip",
+          "passed": true,
+          "firstRenderedMs": 110.49233300000014,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33509,
+            "orange": 3836,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF tar",
+          "passed": true,
+          "firstRenderedMs": 112.72916700000042,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33509,
+            "orange": 3836,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF tgz",
+          "passed": true,
+          "firstRenderedMs": 118.75891700000011,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33509,
+            "orange": 3836,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF sqfs",
+          "passed": true,
+          "firstRenderedMs": 115.08670800000073,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33509,
+            "orange": 3836,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        }
+      ],
+      "sourceFilesUnchanged": 19
+    },
+    "1.148.0": {
+      "fullIntegration": {
+        "passed": 66,
+        "pendingOptIn": 2
+      },
+      "installedVsixCases": [
+        {
+          "name": "PhysioNet EDF+C eeg",
+          "passed": true,
+          "firstRenderedMs": 286.6848329999999,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 10325,
+            "orange": 69388,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C zip",
+          "passed": true,
+          "firstRenderedMs": 112.5391669999999,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 10325,
+            "orange": 69388,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C tar",
+          "passed": true,
+          "firstRenderedMs": 343.44699999999966,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 10325,
+            "orange": 69388,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C tgz",
+          "passed": true,
+          "firstRenderedMs": 214.55404099999987,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 10325,
+            "orange": 69388,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "PhysioNet EDF+C sqfs",
+          "passed": true,
+          "firstRenderedMs": 112.75562500000024,
+          "channels": 2,
+          "eventRows": 30,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 10325,
+            "orange": 69388,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF edf",
+          "passed": true,
+          "firstRenderedMs": 114.37608300000011,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33997,
+            "orange": 4668,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF zip",
+          "passed": true,
+          "firstRenderedMs": 110.65333399999963,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33997,
+            "orange": 4668,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF tar",
+          "passed": true,
+          "firstRenderedMs": 108.81237499999952,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33997,
+            "orange": 4668,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF tgz",
+          "passed": true,
+          "firstRenderedMs": 110.87625000000025,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33997,
+            "orange": 4668,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        },
+        {
+          "name": "Synthetic ordinary EDF sqfs",
+          "passed": true,
+          "firstRenderedMs": 110.83041599999979,
+          "channels": 2,
+          "eventRows": 2,
+          "painted": {
+            "type": "packagePixels",
+            "blue": 33997,
+            "orange": 4668,
+            "green": 0,
+            "canvases": 1
+          },
+          "shared": true
+        }
+      ],
+      "sourceFilesUnchanged": 19
+    }
+  },
+  "remote": {
+    "host": "Rorqual",
+    "vscode": "1.148.0",
+    "remoteKind": "ssh-remote",
+    "packageVersion": "1.5.0",
+    "artifactSha256": "2f0d24c4876a872e2bd4303eaf49272830610b44f1a67038d615a0b342190303",
+    "installedPayloadFilesVerified": 423,
+    "basicCases": [
+      {
+        "name": "PhysioNet EDF+C eeg",
+        "passed": true,
+        "firstRenderedMs": 695.9281679999999,
+        "channels": 2,
+        "eventRows": 30,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 38702,
+          "orange": 431761,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "PhysioNet EDF+C zip",
+        "passed": true,
+        "firstRenderedMs": 355.3290229999993,
+        "channels": 2,
+        "eventRows": 30,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 38702,
+          "orange": 431761,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "PhysioNet EDF+C tar",
+        "passed": true,
+        "firstRenderedMs": 239.27917100000013,
+        "channels": 2,
+        "eventRows": 30,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 38702,
+          "orange": 431761,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "PhysioNet EDF+C tgz",
+        "passed": true,
+        "firstRenderedMs": 240.47485200000028,
+        "channels": 2,
+        "eventRows": 30,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 38702,
+          "orange": 431761,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "PhysioNet EDF+C sqfs",
+        "passed": true,
+        "firstRenderedMs": 229.8636920000008,
+        "channels": 2,
+        "eventRows": 30,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 38702,
+          "orange": 431761,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "Synthetic ordinary EDF edf",
+        "passed": true,
+        "firstRenderedMs": 228.01987599999848,
+        "channels": 2,
+        "eventRows": 2,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 115830,
+          "orange": 35592,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "Synthetic ordinary EDF zip",
+        "passed": true,
+        "firstRenderedMs": 229.81643200000144,
+        "channels": 2,
+        "eventRows": 2,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 115830,
+          "orange": 35592,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "Synthetic ordinary EDF tar",
+        "passed": true,
+        "firstRenderedMs": 233.7139989999996,
+        "channels": 2,
+        "eventRows": 2,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 115830,
+          "orange": 35592,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "Synthetic ordinary EDF tgz",
+        "passed": true,
+        "firstRenderedMs": 234.84234900000047,
+        "channels": 2,
+        "eventRows": 2,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 115830,
+          "orange": 35592,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      },
+      {
+        "name": "Synthetic ordinary EDF sqfs",
+        "passed": true,
+        "firstRenderedMs": 270.1883880000005,
+        "channels": 2,
+        "eventRows": 2,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 115830,
+          "orange": 35592,
+          "green": 0,
+          "canvases": 1
+        },
+        "shared": true
+      }
+    ],
+    "boundedCases": [
+      {
+        "name": "Synthetic large edf loose",
+        "passed": true,
+        "firstRenderedMs": 406.6770969999925,
+        "channels": 2,
+        "eventRows": 4,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 216182,
+          "orange": 51742,
+          "green": 0,
+          "canvases": 2
+        },
+        "shared": false
+      },
+      {
+        "name": "Synthetic large edf zip",
+        "passed": true,
+        "firstRenderedMs": 230.79991100000916,
+        "channels": 2,
+        "eventRows": 4,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 216182,
+          "orange": 51742,
+          "green": 0,
+          "canvases": 2
+        },
+        "shared": false
+      },
+      {
+        "name": "Synthetic large edfc loose",
+        "passed": true,
+        "firstRenderedMs": 230.76345100000617,
+        "channels": 2,
+        "eventRows": 4,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 217513,
+          "orange": 49618,
+          "green": 0,
+          "canvases": 2
+        },
+        "shared": false
+      },
+      {
+        "name": "Synthetic large edfc zip",
+        "passed": true,
+        "firstRenderedMs": 197.71705099999963,
+        "channels": 2,
+        "eventRows": 4,
+        "painted": {
+          "type": "packagePixels",
+          "blue": 217513,
+          "orange": 49618,
+          "green": 0,
+          "canvases": 2
+        },
+        "shared": false
+      }
+    ],
+    "sourceFilesUnchanged": 31,
+    "localProfileAfterPreviewsClosed": {
+      "files": 358,
+      "bytes": 50682467,
+      "decodedGzip": 1,
+      "hits": [],
+      "skipped": []
+    },
+    "scannerPositiveControls": {
+      "files": 4,
+      "hits": 75,
+      "decodedGzip": 1
+    },
+    "cleanup": "Previous remote BIDS Explorer registration restored; both temporary test registrations removed; existing window reused"
+  },
+  "spokenAccessibility": {
+    "date": "2026-11-26",
+    "method": "User-assisted VoiceOver on the reopened realistic EEG demo",
+    "result": "User: looks good and VoiceOver announces everything clearly",
+    "scope": [
+      "Channel selection",
+      "Amplitude controls and \u00b5V scale",
+      "Time-window status",
+      "Named event navigation"
+    ]
+  },
+  "releasePackaging": {
+    "candidateSha256": "2f0d24c4876a872e2bd4303eaf49272830610b44f1a67038d615a0b342190303",
+    "finalLocalSha256": "5d8ff3d5285b895b2a0e22b193c2aea34b323c42c61362c4662a21a11db9742f",
+    "bytes": 2276716,
+    "runtimeFilesIdentical": 417,
+    "changedMetadataFiles": [
+      "extension.vsixmanifest",
+      "extension/changelog.md",
+      "extension/package.json",
+      "extension/readme.md"
+    ],
+    "note": "Local release package; hosted distribution checksum is recorded with the GitHub release assets"
+  }
+}

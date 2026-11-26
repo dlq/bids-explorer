@@ -4,7 +4,7 @@
 
 **Explore a BIDS study by participant, session and scan—on your computer or over SSH.**
 
-View MRI images, read acquisition metadata and find participants with the sessions or processing outputs you need. BIDS Explorer brings folders and supported archives into one logical study tree, while keeping original filenames and sources accessible. Browsing leaves your dataset unchanged.
+View MRI images and EDF EEG recordings, read acquisition metadata and find participants with the sessions or processing outputs you need. BIDS Explorer brings folders and supported archives into one logical study tree, while keeping original filenames and sources accessible. Browsing leaves your dataset unchanged.
 
 ![BIDS Explorer showing a functional scan in three orthogonal slices and a 3D crosshair cutaway, with the Volume slider, playback controls and voxel signal plot on the right.](docs/images/study-explorer.png)
 
@@ -14,6 +14,7 @@ _Functional MRI example from the public [OpenNeuro ds007661 dataset](https://ope
 
 - **Navigate a study:** browse participants, sessions, anatomical and functional scans, diffusion data and processing outputs. Multi-echo acquisitions keep their echoes together.
 - **View images:** open NIfTI images in the built-in viewer. Read voxel values, compare slices in Lightbox, inspect the volume with a 3D cutaway, play through 4D volumes, plot the signal at the crosshair, and save the current view as a PNG.
+- **Inspect EEG recordings:** view ordinary EDF and continuous EDF+ waveforms, select channels, adjust a shared amplitude scale and follow events from the recording’s BIDS tables. [EEG walkthrough](docs/USER_GUIDE.md#inspect-an-eeg-recording).
 - **Understand metadata:** inspect TR, TE and other recorded parameters, see inherited JSON values and trace them to their original files. Preview participant tables, event timing and diffusion gradients.
 - **Find usable coverage:** filter participant availability by raw sessions and processing outputs, including explicitly linked derivative datasets.
 - **Browse data where it lives:** use local folders or VS Code Remote SSH, including ZIP, supported tarballs and SquashFS collections. Selected archive images are prepared in a cache without unpacking the entire study.

@@ -4,17 +4,23 @@ Record new changes under Unreleased. Released versions use `major.minor.patch`, 
 
 ## Unreleased
 
-- Show compact stacked EEG traces with shared µV amplitude scales for compatible channels, fixed scales while paging, explicit amplitude/fit controls and BIDS event shading across traces. Other types and unresolved/incompatible units stay separate, with a separate-channel layout available. Display conversions and recorded bad-channel status remain explicit.
+## [1.5.0] - 2026-11-26
 
-- Label event intervals with their names and recorded times, align the event and waveform time axes, and provide explicit Go to event buttons. Dense timelines show the first 12 intervals with coverage stated; the paged event list retains all checked rows.
+### Added
 
-- Integrate source-qualified channels.tsv metadata and BIDS event timelines in the EDF waveform editor. Show recorded channel status and header/TSV differences, filter and page event rows, jump to events, and choose between matching physical table sources without merging them.
+- Open ordinary EDF and continuous EDF+ EEG recordings directly from the logical BIDS tree in a read-only waveform viewer, locally or over Remote SSH, including supported ZIP, tar/gzip tar and SquashFS sources.
+- Inspect compact stacked EEG channels with shared µV display scales, channel selection, time-window navigation, amplitude/fit controls and a separate-channel layout. Recorded bad-channel status, source units and display conversions remain explicit.
+- Read applicable `channels.tsv` and `events.tsv` alongside the recording. Choose between matching physical table sources, inspect channel metadata, follow named/timed events with **Go to event**, and toggle event shading across the traces.
+- Keep technical summaries available for discontinuous or unknown-duration EDF recordings, with per-channel rates/units, source details and access to acquisition JSON.
 
-- Open supported EDF recordings directly to a bounded waveform preview, with logical EEG tree labels, compact controls, accurate channel counts and recording/source details in the same editor.
+### Fixed
 
-- Open EDF/EDF+ recordings from the logical BIDS tree in read-only previews with a technical summary fallback, with per-channel sampling rates and units, explicit header-only coverage, and access to inherited JSON. Bounded prefix reads support loose files and supported ZIP, tar/gzip tar and SquashFS sources without extracting a whole recording. Event/channel-table integration remains planned.
+- Repaint waveform labels, scale bars and traces when the VS Code colour theme changes, preserving the current time window and amplitude settings.
 
-- View bounded signal windows from ordinary EDF and continuous EDF+ recordings, with channel selection, recorded units and calibration, time navigation, cancellation and peak-preserving display envelopes. Loose files use positional reads; supported archives use prefix scans capped at 16 MiB, so later archived windows may be unavailable. Discontinuous and unknown-duration recordings retain summary access.
+### Limits
+
+- Waveform previews show 1–8 channels and up to 30 seconds per request, with explicit sample/read limits. Archive reads scan a member prefix capped at 16 MiB, so late windows in large archived recordings can be unavailable; the previous completed view is retained.
+- Other EEG/MEG formats, EDF+ annotation decoding, filtering and rereferencing are not included. BIDS event tables supply the displayed event timeline. Dataset files remain unchanged.
 
 ## [1.4.0] - 2026-11-19
 

@@ -38,6 +38,16 @@ For tables inside an archive, the column dictionary comes from a JSON file next 
 
 A preview’s **Open original** action opens the source in the regular editor. Use **Reload snapshot** if the file has changed. In the availability grid, **Missing** means the inspected branch contained no matching data. **Not checked** means coverage is incomplete.
 
+## Inspect an EEG recording
+
+In **BIDS**, expand the participant and **EEG**, then select an **EDF recording**. Ordinary EDF and continuous EDF+ with a known duration open to a ten-second waveform preview. Expand **Choose channels**, select the signals you need, and choose **Apply channels and time window**. The preview shows up to eight channels at once.
+
+Compatible EEG traces share a µV display scale. **Larger amplitude** and **Smaller amplitude** change display gain; **Fit amplitude** refits the current window. The range otherwise stays fixed when you move through time. Source samples and recorded reference remain unchanged. ECG and other signal types keep separate scales, and **Separate channels** displays individual source-unit traces.
+
+Use **Previous window**, **Next window**, or **Start (s)** and **Duration (s)** to inspect another interval. With an applicable `events.tsv`, each named event has a **Go to event** action; its interval aligns with the waveform time axis. **Shade BIDS events** toggles the trace overlay. Expand **Events** to filter the checked event rows. Applicable `channels.tsv` supplies recorded channel type/status and reference; a recorded bad status is displayed without hiding the channel or assessing signal quality. When several physical tables match, choose the intended **Channels source** or **Events source**.
+
+The viewer checks only the displayed interval. Archive reads have a 16 MiB member-prefix budget, so a late window can be unavailable even when an early window opens; this is a reader limit, not evidence that the recording is missing. Discontinuous or unknown-duration EDF files keep technical summaries. Other EEG/MEG formats, EDF+ annotation decoding, filtering and rereferencing are outside this release. See the [recording reference](EXPLORER_REFERENCE.md#edf-recording-previews) for exact limits.
+
 ## Browse archived studies
 
 BIDS Explorer supports ZIP, tar and gzip tarballs, and SquashFS images with supported compression. Open or add the containing folder to browse archives alongside ordinary files. When sources contribute to the same study, the tree groups recognizable content by participant and session. Where sources disagree, you can inspect the original files separately.
